@@ -57,18 +57,13 @@ connection = mysql://{{keystone.database.user}}:{{keystone.database.password}@{{
 
 Configuration requiring logic is expressed in executable templates.
 
-An executable template is a script which accepts parameters via environment variables or standard in, and writes a config file to standard out.
+An executable template is a script which accepts configuration as a json string on standard in, and writes a config file to standard out.
+
+The script should exit non-zero if it encounters a problem, so that cornfig knows what's up.
 
 The output of the script will be written to the path corresponding to the executable template's path in the template tree.
 
-e.g.
-```bash
-#/bin/sh
-echo "[sql]"
-echo "connection = mysql://$keystone_database_user:$keystone_database_password@$keystone_database_user/keystone"
-```
 
-TODO: the script is passed the contents of the metadata file on stdin, so you can use a higher-level languages, too:
 ```ruby
 #!/usr/bin/env ruby
 require 'json'
