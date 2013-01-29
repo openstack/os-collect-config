@@ -21,7 +21,7 @@ connection = mysql://keystone:foobar@127.0.0.1/keystone
 
 Just pass it the path to a directory tree of templates:
 ```
-cornfig /home/me/my_templates
+cornfig -t /home/me/my_templates
 ```
 
 # Templates?
