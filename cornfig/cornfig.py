@@ -2,6 +2,7 @@ import json
 import os
 import pystache
 import subprocess
+import sys
 from pystache.context import KeyNotFoundError
 
 class CornfigException(Exception):
@@ -11,7 +12,7 @@ def install_cornfig(config_path, template_root, output_path='/'):
   config = read_config(config_path)
   tree = build_tree( template_paths(template_root), config )
   for path, contents in tree.items():
-    write_file( os.path.join(output_path, path[1:]), contents)
+    write_file( os.path.join(output_path, path), contents)
 
 def write_file(path, contents):
   d = os.path.dirname(path)
@@ -73,3 +74,16 @@ def template_paths(root):
 
 def strip_prefix(prefix, s):
   return s[len(prefix):] if s.startswith(prefix) else s
+
+
+def usage():
+  print "Usage:\n  cornfig TEMPLATE_ROOT JSON_PATH OUTPUT_ROOT]"
+  sys.exit(1)
+
+def main():
+  try:
+    if len(sys.argv) != 4:
+      usage()
+    install_cornfig(sys.argv[2], sys.argv[1], sys.argv[3])
+  except Exception as e:
+    print e
