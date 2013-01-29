@@ -7,7 +7,7 @@ Apply configuration from cloud metadata.
 # What does it do?
 
 it turns a cloud-metdata file like this:
-```
+```javascript
 {"config": {"keystone": {"database": {"host": "127.0.0.1", "user": "keystone", "password": "foobar"}}}}
 ```
 into service config files like this:
@@ -17,7 +17,7 @@ connection = mysql://keystone:foobar@127.0.0.1/keystone
 ...other settings...
 ```
 
-# But HOW??
+# but... but HOW??
 
 Just pass it the path to a directory tree of templates:
 ```
@@ -53,7 +53,7 @@ connection = mysql://{{keystone.database.user}}:{{keystone.database.password}@{{
 
 ## Executable Templates
 
-An executable template is a script which accepts parameters in environment variables, and writes a config file to standard out.
+An executable template is a script which accepts parameters via environment variables or standard in, and writes a config file to standard out.
 
 The output of the script will be written to the path corresponding to the executable template's path in the template tree.
 
@@ -64,7 +64,7 @@ echo "[sql]"
 echo "connection = mysql://$keystone_database_user:$keystone_database_password@$keystone_database_user/keystone"
 ```
 
-TODO: the script is passed the path of the metadata file contents on stdin, so you can use a higher-level languages, too:
+TODO: the script is passed the contents of the metadata file on stdin, so you can use a higher-level languages, too:
 ```ruby
 #!/usr/bin/env/ruby
 require 'json'
