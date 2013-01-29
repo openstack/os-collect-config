@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 import json
+import logging
 import os
 import pystache
 import subprocess
 import sys
 from pystache.context import KeyNotFoundError
+
+logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y/%m/%d %I:%M:%S %p', level=logging.INFO)
 
 class CornfigException(Exception):
   pass
@@ -16,6 +19,7 @@ def install_cornfig(config_path, template_root, output_path='/'):
     write_file( os.path.join(output_path, strip_prefix('/', path)), contents)
 
 def write_file(path, contents):
+  logging.info("writing %s", path)
   d = os.path.dirname(path)
   if not os.path.exists(d):
     os.makedirs(d)
