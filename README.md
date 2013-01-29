@@ -70,7 +70,7 @@ echo "connection = mysql://$keystone_database_user:$keystone_database_password@$
 
 TODO: the script is passed the contents of the metadata file on stdin, so you can use a higher-level languages, too:
 ```ruby
-#!/usr/bin/env/ruby
+#!/usr/bin/env ruby
 require 'json'
 c = JSON.parse STDIN.read
 puts "connection = mysql://#{c['keystone']['database']['user']}:#{c['keystone']['database']['password']}@#{c['keystone']['database']['host']}/keystone"
