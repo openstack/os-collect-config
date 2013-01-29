@@ -6,7 +6,7 @@ Apply configuration from cloud metadata.
 
 # What does it do?
 
-it turns a cloud-metdata file like this:
+it turns a cloud-metadata file like this:
 ```javascript
 {"config": {"keystone": {"database": {"host": "127.0.0.1", "user": "keystone", "password": "foobar"}}}}
 ```
