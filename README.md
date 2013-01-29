@@ -39,6 +39,8 @@ e.g.
         └── mysql.conf
 ```
 
+An example tree [can be found here](https://github.com/echohead/openstack_cornfig_templates).
+
 If a template is executable it will be treated as an **executable template**.
 Otherwise, it will be treated as a **mustache template**.
 
