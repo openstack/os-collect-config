@@ -55,7 +55,7 @@ connection = mysql://{{keystone.database.user}}:{{keystone.database.password}@{{
 
 ## Executable Templates
 
-Configuration requiring logic is best expressed as an executable template.
+Configuration requiring logic is expressed in executable templates.
 
 An executable template is a script which accepts parameters via environment variables or standard in, and writes a config file to standard out.
 
