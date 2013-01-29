@@ -40,11 +40,11 @@ e.g.
 ```
 
 If a template is executable it will be treated as an **executable template**.
-Otherwise, it will be treated as a **moustache template**.
+Otherwise, it will be treated as a **mustache template**.
 
-## Moustache Templates
+## Mustache Templates
 
-If you don't need any logic, just some string substitution, use a moustache template.
+If you don't need any logic, just some string substitution, use a mustache template.
 
 Metadata settings are accessed with dot ('.') notation:
 
