@@ -44,7 +44,9 @@ Otherwise, it will be treated as a **moustache template**.
 
 ## Moustache Templates
 
-If you don't need any logic, just some string substitution, use a moustache template:
+If you don't need any logic, just some string substitution, use a moustache template.
+
+Metadata settings are accessed with dot ('.') notation:
 
 ```
 [sql]
