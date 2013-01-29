@@ -4,17 +4,25 @@ import tempfile
 from nose.tools import *
 from cornfig.cornfig import *
 
+# example template tree
 TEMPLATES = os.path.join(os.path.dirname(__file__), 'templates')
 TEMPLATE_PATHS = [
     "/etc/glance/script.conf",
     "/etc/keystone/keystone.conf"
   ]
 
+# config for example tree
 CONFIG = {
   "x": "foo",
   "database": {
     "url": "sqlite:///blah"
   }
+}
+
+# expected output for example tree
+OUTPUT = {
+  "/etc/glance/script.conf": "foo\n",
+  "/etc/keystone/keystone.conf": "[foo]\ndatabase = sqlite:///blah\n"
 }
 
 def setup():
@@ -26,13 +34,20 @@ def teardown():
 def template(relpath):
   return os.path.join(TEMPLATES, relpath[1:])
 
+
+def test_install_cornfig():
+  t = tempfile.NamedTemporaryFile()
+  t.write(json.dumps(CONFIG))
+  t.flush()
+  tmpdir = tempfile.mkdtemp()
+  install_cornfig(t.name, TEMPLATES, output_path=tmpdir)
+  for path, contents in OUTPUT.items():
+    full_path = os.path.join(tmpdir, path[1:])
+    assert os.path.exists(full_path)
+    assert_equal( open(full_path).read(), contents )
+
 def test_build_tree():
-  print flatten(CONFIG)
-  assert_equals( build_tree(template_paths(TEMPLATES), CONFIG),
-    {
-      "/etc/keystone/keystone.conf": "[foo]\ndatabase = sqlite:///blah\n",
-      "/etc/glance/script.conf": "foo\n"
-    })
+  assert_equals( build_tree(template_paths(TEMPLATES), CONFIG), OUTPUT )
 
 def test_flatten():
   assert_equals( flatten({"x": {"a": "b", "c": "d"}, "y": "z"}), {"x.a": "b", "x.c": "d", "y": "z"} )

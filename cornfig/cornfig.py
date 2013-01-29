@@ -7,10 +7,19 @@ from pystache.context import KeyNotFoundError
 class CornfigException(Exception):
   pass
 
-def install_cornfig(config_path, template_root):
+def install_cornfig(config_path, template_root, output_path='/'):
   config = read_config(config_path)
-  for in_file, out_file in template_paths(template_root):
-    print render_template(in_file, config)
+  tree = build_tree( template_paths(template_root), config )
+  for path, contents in tree.items():
+    write_file( os.path.join(output_path, path[1:]), contents)
+
+def write_file(path, contents):
+  d = os.path.dirname(path)
+  if not os.path.exists(d):
+    os.makedirs(d)
+  out = open(path, 'w')
+  out.write(contents)
+  out.close()
 
 def build_tree(templates, config):
   res = {}
@@ -44,7 +53,7 @@ def flatten(d, prefix='', res=None):
   res = res or {}
   for k, v in d.items():
     key = (prefix + '.' + k) if len(prefix) > 0 else k
-    if isinstance(v, str):
+    if isinstance(v, str) or isinstance(v, unicode):
       res[key] = v
     elif isinstance(v, dict):
        res = dict(res.items() + flatten(v, key, res).items())
