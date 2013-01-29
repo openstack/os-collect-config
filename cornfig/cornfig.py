@@ -22,6 +22,7 @@ def write_file(path, contents):
   out.write(contents)
   out.close()
 
+# return a map of filenames->filecontents
 def build_tree(templates, config):
   res = {}
   for in_file, out_file in templates:
@@ -50,6 +51,8 @@ def render_executable(path, config):
 def read_config(path):
   return json.loads(open(path).read())
 
+# flatten a nested hash into a one-level hash
+# {x: {a: b} } => {x.a: b}
 def flatten(d, prefix='', res=None):
   res = res or {}
   for k, v in d.items():
