@@ -5,6 +5,7 @@ import os
 import pystache
 import subprocess
 import sys
+from optparse import OptionParser
 from pystache.context import KeyNotFoundError
 
 logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y/%m/%d %I:%M:%S %p', level=logging.INFO)
@@ -90,11 +91,20 @@ def usage():
 
 def main():
   try:
-    if len(sys.argv) != 4:
-      usage()
-    install_cornfig(sys.argv[2], sys.argv[1], sys.argv[3])
-  except Exception as e:
-    print e
+    parser = OptionParser(usage="cornfig -t TEMPLATE_ROOT [-m METADATA_FILE] [-o OUT_DIR]")
+    parser.add_option('-m', '--metadata', dest='metadata_path',
+      help='path to metadata file (default: /var/lib/cloud/cfn-init-data)',
+      default='/var/lib/cloud/cfn-init-data')
+    parser.add_option('-t', '--templates', dest='template_root', help='path to template root directory')
+    parser.add_option('-o', '--output', dest='out_root', help='root directory for output (default: /)', default='/')
+    (options, args) = parser.parse_args()
+
+    if options.template_root is None: raise CornfigException('missing option --templates')
+
+    install_cornfig(options.metadata_path, options.template_root, options.out_root)
+  except CornfigException as e:
+    logging.error(e.message())
+    sys.exit(1)
 
 if __name__ == '__main__':
   main()
