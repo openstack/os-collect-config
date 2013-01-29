@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import json
 import os
 import pystache
@@ -80,7 +81,7 @@ def strip_prefix(prefix, s):
 
 
 def usage():
-  print "Usage:\n  cornfig TEMPLATE_ROOT JSON_PATH OUTPUT_ROOT]"
+  print "Usage:\n  cornfig TEMPLATE_ROOT JSON_PATH OUTPUT_ROOT"
   sys.exit(1)
 
 def main():
@@ -90,3 +91,6 @@ def main():
     install_cornfig(sys.argv[2], sys.argv[1], sys.argv[3])
   except Exception as e:
     print e
+
+if __name__ == '__main__':
+  main()
