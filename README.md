@@ -58,11 +58,17 @@ An executable template is a script which accepts parameters in environment varia
 The output of the script will be written to the path corresponding to the executable template's path in the template tree.
 
 e.g.
-```
+```bash
 #/bin/sh
 echo "[sql]"
 echo "connection = mysql://$keystone_database_user:$keystone_database_password@$keystone_database_user/keystone"
 ```
 
-
+TODO: the script is passed the path of the metadata file contents on stdin, so you can use a higher-level languages, too:
+```ruby
+#!/usr/bin/env/ruby
+require 'json'
+c = JSON.parse STDIN.read
+puts "connection = mysql://#{c['keystone']['database']['user']}:#{c['keystone']['database']['password']}@#{c['keystone']['database']['host']}/keystone"
+```
 
