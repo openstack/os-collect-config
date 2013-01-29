@@ -12,7 +12,7 @@ def install_cornfig(config_path, template_root, output_path='/'):
   config = read_config(config_path)
   tree = build_tree( template_paths(template_root), config )
   for path, contents in tree.items():
-    write_file( os.path.join(output_path, path), contents)
+    write_file( os.path.join(output_path, strip_prefix('/', path)), contents)
 
 def write_file(path, contents):
   d = os.path.dirname(path)
