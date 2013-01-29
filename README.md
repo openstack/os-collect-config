@@ -1,7 +1,7 @@
 cornfig
 =======
 
-Apply configuration from cloud metadata.
+Apply cornfiguration from cloud metadata.
 
 
 # What does it do?
