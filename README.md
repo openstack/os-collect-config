@@ -91,6 +91,8 @@ connection = mysql://{{keystone.database.user}}:{{keystone.database.password}}@{
 ...
 eos
 
+# tweak params here...
+
 puts Mustache.render(template, params)
 ```
 
