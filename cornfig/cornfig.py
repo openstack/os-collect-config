@@ -55,7 +55,10 @@ def render_executable(path, config):
     raise CornfigException("config script failed: %s\n\nwith output:\n\n%s" % (path, e.output))
 
 def read_config(path):
-  return json.loads(open(path).read())
+  try:
+    return json.loads(open(path).read())
+  except:
+    raise CornfigException("invalid metadata file: %s" % path)
 
 # flatten a nested hash into a one-level hash
 # {x: {a: b} } => {x.a: b}
@@ -103,7 +106,7 @@ def main():
 
     install_cornfig(options.metadata_path, options.template_root, options.out_root)
   except CornfigException as e:
-    logging.error(e.message())
+    logging.error(e)
     sys.exit(1)
 
 if __name__ == '__main__':

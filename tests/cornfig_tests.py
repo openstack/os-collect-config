@@ -83,7 +83,7 @@ def test_read_config():
     t.flush()
     assert_equals( read_config(t.name), d )
 
-@raises(ValueError)
+@raises(CornfigException)
 def test_read_config_bad_json():
   with tempfile.NamedTemporaryFile() as t:
     t.write("{{{{")
