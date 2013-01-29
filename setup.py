@@ -7,13 +7,14 @@ config = {
     'name': 'cornfig',
     'description': 'applies cornfiguration from cloud metadata.',
     'author': 'echohead',
+    'author_email': 'tim.miller.0@gmail.com',
     'url': 'github.com/echohead/cornfig',
     'version': '0.1',
     'install_requires': ['nose'],
     'packages': ['cornfig'],
     'scripts': [],
-    'install_requires': ['pystache'],
-    'long_description': open('README.md').read(),
+    'install_requires': ['pystache', 'anyjson'],
+#    'long_description': open('README.md').read(),
     'entry_points': {
       'console_scripts': ['cornfig = cornfig.cornfig:main']
     }
