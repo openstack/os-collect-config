@@ -3,10 +3,11 @@ import json
 import logging
 import os
 import pystache
-import subprocess
 import sys
+import tempfile
 from optparse import OptionParser
 from pystache.context import KeyNotFoundError
+from subprocess import Popen, PIPE
 
 logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y/%m/%d %I:%M:%S %p', level=logging.INFO)
 
@@ -49,30 +50,17 @@ def render_moustache(text, config):
   return r.render(text, config)
 
 def render_executable(path, config):
-  try:
-    return subprocess.check_output([path], env=flatten(config))
-  except subprocess.CalledProcessError as e:
-    raise CornfigException("config script failed: %s\n\nwith output:\n\n%s" % (path, e.output))
+  p = Popen([path], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+  stdout, stderr = p.communicate(json.dumps(config))
+  p.wait()
+  if p.returncode != 0: raise CornfigException("config script failed: %s\n\nwith output:\n\n%s" % (path, stdout + stderr))
+  return stdout
 
 def read_config(path):
   try:
     return json.loads(open(path).read())
   except:
     raise CornfigException("invalid metadata file: %s" % path)
-
-# flatten a nested hash into a one-level hash
-# {x: {a: b} } => {x.a: b}
-def flatten(d, prefix='', res=None):
-  res = res or {}
-  for k, v in d.items():
-    key = (prefix + '.' + k) if len(prefix) > 0 else k
-    if isinstance(v, str) or isinstance(v, unicode):
-      res[key] = v
-    elif isinstance(v, dict):
-       res = dict(res.items() + flatten(v, key, res).items())
-    else:
-      raise CornfigException("expected only strings and hashes in config.")
-  return res
 
 # given a root directory, return a list of tuples
 # containing input and output paths

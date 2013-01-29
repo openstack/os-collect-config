@@ -49,9 +49,6 @@ def test_install_cornfig():
 def test_build_tree():
   assert_equals( build_tree(template_paths(TEMPLATES), CONFIG), OUTPUT )
 
-def test_flatten():
-  assert_equals( flatten({"x": {"a": "b", "c": "d"}, "y": "z"}), {"x.a": "b", "x.c": "d", "y": "z"} )
-
 def test_render_template():
   # execute executable files, moustache non-executables
   assert render_template(template("/etc/glance/script.conf"), {"x": "abc"}) == "abc\n"
