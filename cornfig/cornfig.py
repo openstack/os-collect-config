@@ -46,8 +46,11 @@ def is_executable(path):
   return os.path.isfile(path) and os.access(path, os.X_OK)
 
 def render_moustache(text, config):
-  r = pystache.Renderer(missing_tags = 'strict')
-  return r.render(text, config)
+  try:
+    r = pystache.Renderer(missing_tags = 'strict')
+    return r.render(text, config)
+  except KeyNotFoundError as e:
+    raise CornfigException("key '%s' does not exist metadata file." % e.key)
 
 def render_executable(path, config):
   p = Popen([path], stdin=PIPE, stdout=PIPE, stderr=PIPE)
