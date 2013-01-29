@@ -8,7 +8,7 @@ Apply cornfiguration from cloud metadata.
 
 it turns a cloud-metadata file like this:
 ```javascript
-{"config": {"keystone": {"database": {"host": "127.0.0.1", "user": "keystone", "password": "foobar"}}}}
+{"keystone": {"database": {"host": "127.0.0.1", "user": "keystone", "password": "foobar"}}}
 ```
 into service config files like this:
 ```
