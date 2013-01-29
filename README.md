@@ -72,7 +72,25 @@ TODO: the script is passed the contents of the metadata file on stdin, so you ca
 ```ruby
 #!/usr/bin/env ruby
 require 'json'
-c = JSON.parse STDIN.read
+params = JSON.parse STDIN.read
 puts "connection = mysql://#{c['keystone']['database']['user']}:#{c['keystone']['database']['password']}@#{c['keystone']['database']['host']}/keystone"
+```
+
+You could even embed mustache in a heredoc, and use that:
+```ruby
+#!/usr/bin/env ruby
+require 'json'
+require 'mustache'
+params = JSON.parse STDIN.read
+
+template = <<-eos
+[sql]
+connection = mysql://{{keystone.database.user}}:{{keystone.database.password}}@{{keystone.database.host}}/keystone
+
+[log]
+...
+eos
+
+puts Mustache.render(template, params)
 ```
 
