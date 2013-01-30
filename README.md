@@ -8,7 +8,7 @@ Apply cornfiguration from cloud metadata.
 
 it turns a cloud-metadata file like this:
 ```javascript
-{"config": {"keystone": {"database": {"host": "127.0.0.1", "user": "keystone", "password": "foobar"}}}}
+{"keystone": {"database": {"host": "127.0.0.1", "user": "keystone", "password": "foobar"}}}
 ```
 into service config files like this:
 ```
@@ -21,7 +21,7 @@ connection = mysql://keystone:foobar@127.0.0.1/keystone
 
 Just pass it the path to a directory tree of templates:
 ```
-cornfig /home/me/my_templates
+cornfig -t /home/me/my_templates
 ```
 
 # Templates?
@@ -38,6 +38,8 @@ e.g.
     └── mysql
         └── mysql.conf
 ```
+
+An example tree [can be found here](https://github.com/echohead/openstack_cornfig_templates).
 
 If a template is executable it will be treated as an **executable template**.
 Otherwise, it will be treated as a **mustache template**.
