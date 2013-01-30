@@ -40,7 +40,7 @@ def test_install_cornfig():
   t.write(json.dumps(CONFIG))
   t.flush()
   tmpdir = tempfile.mkdtemp()
-  install_cornfig(t.name, TEMPLATES, output_path=tmpdir)
+  install_cornfig(t.name, TEMPLATES, tmpdir, True)
   for path, contents in OUTPUT.items():
     full_path = os.path.join(tmpdir, path[1:])
     assert os.path.exists(full_path)

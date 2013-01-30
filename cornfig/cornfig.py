@@ -9,25 +9,18 @@ from optparse import OptionParser
 from pystache.context import KeyNotFoundError
 from subprocess import Popen, PIPE
 
-logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y/%m/%d %I:%M:%S %p', level=logging.INFO)
-
-class CornfigException(Exception):
-  pass
-
-def install_cornfig(config_path, template_root, output_path='/'):
+def install_cornfig(config_path, template_root, output_path, write):
   config = read_config(config_path)
   tree = build_tree( template_paths(template_root), config )
-  for path, contents in tree.items():
-    write_file( os.path.join(output_path, strip_prefix('/', path)), contents)
+  if write:
+    for path, contents in tree.items():
+      write_file( os.path.join(output_path, strip_prefix('/', path)), contents)
 
 def write_file(path, contents):
   logging.info("writing %s", path)
   d = os.path.dirname(path)
-  if not os.path.exists(d):
-    os.makedirs(d)
-  out = open(path, 'w')
-  out.write(contents)
-  out.close()
+  os.path.exists(d) or os.makedirs(d)
+  with open(path, 'w') as f: f.write(contents)
 
 # return a map of filenames->filecontents
 def build_tree(templates, config):
@@ -50,7 +43,7 @@ def render_moustache(text, config):
     r = pystache.Renderer(missing_tags = 'strict')
     return r.render(text, config)
   except KeyNotFoundError as e:
-    raise CornfigException("key '%s' does not exist metadata file." % e.key)
+    raise CornfigException("key '%s' does not exist in metadata file." % e.key)
 
 def render_executable(path, config):
   p = Popen([path], stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -65,8 +58,6 @@ def read_config(path):
   except:
     raise CornfigException("invalid metadata file: %s" % path)
 
-# given a root directory, return a list of tuples
-# containing input and output paths
 def template_paths(root):
   res = []
   for cur_root, subdirs, files in os.walk(root):
@@ -78,27 +69,40 @@ def template_paths(root):
 def strip_prefix(prefix, s):
   return s[len(prefix):] if s.startswith(prefix) else s
 
+### CLI ###
 
-def usage():
-  print "Usage:\n  cornfig TEMPLATE_ROOT JSON_PATH OUTPUT_ROOT"
-  sys.exit(1)
+def parse_opts():
+    parser = OptionParser(usage="cornfig -t TEMPLATE_ROOT [-m METADATA_FILE] [-o OUT_DIR]")
+
+    parser.add_option('-t', '--templates', dest='template_root', help='path to template root directory')
+    parser.add_option('-o', '--output',    dest='out_root',      help='root directory for output (default: /)',
+                       default='/')
+    parser.add_option('-m', '--metadata', dest='metadata_path',  help='path to metadata file',
+                       default='/var/lib/cloud/cfn-init-data')
+    parser.add_option('-v', '--validate', dest='write',          help='validate only. do not write files',
+                       default=True, action='store_false')
+    (opts, args) = parser.parse_args()
+
+    if opts.template_root is None: raise CornfigException('missing option --templates')
+    if not os.access(opts.out_root, os.W_OK):
+      raise CornfigException("you don't have permission to write to '%s'" % opts.out_root)
+    return opts
 
 def main():
   try:
-    parser = OptionParser(usage="cornfig -t TEMPLATE_ROOT [-m METADATA_FILE] [-o OUT_DIR]")
-    parser.add_option('-m', '--metadata', dest='metadata_path',
-      help='path to metadata file (default: /var/lib/cloud/cfn-init-data)',
-      default='/var/lib/cloud/cfn-init-data')
-    parser.add_option('-t', '--templates', dest='template_root', help='path to template root directory')
-    parser.add_option('-o', '--output', dest='out_root', help='root directory for output (default: /)', default='/')
-    (options, args) = parser.parse_args()
-
-    if options.template_root is None: raise CornfigException('missing option --templates')
-
-    install_cornfig(options.metadata_path, options.template_root, options.out_root)
+    opts = parse_opts()
+    install_cornfig(opts.metadata_path, opts.template_root, opts.out_root, opts.write)
+    logging.info("success")
   except CornfigException as e:
     logging.error(e)
     sys.exit(1)
+
+class CornfigException(Exception):
+  pass
+
+logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s',
+                    datefmt='%Y/%m/%d %I:%M:%S %p',
+                    level=logging.INFO)
 
 if __name__ == '__main__':
   main()

@@ -8,7 +8,7 @@ config = {
     'description': 'applies cornfiguration from cloud metadata.',
     'author': 'echohead',
     'author_email': 'tim.miller.0@gmail.com',
-    'url': 'github.com/echohead/cornfig',
+    'url': 'http://github.com/echohead/cornfig',
     'version': '0.1',
     'install_requires': ['nose'],
     'packages': ['cornfig'],
