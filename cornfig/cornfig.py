@@ -17,7 +17,7 @@ def install_cornfig(config_path, template_root, output_path, write):
       write_file( os.path.join(output_path, strip_prefix('/', path)), contents)
 
 def write_file(path, contents):
-  logging.info("writing %s", path)
+  logger.info("writing %s", path)
   d = os.path.dirname(path)
   os.path.exists(d) or os.makedirs(d)
   with open(path, 'w') as f: f.write(contents)
@@ -71,11 +71,8 @@ def template_paths(root):
 def strip_prefix(prefix, s):
   return s[len(prefix):] if s.startswith(prefix) else s
 
-### CLI ###
-
 def parse_opts():
     parser = OptionParser(usage="cornfig -t TEMPLATE_ROOT [-m METADATA_FILE] [-o OUT_DIR]")
-
     parser.add_option('-t', '--templates', dest='template_root', help='path to template root directory')
     parser.add_option('-o', '--output',    dest='out_root',      help='root directory for output (default: /)',
                        default='/')
@@ -94,17 +91,24 @@ def main():
   try:
     opts = parse_opts()
     install_cornfig(opts.metadata_path, opts.template_root, opts.out_root, opts.write)
-    logging.info("success")
+    logger.info("success")
   except CornfigException as e:
-    logging.error(e)
+    logger.error(e)
     sys.exit(1)
 
 class CornfigException(Exception):
   pass
 
-logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s',
-                    datefmt='%Y/%m/%d %I:%M:%S %p',
-                    level=logging.INFO)
+# logginig
+LOG_FORMAT = '[%(asctime)s] [%(levelname)s] %(message)s'
+DATE_FORMAT = '%Y/%m/%d %I:%M:%S %p'
+def add_handler(logger, handler):
+  handler.setFormatter(logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT))
+  logger.addHandler(handler)
+logger = logging.getLogger('cornfig')
+logger.setLevel(logging.INFO)
+add_handler(logger, logging.StreamHandler(sys.stdout))
+if os.geteuid() == 0: add_handler(logger, logging.FileHandler('/var/log/cornfig.log'))
 
 if __name__ == '__main__':
   main()
