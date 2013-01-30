@@ -57,7 +57,7 @@ def test_render_template():
 def test_render_moustache():
   assert_equals( render_moustache("ab{{x.a}}cd", {"x": {"a": "123"}}), "ab123cd" )
 
-@raises(CornfigException)
+@raises(Exception)
 def test_render_moustache_bad_key():
   render_moustache("{{badkey}}", {})
 

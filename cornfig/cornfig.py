@@ -33,17 +33,19 @@ def render_template(template, config):
   if is_executable(template):
     return render_executable(template, config)
   else:
-    return render_moustache(open(template).read(), config)
+    try:
+      return render_moustache(open(template).read(), config)
+    except KeyNotFoundError as e:
+      raise CornfigException("key '%s' does not exist in metadata file '%s'" % (e.key, template))
+    except Exception as e:
+      raise CornfigException("could not render moustache template %s" % template)
 
 def is_executable(path):
   return os.path.isfile(path) and os.access(path, os.X_OK)
 
 def render_moustache(text, config):
-  try:
-    r = pystache.Renderer(missing_tags = 'strict')
-    return r.render(text, config)
-  except KeyNotFoundError as e:
-    raise CornfigException("key '%s' does not exist in metadata file." % e.key)
+  r = pystache.Renderer(missing_tags = 'strict')
+  return r.render(text, config)
 
 def render_executable(path, config):
   p = Popen([path], stdin=PIPE, stdout=PIPE, stderr=PIPE)

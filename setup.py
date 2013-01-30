@@ -9,7 +9,7 @@ config = {
     'author': 'echohead',
     'author_email': 'tim.miller.0@gmail.com',
     'url': 'http://github.com/echohead/cornfig',
-    'version': '0.1',
+    'version': '0.2',
     'install_requires': ['nose'],
     'packages': ['cornfig'],
     'scripts': [],
