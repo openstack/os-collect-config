@@ -77,7 +77,7 @@ def parse_opts():
     parser.add_option('-o', '--output',    dest='out_root',      help='root directory for output (default: /)',
                        default='/')
     parser.add_option('-m', '--metadata', dest='metadata_path',  help='path to metadata file',
-                       default='/var/lib/cloud/cfn-init-data')
+                       default='/var/lib/cloud/data/cfn-init-data')
     parser.add_option('-v', '--validate', dest='write',          help='validate only. do not write files',
                        default=True, action='store_false')
     (opts, args) = parser.parse_args()
