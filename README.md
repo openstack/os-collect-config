@@ -93,3 +93,14 @@ eos
 puts Mustache.render(template, params)
 ```
 
+# Quick Start
+```bash
+# install it
+sudo pip install -U git+git://github.com/tripleo/os-config-applier.git
+
+# grab example templates
+git clone git://github.com/tripleo/openstack-config-templates /tmp/config
+
+# run it
+os-config-applier -t /tmp/config/templates/ -m /tmp/config/cfn-init-data.example -o /tmp/config_output
+```
