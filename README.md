@@ -1,5 +1,5 @@
 os-config-applier
-=======
+=================
 
 Apply configuration from cloud metadata.
 
@@ -17,14 +17,14 @@ connection = mysql://keystone:foobar@127.0.0.1/keystone
 ...other settings...
 ```
 
-# but... but HOW??
+# Usage
 
 Just pass it the path to a directory tree of templates:
 ```
 os-config-applier -t /home/me/my_templates
 ```
 
-# Templates?
+# Templates
 
 The template directory structure should mimic a root filesystem, and contain templates for only those files you want configured.
 
@@ -39,7 +39,7 @@ e.g.
         └── mysql.conf
 ```
 
-An example tree [can be found here](https://github.com/echohead/openstack_config_templates).
+An example tree [can be found here](https://github.com/tripleo/openstack_config_templates).
 
 If a template is executable it will be treated as an **executable template**.
 Otherwise, it will be treated as a **mustache template**.
