@@ -9,7 +9,7 @@ from optparse import OptionParser
 from pystache.context import KeyNotFoundError
 from subprocess import Popen, PIPE
 
-def install_cornfig(config_path, template_root, output_path, write):
+def install_config(config_path, template_root, output_path, write):
   config = read_config(config_path)
   tree = build_tree( template_paths(template_root), config )
   if write:
@@ -36,9 +36,9 @@ def render_template(template, config):
     try:
       return render_moustache(open(template).read(), config)
     except KeyNotFoundError as e:
-      raise CornfigException("key '%s' does not exist in metadata file '%s'" % (e.key, template))
+      raise ConfigException("key '%s' does not exist in metadata file '%s'" % (e.key, template))
     except Exception as e:
-      raise CornfigException("could not render moustache template %s" % template)
+      raise ConfigException("could not render moustache template %s" % template)
 
 def is_executable(path):
   return os.path.isfile(path) and os.access(path, os.X_OK)
@@ -51,14 +51,14 @@ def render_executable(path, config):
   p = Popen([path], stdin=PIPE, stdout=PIPE, stderr=PIPE)
   stdout, stderr = p.communicate(json.dumps(config))
   p.wait()
-  if p.returncode != 0: raise CornfigException("config script failed: %s\n\nwith output:\n\n%s" % (path, stdout + stderr))
+  if p.returncode != 0: raise ConfigException("config script failed: %s\n\nwith output:\n\n%s" % (path, stdout + stderr))
   return stdout
 
 def read_config(path):
   try:
     return json.loads(open(path).read())
   except:
-    raise CornfigException("invalid metadata file: %s" % path)
+    raise ConfigException("invalid metadata file: %s" % path)
 
 def template_paths(root):
   res = []
@@ -72,7 +72,7 @@ def strip_prefix(prefix, s):
   return s[len(prefix):] if s.startswith(prefix) else s
 
 def parse_opts():
-    parser = OptionParser(usage="cornfig -t TEMPLATE_ROOT [-m METADATA_FILE] [-o OUT_DIR]")
+    parser = OptionParser(usage="os-config-applier -t TEMPLATE_ROOT [-m METADATA_FILE] [-o OUT_DIR]")
     parser.add_option('-t', '--templates', dest='template_root', help='path to template root directory')
     parser.add_option('-o', '--output',    dest='out_root',      help='root directory for output (default: /)',
                        default='/')
@@ -82,21 +82,21 @@ def parse_opts():
                        default=True, action='store_false')
     (opts, args) = parser.parse_args()
 
-    if opts.template_root is None: raise CornfigException('missing option --templates')
+    if opts.template_root is None: raise ConfigException('missing option --templates')
     if not os.access(opts.out_root, os.W_OK):
-      raise CornfigException("you don't have permission to write to '%s'" % opts.out_root)
+      raise ConfigException("you don't have permission to write to '%s'" % opts.out_root)
     return opts
 
 def main():
   try:
     opts = parse_opts()
-    install_cornfig(opts.metadata_path, opts.template_root, opts.out_root, opts.write)
+    install_config(opts.metadata_path, opts.template_root, opts.out_root, opts.write)
     logger.info("success")
-  except CornfigException as e:
+  except ConfigException as e:
     logger.error(e)
     sys.exit(1)
 
-class CornfigException(Exception):
+class ConfigException(Exception):
   pass
 
 # logginig
@@ -105,10 +105,10 @@ DATE_FORMAT = '%Y/%m/%d %I:%M:%S %p'
 def add_handler(logger, handler):
   handler.setFormatter(logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT))
   logger.addHandler(handler)
-logger = logging.getLogger('cornfig')
+logger = logging.getLogger('os-config-applier')
 logger.setLevel(logging.INFO)
 add_handler(logger, logging.StreamHandler(sys.stdout))
-if os.geteuid() == 0: add_handler(logger, logging.FileHandler('/var/log/cornfig.log'))
+if os.geteuid() == 0: add_handler(logger, logging.FileHandler('/var/log/os-config-applier.log'))
 
 if __name__ == '__main__':
   main()

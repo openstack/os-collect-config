@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 from nose.tools import *
-from cornfig.cornfig import *
+from os_config_applier.os_config_applier import *
 
 # example template tree
 TEMPLATES = os.path.join(os.path.dirname(__file__), 'templates')
@@ -35,12 +35,12 @@ def template(relpath):
   return os.path.join(TEMPLATES, relpath[1:])
 
 
-def test_install_cornfig():
+def test_install_config():
   t = tempfile.NamedTemporaryFile()
   t.write(json.dumps(CONFIG))
   t.flush()
   tmpdir = tempfile.mkdtemp()
-  install_cornfig(t.name, TEMPLATES, tmpdir, True)
+  install_config(t.name, TEMPLATES, tmpdir, True)
   for path, contents in OUTPUT.items():
     full_path = os.path.join(tmpdir, path[1:])
     assert os.path.exists(full_path)
@@ -52,7 +52,7 @@ def test_build_tree():
 def test_render_template():
   # execute executable files, moustache non-executables
   assert render_template(template("/etc/glance/script.conf"), {"x": "abc"}) == "abc\n"
-  assert_raises(CornfigException, render_template, template("/etc/glance/script.conf"), {})
+  assert_raises(ConfigException, render_template, template("/etc/glance/script.conf"), {})
 
 def test_render_moustache():
   assert_equals( render_moustache("ab{{x.a}}cd", {"x": {"a": "123"}}), "ab123cd" )
@@ -65,7 +65,7 @@ def test_render_executable():
   params = {"x": "foo"}
   assert render_executable(template("/etc/glance/script.conf"), params) == "foo\n"
 
-@raises(CornfigException)
+@raises(ConfigException)
 def test_render_executable_failure():
   render_executable(template("/etc/glance/script.conf"), {})
 
@@ -80,7 +80,7 @@ def test_read_config():
     t.flush()
     assert_equals( read_config(t.name), d )
 
-@raises(CornfigException)
+@raises(ConfigException)
 def test_read_config_bad_json():
   with tempfile.NamedTemporaryFile() as t:
     t.write("{{{{")
