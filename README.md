@@ -1,7 +1,7 @@
-cornfig
+os-config-applier
 =======
 
-Apply cornfiguration from cloud metadata.
+Apply configuration from cloud metadata.
 
 
 # What does it do?
@@ -21,12 +21,12 @@ connection = mysql://keystone:foobar@127.0.0.1/keystone
 
 Just pass it the path to a directory tree of templates:
 ```
-cornfig -t /home/me/my_templates
+os-config-applier -t /home/me/my_templates
 ```
 
 # Templates?
 
-The template directory structure should mimic a root filesystem, and contain templates for only those files you want cornfig-ed.
+The template directory structure should mimic a root filesystem, and contain templates for only those files you want configured.
 
 e.g.
 ```
@@ -39,7 +39,7 @@ e.g.
         └── mysql.conf
 ```
 
-An example tree [can be found here](https://github.com/echohead/openstack_cornfig_templates).
+An example tree [can be found here](https://github.com/echohead/openstack_config_templates).
 
 If a template is executable it will be treated as an **executable template**.
 Otherwise, it will be treated as a **mustache template**.
@@ -61,7 +61,7 @@ Configuration requiring logic is expressed in executable templates.
 
 An executable template is a script which accepts configuration as a json string on standard in, and writes a config file to standard out.
 
-The script should exit non-zero if it encounters a problem, so that cornfig knows what's up.
+The script should exit non-zero if it encounters a problem, so that os-config-applier knows what's up.
 
 The output of the script will be written to the path corresponding to the executable template's path in the template tree.
 
