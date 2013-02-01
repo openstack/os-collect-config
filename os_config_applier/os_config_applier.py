@@ -36,7 +36,7 @@ def render_template(template, config):
     try:
       return render_moustache(open(template).read(), config)
     except KeyNotFoundError as e:
-      raise ConfigException("key '%s' does not exist in metadata file '%s'" % (e.key, template))
+      raise ConfigException("key '%s' from template '%s' does not exist in metadata file." % (e.key, template))
     except Exception as e:
       raise ConfigException("could not render moustache template %s" % template)
 
