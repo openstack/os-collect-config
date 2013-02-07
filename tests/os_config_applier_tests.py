@@ -40,7 +40,7 @@ def test_install_config():
   t.write(json.dumps(CONFIG))
   t.flush()
   tmpdir = tempfile.mkdtemp()
-  install_config(t.name, TEMPLATES, tmpdir, True)
+  install_config(t.name, TEMPLATES, tmpdir, False)
   for path, contents in OUTPUT.items():
     full_path = os.path.join(tmpdir, path[1:])
     assert os.path.exists(full_path)
@@ -71,7 +71,10 @@ def test_render_executable_failure():
 
 def test_template_paths():
   expected = map(lambda p: (template(p), p), TEMPLATE_PATHS)
-  assert_equals( template_paths(TEMPLATES), expected)
+  actual = template_paths(TEMPLATES)
+  expected.sort(key=lambda tup: tup[1])
+  actual.sort(key=lambda tup: tup[1])
+  assert_equals( actual , expected)
 
 def test_read_config():
   with tempfile.NamedTemporaryFile() as t:
