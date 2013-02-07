@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+from StringIO import StringIO
 from nose.tools import *
 from os_config_applier.os_config_applier import *
 
@@ -93,3 +94,11 @@ def test_read_config_bad_json():
 @raises(Exception)
 def test_read_config_no_file():
   read_config("/nosuchfile")
+
+def test_print_templates():
+    save_stdout = sys.stdout
+    output = StringIO()
+    sys.stdout = output
+    main(['os-config-applier', '--print-templates'])
+    sys.stdout = save_stdout
+    assert_equals(output.getvalue().strip(), TEMPLATES_DIR)

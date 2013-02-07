@@ -74,7 +74,7 @@ def template_paths(root):
 def strip_prefix(prefix, s):
   return s[len(prefix):] if s.startswith(prefix) else s
 
-def parse_opts():
+def parse_opts(argv):
     parser = ArgumentParser()
     parser.add_argument('-t', '--templates', metavar='TEMPLATE_ROOT',
                         help="""path to template root directory (default:
@@ -88,16 +88,24 @@ def parse_opts():
                         default='/var/lib/cloud/data/cfn-init-data')
     parser.add_argument('-v', '--validate', help='validate only. do not write files',
                         default=False, action='store_true')
-    opts = parser.parse_args()
+    parser.add_argument('--print-templates', default=False, action='store_true',
+                        help='Print templates root and exit.')
+    opts = parser.parse_args(argv[1:])
 
-    if opts.templates is None: raise ConfigException('missing option --templates')
-    if not os.access(opts.output, os.W_OK):
-      raise ConfigException("you don't have permission to write to '%s'" % opts.output)
     return opts
 
-def main():
+def main(argv):
+  opts = parse_opts(argv)
+  if opts.print_templates:
+      print(opts.templates)
+      return 0
+
   try:
-    opts = parse_opts()
+    if opts.templates is None:
+        raise ConfigException('missing option --templates')
+    if not os.access(opts.output, os.W_OK):
+        raise ConfigException("you don't have permission to write to '%s'" % opts.output)
+
     install_config(opts.metadata, opts.templates, opts.output,
                    opts.validate)
     logger.info("success")
@@ -120,4 +128,4 @@ add_handler(logger, logging.StreamHandler(sys.stdout))
 if os.geteuid() == 0: add_handler(logger, logging.FileHandler('/var/log/os-config-applier.log'))
 
 if __name__ == '__main__':
-  main()
+  main(sys.argv)
