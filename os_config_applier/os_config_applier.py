@@ -9,6 +9,8 @@ from argparse import ArgumentParser
 from pystache.context import KeyNotFoundError
 from subprocess import Popen, PIPE
 
+TEMPLATES_DIR = os.environ.get('OS_CONFIG_APPLIER_TEMPLATES',
+                               '/opt/stack/os-config-applier/templates')
 
 def install_config(config_path, template_root, output_path, validate):
   config = read_config(config_path)
@@ -75,15 +77,17 @@ def strip_prefix(prefix, s):
 def parse_opts():
     parser = ArgumentParser()
     parser.add_argument('-t', '--templates', metavar='TEMPLATE_ROOT',
-                      help='path to template root directory')
+                        help="""path to template root directory (default:
+                        %(default)s)""",
+                        default=TEMPLATES_DIR)
     parser.add_argument('-o', '--output', metavar='OUT_DIR',
-                      help='root directory for output (default: /)',
-                      default='/')
+                        help='root directory for output (default: %(default)s)',
+                        default='/')
     parser.add_argument('-m', '--metadata', metavar='METADATA_FILE',
-                      help='path to metadata file',
-                      default='/var/lib/cloud/data/cfn-init-data')
+                        help='path to metadata file (default: %(default)s)',
+                        default='/var/lib/cloud/data/cfn-init-data')
     parser.add_argument('-v', '--validate', help='validate only. do not write files',
-                       default=False, action='store_true')
+                        default=False, action='store_true')
     opts = parser.parse_args()
 
     if opts.templates is None: raise ConfigException('missing option --templates')
