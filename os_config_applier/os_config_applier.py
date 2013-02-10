@@ -94,7 +94,7 @@ def parse_opts(argv):
 
     return opts
 
-def main(argv):
+def main(argv=sys.argv):
   opts = parse_opts(argv)
   if opts.print_templates:
       print(opts.templates)
