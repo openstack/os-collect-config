@@ -8,6 +8,8 @@ import tempfile
 from argparse import ArgumentParser
 from pystache.context import KeyNotFoundError
 from subprocess import Popen, PIPE
+from value_types import *
+from config_exception import *
 
 TEMPLATES_DIR = os.environ.get('OS_CONFIG_APPLIER_TEMPLATES',
                                '/opt/stack/os-config-applier/templates')
@@ -18,6 +20,18 @@ def install_config(config_path, template_root, output_path, validate, subhash=No
   if not validate:
     for path, contents in tree.items():
       write_file( os.path.join(output_path, strip_prefix('/', path)), contents)
+
+def print_key(config_path, key, type_name):
+  config = read_config(config_path)
+  keys = key.split('.')
+  for key in keys:
+    try:
+      config = config[key]
+    except KeyError:
+      raise KeyError('key %s does not exist in %s' % (key, config_path))
+  ensure_type(config, type_name)
+  print config
+
 
 def write_file(path, contents):
   logger.info("writing %s", path)
@@ -101,6 +115,10 @@ def parse_opts(argv):
                         help='Print templates root and exit.')
     parser.add_argument('-s', '--subhash',
                         help='use the sub-hash named by this key, instead of the full metadata hash')
+    parser.add_argument('--key', metavar='KEY', default=None,
+                        help='print the specified key and exit. (may be used with --type)')
+    parser.add_argument('--type', default='default',
+                        help='exit with error if the specified --key does not match type. Valid types are <int|default|raw>')
     opts = parser.parse_args(argv[1:])
 
     return opts
@@ -114,18 +132,19 @@ def main(argv=sys.argv):
   try:
     if opts.templates is None:
         raise ConfigException('missing option --templates')
-    if not os.access(opts.output, os.W_OK):
-        raise ConfigException("you don't have permission to write to '%s'" % opts.output)
 
-    install_config(opts.metadata, opts.templates, opts.output,
-                   opts.validate, opts.subhash)
-    logger.info("success")
+    if opts.key:
+      print_key(opts.metadata, opts.key, opts.type)
+    else:
+      if not os.access(opts.output, os.W_OK):
+        raise ConfigException("you don't have permission to write to '%s'" % opts.output)
+      install_config(opts.metadata, opts.templates, opts.output,
+                     opts.validate)
+      logger.info("success")
   except ConfigException as e:
     logger.error(e)
     sys.exit(1)
-
-class ConfigException(Exception):
-  pass
+  sys.exit(0)
 
 # logginig
 LOG_FORMAT = '[%(asctime)s] [%(levelname)s] %(message)s'
