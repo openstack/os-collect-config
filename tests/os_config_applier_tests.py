@@ -95,6 +95,12 @@ def test_read_config_bad_json():
 def test_read_config_no_file():
   read_config("/nosuchfile")
 
+def test_strip_hash():
+  h = {'a': {'b': {'x': 'y'} }, "c": [1, 2, 3] }
+  assert_equals( strip_hash(h, 'a.b'), {'x': 'y'})
+  assert_raises(ConfigException, strip_hash, h, 'a.nonexistent')
+  assert_raises(ConfigException, strip_hash, h, 'a.c')
+
 def test_print_templates():
     save_stdout = sys.stdout
     output = StringIO()

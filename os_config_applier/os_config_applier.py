@@ -12,8 +12,8 @@ from subprocess import Popen, PIPE
 TEMPLATES_DIR = os.environ.get('OS_CONFIG_APPLIER_TEMPLATES',
                                '/opt/stack/os-config-applier/templates')
 
-def install_config(config_path, template_root, output_path, validate):
-  config = read_config(config_path)
+def install_config(config_path, template_root, output_path, validate, subhash=None):
+  config = strip_hash( read_config(config_path), subhash)
   tree = build_tree( template_paths(template_root), config )
   if not validate:
     for path, contents in tree.items():
@@ -74,6 +74,15 @@ def template_paths(root):
 def strip_prefix(prefix, s):
   return s[len(prefix):] if s.startswith(prefix) else s
 
+def strip_hash(h, keys):
+  if not keys: return h
+  for k in keys.split('.'):
+    if k in h and isinstance(h[k], dict):
+      h = h[k]
+    else:
+      raise ConfigException("key '%s' does not correspond to a hash in the metadata file" % keys)
+  return h
+
 def parse_opts(argv):
     parser = ArgumentParser()
     parser.add_argument('-t', '--templates', metavar='TEMPLATE_ROOT',
@@ -90,6 +99,8 @@ def parse_opts(argv):
                         default=False, action='store_true')
     parser.add_argument('--print-templates', default=False, action='store_true',
                         help='Print templates root and exit.')
+    parser.add_argument('-s', '--subhash',
+                        help='use the sub-hash named by this key, instead of the full metadata hash')
     opts = parser.parse_args(argv[1:])
 
     return opts
@@ -107,7 +118,7 @@ def main(argv=sys.argv):
         raise ConfigException("you don't have permission to write to '%s'" % opts.output)
 
     install_config(opts.metadata, opts.templates, opts.output,
-                   opts.validate)
+                   opts.validate, opts.subhash)
     logger.info("success")
   except ConfigException as e:
     logger.error(e)
