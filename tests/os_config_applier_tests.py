@@ -1,8 +1,10 @@
 import json
 import os
+import subprocess
 import tempfile
 from StringIO import StringIO
 from nose.tools import *
+from os_config_applier.config_exception import *
 from os_config_applier.os_config_applier import *
 
 # example template tree
@@ -32,9 +34,11 @@ def setup():
 def teardown():
   pass
 
+def main_path():
+  return os.path.dirname(os.path.realpath(__file__)) + '/../os_config_applier/os_config_applier.py'
+
 def template(relpath):
   return os.path.join(TEMPLATES, relpath[1:])
-
 
 def test_install_config():
   t = tempfile.NamedTemporaryFile()
@@ -46,6 +50,28 @@ def test_install_config():
     full_path = os.path.join(tmpdir, path[1:])
     assert os.path.exists(full_path)
     assert_equal( open(full_path).read(), contents )
+
+def test_print_key():
+  t = tempfile.NamedTemporaryFile()
+  t.write(json.dumps(CONFIG))
+  t.flush()
+  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key', 'database.url', '--type', 'raw'])
+  assert_equals(CONFIG['database']['url'], out.rstrip())
+
+@raises(subprocess.CalledProcessError)
+def test_print_key_missing():
+  t = tempfile.NamedTemporaryFile()
+  t.write(json.dumps(CONFIG))
+  t.flush()
+  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key', 'does.not.exist'])
+
+@raises(subprocess.CalledProcessError)
+def test_print_key_wrong_type():
+  t = tempfile.NamedTemporaryFile()
+  t.write(json.dumps(CONFIG))
+  t.flush()
+  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key', 'x', '--type', 'int'])
+
 
 def test_build_tree():
   assert_equals( build_tree(template_paths(TEMPLATES), CONFIG), OUTPUT )
