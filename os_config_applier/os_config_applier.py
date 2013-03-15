@@ -10,6 +10,7 @@ from pystache.context import KeyNotFoundError
 from subprocess import Popen, PIPE
 from value_types import *
 from config_exception import *
+from tempfile import NamedTemporaryFile
 
 TEMPLATES_DIR = os.environ.get('OS_CONFIG_APPLIER_TEMPLATES',
                                '/opt/stack/os-config-applier/templates')
@@ -37,7 +38,9 @@ def write_file(path, contents):
   logger.info("writing %s", path)
   d = os.path.dirname(path)
   os.path.exists(d) or os.makedirs(d)
-  with open(path, 'w') as f: f.write(contents)
+  with NamedTemporaryFile(dir=d, delete=False) as newfile:
+    newfile.write(contents)
+    os.rename(newfile.name, path)
 
 # return a map of filenames->filecontents
 def build_tree(templates, config):
