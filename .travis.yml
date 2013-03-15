@@ -5,3 +5,5 @@ python:
 install: pip install --use-mirrors pystache nose argparse
 # # command to run tests, e.g. python setup.py test
 script:  nosetests
+notifications:
+  irc: "irc.freenode.org#tripleo"
