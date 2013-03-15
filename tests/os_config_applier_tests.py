@@ -22,6 +22,16 @@ CONFIG = {
   }
 }
 
+# config for example tree - with subhash
+CONFIG_SUBHASH = {
+  "OpenStack::Config": {
+    "x": "foo",
+    "database": {
+      "url": "sqlite:///blah"
+    }
+  }
+}
+
 # expected output for example tree
 OUTPUT = {
   "/etc/glance/script.conf": "foo\n",
@@ -46,6 +56,17 @@ def test_install_config():
   t.flush()
   tmpdir = tempfile.mkdtemp()
   install_config(t.name, TEMPLATES, tmpdir, False)
+  for path, contents in OUTPUT.items():
+    full_path = os.path.join(tmpdir, path[1:])
+    assert os.path.exists(full_path)
+    assert_equal( open(full_path).read(), contents )
+
+def test_install_config_subhash():
+  t = tempfile.NamedTemporaryFile()
+  t.write(json.dumps(CONFIG_SUBHASH))
+  t.flush()
+  tmpdir = tempfile.mkdtemp()
+  install_config(t.name, TEMPLATES, tmpdir, False, 'OpenStack::Config')
   for path, contents in OUTPUT.items():
     full_path = os.path.join(tmpdir, path[1:])
     assert os.path.exists(full_path)
