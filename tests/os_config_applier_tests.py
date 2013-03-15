@@ -55,7 +55,9 @@ def test_print_key():
   t = tempfile.NamedTemporaryFile()
   t.write(json.dumps(CONFIG))
   t.flush()
-  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key', 'database.url', '--type', 'raw'])
+  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key',
+                                 'database.url', '--type', 'raw'],
+                                stderr=subprocess.STDOUT)
   assert_equals(CONFIG['database']['url'], out.rstrip())
 
 @raises(subprocess.CalledProcessError)
@@ -63,14 +65,17 @@ def test_print_key_missing():
   t = tempfile.NamedTemporaryFile()
   t.write(json.dumps(CONFIG))
   t.flush()
-  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key', 'does.not.exist'])
+  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key',
+                                 'does.not.exist'], stderr=subprocess.STDOUT)
 
 @raises(subprocess.CalledProcessError)
 def test_print_key_wrong_type():
   t = tempfile.NamedTemporaryFile()
   t.write(json.dumps(CONFIG))
   t.flush()
-  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key', 'x', '--type', 'int'])
+  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key',
+                                 'x', '--type', 'int'],
+                                stderr=subprocess.STDOUT)
 
 
 def test_build_tree():
