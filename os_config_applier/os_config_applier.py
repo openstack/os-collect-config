@@ -139,7 +139,7 @@ def main(argv=sys.argv):
       if not os.access(opts.output, os.W_OK):
         raise ConfigException("you don't have permission to write to '%s'" % opts.output)
       install_config(opts.metadata, opts.templates, opts.output,
-                     opts.validate)
+                     opts.validate, opts.subhash)
       logger.info("success")
   except ConfigException as e:
     logger.error(e)
