@@ -1,157 +1,186 @@
 import json
 import os
+import sys
 import subprocess
 import tempfile
 from StringIO import StringIO
-from nose.tools import *
-from os_config_applier.config_exception import *
-from os_config_applier.os_config_applier import *
+from nose.tools import assert_equal, assert_equals, assert_raises, raises
+from os_config_applier.config_exception import ConfigException
+from os_config_applier.os_config_applier import (
+    main, TEMPLATES_DIR, strip_hash, read_config, template_paths,
+    render_executable, render_template, render_moustache, install_config,
+    build_tree)
 
 # example template tree
 TEMPLATES = os.path.join(os.path.dirname(__file__), 'templates')
 TEMPLATE_PATHS = [
     "/etc/glance/script.conf",
     "/etc/keystone/keystone.conf"
-  ]
+]
 
 # config for example tree
 CONFIG = {
-  "x": "foo",
-  "database": {
+    "x": "foo",
+    "database": {
     "url": "sqlite:///blah"
-  }
+    }
 }
 
 # config for example tree - with subhash
 CONFIG_SUBHASH = {
-  "OpenStack::Config": {
+    "OpenStack::Config": {
     "x": "foo",
     "database": {
-      "url": "sqlite:///blah"
+        "url": "sqlite:///blah"
     }
-  }
+    }
 }
 
 # expected output for example tree
 OUTPUT = {
-  "/etc/glance/script.conf": "foo\n",
-  "/etc/keystone/keystone.conf": "[foo]\ndatabase = sqlite:///blah\n"
+    "/etc/glance/script.conf": "foo\n",
+    "/etc/keystone/keystone.conf": "[foo]\ndatabase = sqlite:///blah\n"
 }
 
+
 def setup():
-  pass
+    pass
+
 
 def teardown():
-  pass
+    pass
+
 
 def main_path():
-  return os.path.dirname(os.path.realpath(__file__)) + '/../os_config_applier/os_config_applier.py'
+    return (
+        os.path.dirname(os.path.realpath(__file__)) +
+        '/../os_config_applier/os_config_applier.py')
+
 
 def template(relpath):
-  return os.path.join(TEMPLATES, relpath[1:])
+    return os.path.join(TEMPLATES, relpath[1:])
+
 
 def test_install_config():
-  t = tempfile.NamedTemporaryFile()
-  t.write(json.dumps(CONFIG))
-  t.flush()
-  tmpdir = tempfile.mkdtemp()
-  install_config(t.name, TEMPLATES, tmpdir, False)
-  for path, contents in OUTPUT.items():
-    full_path = os.path.join(tmpdir, path[1:])
-    assert os.path.exists(full_path)
-    assert_equal( open(full_path).read(), contents )
+    t = tempfile.NamedTemporaryFile()
+    t.write(json.dumps(CONFIG))
+    t.flush()
+    tmpdir = tempfile.mkdtemp()
+    install_config(t.name, TEMPLATES, tmpdir, False)
+    for path, contents in OUTPUT.items():
+        full_path = os.path.join(tmpdir, path[1:])
+        assert os.path.exists(full_path)
+        assert_equal(open(full_path).read(), contents)
+
 
 def test_install_config_subhash():
-  t = tempfile.NamedTemporaryFile()
-  t.write(json.dumps(CONFIG_SUBHASH))
-  t.flush()
-  tmpdir = tempfile.mkdtemp()
-  install_config(t.name, TEMPLATES, tmpdir, False, 'OpenStack::Config')
-  for path, contents in OUTPUT.items():
-    full_path = os.path.join(tmpdir, path[1:])
-    assert os.path.exists(full_path)
-    assert_equal( open(full_path).read(), contents )
+    t = tempfile.NamedTemporaryFile()
+    t.write(json.dumps(CONFIG_SUBHASH))
+    t.flush()
+    tmpdir = tempfile.mkdtemp()
+    install_config(t.name, TEMPLATES, tmpdir, False, 'OpenStack::Config')
+    for path, contents in OUTPUT.items():
+        full_path = os.path.join(tmpdir, path[1:])
+        assert os.path.exists(full_path)
+        assert_equal(open(full_path).read(), contents)
+
 
 def test_print_key():
-  t = tempfile.NamedTemporaryFile()
-  t.write(json.dumps(CONFIG))
-  t.flush()
-  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key',
-                                 'database.url', '--type', 'raw'],
-                                stderr=subprocess.STDOUT)
-  assert_equals(CONFIG['database']['url'], out.rstrip())
+    t = tempfile.NamedTemporaryFile()
+    t.write(json.dumps(CONFIG))
+    t.flush()
+    out = subprocess.check_output([main_path(), '--metadata', t.name, '--key',
+                                   'database.url', '--type', 'raw'],
+                                  stderr=subprocess.STDOUT)
+    assert_equals(CONFIG['database']['url'], out.rstrip())
+
 
 @raises(subprocess.CalledProcessError)
 def test_print_key_missing():
-  t = tempfile.NamedTemporaryFile()
-  t.write(json.dumps(CONFIG))
-  t.flush()
-  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key',
-                                 'does.not.exist'], stderr=subprocess.STDOUT)
+    t = tempfile.NamedTemporaryFile()
+    t.write(json.dumps(CONFIG))
+    t.flush()
+    subprocess.check_output([main_path(), '--metadata', t.name, '--key',
+                             'does.not.exist'], stderr=subprocess.STDOUT)
+
 
 @raises(subprocess.CalledProcessError)
 def test_print_key_wrong_type():
-  t = tempfile.NamedTemporaryFile()
-  t.write(json.dumps(CONFIG))
-  t.flush()
-  out = subprocess.check_output([main_path(), '--metadata', t.name, '--key',
-                                 'x', '--type', 'int'],
-                                stderr=subprocess.STDOUT)
+    t = tempfile.NamedTemporaryFile()
+    t.write(json.dumps(CONFIG))
+    t.flush()
+    subprocess.check_output([main_path(), '--metadata', t.name, '--key',
+                             'x', '--type', 'int'], stderr=subprocess.STDOUT)
 
 
 def test_build_tree():
-  assert_equals( build_tree(template_paths(TEMPLATES), CONFIG), OUTPUT )
+    assert_equals(build_tree(template_paths(TEMPLATES), CONFIG), OUTPUT)
+
 
 def test_render_template():
-  # execute executable files, moustache non-executables
-  assert render_template(template("/etc/glance/script.conf"), {"x": "abc"}) == "abc\n"
-  assert_raises(ConfigException, render_template, template("/etc/glance/script.conf"), {})
+    # execute executable files, moustache non-executables
+    assert render_template(template(
+        "/etc/glance/script.conf"), {"x": "abc"}) == "abc\n"
+    assert_raises(ConfigException, render_template, template(
+        "/etc/glance/script.conf"), {})
+
 
 def test_render_moustache():
-  assert_equals( render_moustache("ab{{x.a}}cd", {"x": {"a": "123"}}), "ab123cd" )
+    assert_equals(render_moustache("ab{{x.a}}cd", {
+                  "x": {"a": "123"}}), "ab123cd")
+
 
 @raises(Exception)
 def test_render_moustache_bad_key():
-  render_moustache("{{badkey}}", {})
+    render_moustache("{{badkey}}", {})
+
 
 def test_render_executable():
-  params = {"x": "foo"}
-  assert render_executable(template("/etc/glance/script.conf"), params) == "foo\n"
+    params = {"x": "foo"}
+    assert render_executable(template(
+        "/etc/glance/script.conf"), params) == "foo\n"
+
 
 @raises(ConfigException)
 def test_render_executable_failure():
-  render_executable(template("/etc/glance/script.conf"), {})
+    render_executable(template("/etc/glance/script.conf"), {})
+
 
 def test_template_paths():
-  expected = map(lambda p: (template(p), p), TEMPLATE_PATHS)
-  actual = template_paths(TEMPLATES)
-  expected.sort(key=lambda tup: tup[1])
-  actual.sort(key=lambda tup: tup[1])
-  assert_equals( actual , expected)
+    expected = map(lambda p: (template(p), p), TEMPLATE_PATHS)
+    actual = template_paths(TEMPLATES)
+    expected.sort(key=lambda tup: tup[1])
+    actual.sort(key=lambda tup: tup[1])
+    assert_equals(actual, expected)
+
 
 def test_read_config():
-  with tempfile.NamedTemporaryFile() as t:
-    d = {"a": {"b": ["c", "d"] } }
-    t.write(json.dumps(d))
-    t.flush()
-    assert_equals( read_config(t.name), d )
+    with tempfile.NamedTemporaryFile() as t:
+        d = {"a": {"b": ["c", "d"]}}
+        t.write(json.dumps(d))
+        t.flush()
+        assert_equals(read_config(t.name), d)
+
 
 @raises(ConfigException)
 def test_read_config_bad_json():
-  with tempfile.NamedTemporaryFile() as t:
-    t.write("{{{{")
-    t.flush()
-    read_config(t.name)
+    with tempfile.NamedTemporaryFile() as t:
+        t.write("{{{{")
+        t.flush()
+        read_config(t.name)
+
 
 @raises(Exception)
 def test_read_config_no_file():
-  read_config("/nosuchfile")
+    read_config("/nosuchfile")
+
 
 def test_strip_hash():
-  h = {'a': {'b': {'x': 'y'} }, "c": [1, 2, 3] }
-  assert_equals( strip_hash(h, 'a.b'), {'x': 'y'})
-  assert_raises(ConfigException, strip_hash, h, 'a.nonexistent')
-  assert_raises(ConfigException, strip_hash, h, 'a.c')
+    h = {'a': {'b': {'x': 'y'}}, "c": [1, 2, 3]}
+    assert_equals(strip_hash(h, 'a.b'), {'x': 'y'})
+    assert_raises(ConfigException, strip_hash, h, 'a.nonexistent')
+    assert_raises(ConfigException, strip_hash, h, 'a.c')
+
 
 def test_print_templates():
     save_stdout = sys.stdout

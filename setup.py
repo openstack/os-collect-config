@@ -16,7 +16,8 @@ config = {
     'install_requires': ['pystache', 'anyjson'],
 #    'long_description': open('README.md').read(),
     'entry_points': {
-      'console_scripts': ['os-config-applier = os_config_applier.os_config_applier:main']
+        'console_scripts': [
+            'os-config-applier = os_config_applier.os_config_applier:main']
     }
 }
 
