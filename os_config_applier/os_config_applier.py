@@ -43,6 +43,7 @@ def write_file(path, contents):
     os.path.exists(d) or os.makedirs(d)
     with NamedTemporaryFile(dir=d, delete=False) as newfile:
         newfile.write(contents)
+        os.chmod(newfile.name, 0644)
         os.rename(newfile.name, path)
 
 # return a map of filenames->filecontents
