@@ -2,7 +2,6 @@
 import json
 import logging
 import os
-import pystache
 import sys
 from argparse import ArgumentParser
 from pystache.context import KeyNotFoundError
@@ -10,6 +9,7 @@ from subprocess import Popen, PIPE
 from tempfile import NamedTemporaryFile
 from value_types import ensure_type
 from config_exception import ConfigException
+from renderers import JsonRenderer
 
 TEMPLATES_DIR = os.environ.get('OS_CONFIG_APPLIER_TEMPLATES',
                                '/opt/stack/os-config-applier/templates')
@@ -76,7 +76,7 @@ def is_executable(path):
 
 
 def render_moustache(text, config):
-    r = pystache.Renderer(missing_tags='strict')
+    r = JsonRenderer(missing_tags='strict')
     return r.render(text, config)
 
 
