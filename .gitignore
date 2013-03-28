@@ -23,6 +23,7 @@ pip-log.txt
 
 # Unit test / coverage reports
 .coverage
+.testrepository
 .tox
 nosetests.xml
 
@@ -33,3 +34,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# OpenStack Generated Files
+AUTHORS
+ChangeLog
