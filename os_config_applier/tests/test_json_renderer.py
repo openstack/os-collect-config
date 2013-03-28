@@ -18,7 +18,7 @@ import json
 import testtools
 from testtools import content
 
-from os_config_applier.renderers import JsonRenderer
+from os_config_applier import renderers
 
 TEST_JSON = '{"a":{"b":[1,2,3,"foo"],"c": "the quick brown fox"}}'
 
@@ -27,7 +27,7 @@ class JsonRendererTestCase(testtools.TestCase):
 
     def test_json_renderer(self):
         context = json.loads(TEST_JSON)
-        x = JsonRenderer()
+        x = renderers.JsonRenderer()
         result = x.render('{{a.b}}', context)
         self.addDetail('result', content.text_content(result))
         result_structure = json.loads(result)

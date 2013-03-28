@@ -15,20 +15,23 @@
 
 import testtools
 
-from os_config_applier.config_exception import ConfigException
-from os_config_applier.value_types import ensure_type
+from os_config_applier import config_exception
+from os_config_applier import value_types
 
 
 class ValueTypeTestCase(testtools.TestCase):
 
     def test_unknown_type(self):
-        self.assertRaises(ValueError, ensure_type, "foo", "badtype")
+        self.assertRaises(
+            ValueError, value_types.ensure_type, "foo", "badtype")
 
     def test_int(self):
-        self.assertEqual("123", ensure_type("123", "int"))
+        self.assertEqual("123", value_types.ensure_type("123", "int"))
 
     def test_default(self):
-        self.assertEqual("foobar", ensure_type("foobar", "default"))
+        self.assertEqual("foobar",
+                         value_types.ensure_type("foobar", "default"))
 
     def test_default_bad(self):
-        self.assertRaises(ConfigException, ensure_type, "foo\nbar", "default")
+        self.assertRaises(config_exception.ConfigException,
+                          value_types.ensure_type, "foo\nbar", "default")

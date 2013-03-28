@@ -15,10 +15,10 @@
 
 import json
 
-from pystache import Renderer
+import pystache
 
 
-class JsonRenderer(Renderer):
+class JsonRenderer(pystache.Renderer):
     def __init__(self,
                  file_encoding=None,
                  string_encoding=None,

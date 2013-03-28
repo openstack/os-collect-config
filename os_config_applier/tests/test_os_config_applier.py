@@ -19,10 +19,10 @@ import subprocess
 import tempfile
 
 import fixtures
-from pystache.context import KeyNotFoundError
+from pystache import context
 import testtools
 
-from os_config_applier.config_exception import ConfigException
+from os_config_applier import config_exception
 from os_config_applier import os_config_applier as oca
 
 # example template tree
@@ -90,13 +90,13 @@ class TestRunOSConfigApplier(testtools.TestCase):
 
     def test_print_key_missing(self):
         self.assertRaises(
-            subprocess.CalledProcessError,
+            subprocess.CalledProcessError, oca.main,
             ['os-config-applier.py', '--metadata', self.path, '--key',
              'does.not.exist'])
 
     def test_print_key_wrong_type(self):
         self.assertRaises(
-            subprocess.CalledProcessError,
+            subprocess.CalledProcessError, oca.main,
             ['os-config-applier.py', '--metadata', self.path, '--key',
              'x', '--type', 'int'])
 
@@ -110,6 +110,7 @@ class OSConfigApplierTestCase(testtools.TestCase):
 
     def setUp(self):
         super(OSConfigApplierTestCase, self).setUp()
+        self.useFixture(fixtures.FakeLogger('os-config-applier'))
         self.useFixture(fixtures.NestedTempfile())
 
     def test_install_config(self):
@@ -145,15 +146,16 @@ class OSConfigApplierTestCase(testtools.TestCase):
         # execute executable files, moustache non-executables
         self.assertEqual(oca.render_template(template(
             "/etc/glance/script.conf"), {"x": "abc"}), "abc\n")
-        self.assertRaises(ConfigException, oca.render_template, template(
-            "/etc/glance/script.conf"), {})
+        self.assertRaises(
+            config_exception.ConfigException, oca.render_template, template(
+                "/etc/glance/script.conf"), {})
 
     def test_render_moustache(self):
         self.assertEqual(oca.render_moustache("ab{{x.a}}cd", {
                          "x": {"a": "123"}}), "ab123cd")
 
     def test_render_moustache_bad_key(self):
-        self.assertRaises(KeyNotFoundError,
+        self.assertRaises(context.KeyNotFoundError,
                           oca.render_moustache, "{{badkey}}", {})
 
     def test_render_executable(self):
@@ -163,7 +165,7 @@ class OSConfigApplierTestCase(testtools.TestCase):
 
     def test_render_executable_failure(self):
         self.assertRaises(
-            ConfigException,
+            config_exception.ConfigException,
             oca.render_executable, template("/etc/glance/script.conf"), {})
 
     def test_template_paths(self):
@@ -184,13 +186,17 @@ class OSConfigApplierTestCase(testtools.TestCase):
         with tempfile.NamedTemporaryFile() as t:
             t.write("{{{{")
             t.flush()
-            self.assertRaises(ConfigException, oca.read_config, t.name)
+            self.assertRaises(config_exception.ConfigException,
+                              oca.read_config, t.name)
 
     def test_read_config_no_file(self):
-        self.assertRaises(ConfigException, oca.read_config, "/nosuchfile")
+        self.assertRaises(config_exception.ConfigException,
+                          oca.read_config, "/nosuchfile")
 
     def test_strip_hash(self):
         h = {'a': {'b': {'x': 'y'}}, "c": [1, 2, 3]}
         self.assertEqual(oca.strip_hash(h, 'a.b'), {'x': 'y'})
-        self.assertRaises(ConfigException, oca.strip_hash, h, 'a.nonexistent')
-        self.assertRaises(ConfigException, oca.strip_hash, h, 'a.c')
+        self.assertRaises(config_exception.ConfigException,
+                          oca.strip_hash, h, 'a.nonexistent')
+        self.assertRaises(config_exception.ConfigException,
+                          oca.strip_hash, h, 'a.c')

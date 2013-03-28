@@ -13,15 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import ArgumentParser
+import argparse
 import json
 import logging
 import os
 import subprocess
 import sys
-from tempfile import NamedTemporaryFile
+import tempfile
 
-from pystache.context import KeyNotFoundError
+from pystache import context
 
 from config_exception import ConfigException
 from renderers import JsonRenderer
@@ -57,7 +57,7 @@ def write_file(path, contents):
     logger.info("writing %s", path)
     d = os.path.dirname(path)
     os.path.exists(d) or os.makedirs(d)
-    with NamedTemporaryFile(dir=d, delete=False) as newfile:
+    with tempfile.NamedTemporaryFile(dir=d, delete=False) as newfile:
         newfile.write(contents)
         os.chmod(newfile.name, 0644)
         os.rename(newfile.name, path)
@@ -78,7 +78,7 @@ def render_template(template, config):
     else:
         try:
             return render_moustache(open(template).read(), config)
-        except KeyNotFoundError as e:
+        except context.KeyNotFoundError as e:
             raise ConfigException(
                 "key '%s' from template '%s' does not exist in metadata file."
                 % (e.key, template))
@@ -113,7 +113,7 @@ def render_executable(path, config):
 def read_config(path):
     try:
         return json.loads(open(path).read())
-    except:
+    except Exception:
         raise ConfigException("invalid metadata file: %s" % path)
 
 
@@ -145,7 +145,7 @@ def strip_hash(h, keys):
 
 
 def parse_opts(argv):
-    parser = ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--templates', metavar='TEMPLATE_ROOT',
                         help="""path to template root directory (default:
                         %(default)s)""",
