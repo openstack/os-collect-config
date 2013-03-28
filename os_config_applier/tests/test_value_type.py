@@ -13,6 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import testtools
 
-class ConfigException(Exception):
-    pass
+from os_config_applier.config_exception import ConfigException
+from os_config_applier.value_types import ensure_type
+
+
+class ValueTypeTestCase(testtools.TestCase):
+
+    def test_unknown_type(self):
+        self.assertRaises(ValueError, ensure_type, "foo", "badtype")
+
+    def test_int(self):
+        self.assertEqual("123", ensure_type("123", "int"))
+
+    def test_default(self):
+        self.assertEqual("foobar", ensure_type("foobar", "default"))
+
+    def test_default_bad(self):
+        self.assertRaises(ConfigException, ensure_type, "foo\nbar", "default")

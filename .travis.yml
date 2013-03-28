@@ -2,8 +2,8 @@ language: python
 python:
   - "2.7"
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: pip install --use-mirrors pystache nose argparse flake8
+install: pip install --use-mirrors -r requirements.txt -r test-requirements.txt
 # # command to run tests, e.g. python setup.py test
-script:  ./run_tests.sh
+script:  python setup.py testr
 notifications:
   irc: "irc.freenode.org#tripleo"

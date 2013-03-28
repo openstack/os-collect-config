@@ -1,2 +1,4 @@
 anyjson
+d2to1
+pbr
 pystache
