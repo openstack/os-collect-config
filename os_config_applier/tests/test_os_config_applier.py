@@ -15,7 +15,6 @@
 
 import json
 import os
-import subprocess
 import tempfile
 
 import fixtures
@@ -76,34 +75,39 @@ class TestRunOSConfigApplier(testtools.TestCase):
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', self.stdout))
         stderr = self.useFixture(fixtures.StringStream('stderr')).stream
         self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
+        self.logger = self.useFixture(
+            fixtures.FakeLogger(name="os-config-applier"))
         fd, self.path = tempfile.mkstemp()
         with os.fdopen(fd, 'w') as t:
             t.write(json.dumps(CONFIG))
             t.flush()
 
     def test_print_key(self):
-        oca.main(['os-config-applier.py', '--metadata', self.path, '--key',
-                  'database.url', '--type', 'raw'])
+        self.assertEqual(0, oca.main(
+            ['os-config-applier.py', '--metadata', self.path, '--key',
+             'database.url', '--type', 'raw']))
         self.stdout.seek(0)
         self.assertEqual(CONFIG['database']['url'],
                          self.stdout.read().strip())
+        self.assertEqual('', self.logger.output)
 
     def test_print_key_missing(self):
-        self.assertRaises(
-            subprocess.CalledProcessError, oca.main,
+        self.assertEqual(1, oca.main(
             ['os-config-applier.py', '--metadata', self.path, '--key',
-             'does.not.exist'])
+             'does.not.exist']))
+        self.assertIn('does not exist', self.logger.output)
 
     def test_print_key_wrong_type(self):
-        self.assertRaises(
-            subprocess.CalledProcessError, oca.main,
+        self.assertEqual(1, oca.main(
             ['os-config-applier.py', '--metadata', self.path, '--key',
-             'x', '--type', 'int'])
+             'x', '--type', 'int']))
+        self.assertIn('cannot interpret value', self.logger.output)
 
     def test_print_templates(self):
         oca.main(['os-config-applier', '--print-templates'])
         self.stdout.seek(0)
         self.assertEqual(self.stdout.read().strip(), oca.TEMPLATES_DIR)
+        self.assertEqual('', self.logger.output)
 
 
 class OSConfigApplierTestCase(testtools.TestCase):

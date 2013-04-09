@@ -48,7 +48,8 @@ def print_key(config_path, key, type_name):
         try:
             config = config[key]
         except KeyError:
-            raise KeyError('key %s does not exist in %s' % (key, config_path))
+            raise ConfigException(
+                'key %s does not exist in %s' % (key, config_path))
     ensure_type(config, type_name)
     print config
 
@@ -197,10 +198,11 @@ def main(argv=sys.argv):
             logger.info("success")
     except ConfigException as e:
         logger.error(e)
-        sys.exit(1)
-    sys.exit(0)
+        return 1
+    return 0
 
-# logginig
+
+# logging
 LOG_FORMAT = '[%(asctime)s] [%(levelname)s] %(message)s'
 DATE_FORMAT = '%Y/%m/%d %I:%M:%S %p'
 
@@ -210,6 +212,6 @@ def add_handler(logger, handler):
     logger.addHandler(handler)
 logger = logging.getLogger('os-config-applier')
 logger.setLevel(logging.INFO)
-add_handler(logger, logging.StreamHandler(sys.stdout))
+add_handler(logger, logging.StreamHandler())
 if os.geteuid() == 0:
     add_handler(logger, logging.FileHandler('/var/log/os-config-applier.log'))
