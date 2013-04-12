@@ -123,7 +123,7 @@ class OSConfigApplierTestCase(testtools.TestCase):
             t.write(json.dumps(CONFIG))
             t.flush()
         tmpdir = tempfile.mkdtemp()
-        oca.install_config(path, TEMPLATES, tmpdir, False)
+        oca.install_config([path], TEMPLATES, tmpdir, False)
         for path, contents in OUTPUT.items():
             full_path = os.path.join(tmpdir, path[1:])
             assert os.path.exists(full_path)
@@ -136,7 +136,7 @@ class OSConfigApplierTestCase(testtools.TestCase):
             t.flush()
         tmpdir = tempfile.mkdtemp()
         oca.install_config(
-            tpath, TEMPLATES, tmpdir, False, 'OpenStack::Config')
+            [tpath], TEMPLATES, tmpdir, False, 'OpenStack::Config')
         for path, contents in OUTPUT.items():
             full_path = os.path.join(tmpdir, path[1:])
             assert os.path.exists(full_path)
@@ -184,18 +184,60 @@ class OSConfigApplierTestCase(testtools.TestCase):
             d = {"a": {"b": ["c", "d"]}}
             t.write(json.dumps(d))
             t.flush()
-            self.assertEqual(oca.read_config(t.name), d)
+            self.assertEqual(oca.read_config([t.name]), d)
 
     def test_read_config_bad_json(self):
         with tempfile.NamedTemporaryFile() as t:
             t.write("{{{{")
             t.flush()
             self.assertRaises(config_exception.ConfigException,
-                              oca.read_config, t.name)
+                              oca.read_config, [t.name])
 
     def test_read_config_no_file(self):
         self.assertRaises(config_exception.ConfigException,
-                          oca.read_config, "/nosuchfile")
+                          oca.read_config, ["/nosuchfile"])
+
+    def test_read_config_multi(self):
+        with tempfile.NamedTemporaryFile(mode='wb') as t1:
+            with tempfile.NamedTemporaryFile(mode='wb') as t2:
+                d1 = {"a": {"b": [1, 2]}}
+                d2 = {"x": {"y": [8, 9]}}
+                t1.write(json.dumps(d1))
+                t1.flush()
+                t2.write(json.dumps(d2))
+                t2.flush()
+                result = oca.read_config([t1.name, t2.name])
+                self.assertEqual(d1, result)
+
+    def test_read_config_multi_missing1(self):
+        with tempfile.NamedTemporaryFile(mode='wb') as t1:
+            pass
+        with tempfile.NamedTemporaryFile(mode='wb') as t2:
+            d2 = {"x": {"y": [8, 9]}}
+            t2.write(json.dumps(d2))
+            t2.flush()
+            result = oca.read_config([t1.name, t2.name])
+            self.assertEqual(d2, result)
+
+    def test_read_config_multi_missing_bad1(self):
+        with tempfile.NamedTemporaryFile(mode='wb') as t1:
+            t1.write('{{{')
+            t1.flush()
+            with tempfile.NamedTemporaryFile(mode='wb') as t2:
+                pass
+                d2 = {"x": {"y": [8, 9]}}
+                t2.write(json.dumps(d2))
+                t2.flush()
+                self.assertRaises(config_exception.ConfigException,
+                                  oca.read_config, [t1.name, t2.name])
+
+    def test_read_config_multi_missing_all(self):
+        with tempfile.NamedTemporaryFile(mode='wb') as t1:
+            pass
+        with tempfile.NamedTemporaryFile(mode='wb') as t2:
+            pass
+        self.assertRaises(config_exception.ConfigException,
+                          oca.read_config, [t1.name, t2.name])
 
     def test_strip_hash(self):
         h = {'a': {'b': {'x': 'y'}}, "c": [1, 2, 3]}

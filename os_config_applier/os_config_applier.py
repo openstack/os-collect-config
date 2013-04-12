@@ -111,11 +111,14 @@ def render_executable(path, config):
     return stdout
 
 
-def read_config(path):
-    try:
-        return json.loads(open(path).read())
-    except Exception:
-        raise ConfigException("invalid metadata file: %s" % path)
+def read_config(paths):
+    for path in paths:
+        if os.path.exists(path):
+            try:
+                return json.loads(open(path).read())
+            except Exception:
+                raise ConfigException("invalid metadata file: %s" % path)
+    raise ConfigException("No metadata found.")
 
 
 def template_paths(root):
@@ -154,9 +157,12 @@ def parse_opts(argv):
     parser.add_argument('-o', '--output', metavar='OUT_DIR',
                         help='root directory for output (default:%(default)s)',
                         default='/')
-    parser.add_argument('-m', '--metadata', metavar='METADATA_FILE',
-                        help='path to metadata file (default: %(default)s)',
-                        default='/var/lib/cloud/data/cfn-init-data')
+    parser.add_argument('-m', '--metadata', metavar='METADATA_FILE', nargs='*',
+                        help='path to metadata files. First one that exists'
+                        ' will be used. (default: %(default)s)',
+                        default=['/var/cache/heat-cfntools/last_metadata',
+                                 '/var/lib/heat-cfntools/cfn-init-data',
+                                 '/var/lib/cloud/data/cfn-init-data'])
     parser.add_argument(
         '-v', '--validate', help='validate only. do not write files',
         default=False, action='store_true')
