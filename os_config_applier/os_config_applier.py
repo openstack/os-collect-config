@@ -93,7 +93,7 @@ def is_executable(path):
 
 
 def render_moustache(text, config):
-    r = JsonRenderer(missing_tags='strict')
+    r = JsonRenderer(missing_tags='ignore')
     return r.render(text, config)
 
 

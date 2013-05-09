@@ -18,7 +18,6 @@ import os
 import tempfile
 
 import fixtures
-from pystache import context
 import testtools
 
 from os_config_applier import config_exception
@@ -159,8 +158,7 @@ class OSConfigApplierTestCase(testtools.TestCase):
                          "x": {"a": "123"}}), "ab123cd")
 
     def test_render_moustache_bad_key(self):
-        self.assertRaises(context.KeyNotFoundError,
-                          oca.render_moustache, "{{badkey}}", {})
+        self.assertEqual(oca.render_moustache("{{badkey}}", {}), u'')
 
     def test_render_executable(self):
         params = {"x": "foo"}
