@@ -41,15 +41,19 @@ def install_config(config_path, template_root,
                 output_path, strip_prefix('/', path)), contents)
 
 
-def print_key(config_path, key, type_name):
+def print_key(config_path, key, type_name, default=None):
     config = read_config(config_path)
     keys = key.split('.')
     for key in keys:
         try:
             config = config[key]
         except KeyError:
-            raise ConfigException(
-                'key %s does not exist in %s' % (key, config_path))
+            if default is not None:
+                print default
+                return
+            else:
+                raise ConfigException(
+                    'key %s does not exist in %s' % (key, config_path))
     ensure_type(config, type_name)
     print config
 
@@ -174,10 +178,16 @@ def parse_opts(argv):
                              ' instead of the full metadata hash')
     parser.add_argument('--key', metavar='KEY', default=None,
                         help='print the specified key and exit.'
-                             ' (may be used with --type)')
+                             ' (may be used with --type and --key-default)')
     parser.add_argument('--type', default='default',
                         help='exit with error if the specified --key does not'
                              ' match type. Valid types are <int|default|raw>')
+    parser.add_argument('--key-default',
+                        help='This option only affects running with --key.'
+                             ' Print this if key is not found. This value is'
+                             ' not subject to type restrictions. If --key is'
+                             ' specified and no default is specified, program'
+                             ' exits with an error on missing key.')
     opts = parser.parse_args(argv[1:])
 
     return opts
@@ -194,7 +204,10 @@ def main(argv=sys.argv):
             raise ConfigException('missing option --templates')
 
         if opts.key:
-            print_key(opts.metadata, opts.key, opts.type)
+            print_key(opts.metadata,
+                      opts.key,
+                      opts.type,
+                      opts.key_default)
         else:
             install_config(opts.metadata, opts.templates, opts.output,
                            opts.validate, opts.subhash)

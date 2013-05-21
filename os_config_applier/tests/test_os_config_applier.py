@@ -96,6 +96,14 @@ class TestRunOSConfigApplier(testtools.TestCase):
              'does.not.exist']))
         self.assertIn('does not exist', self.logger.output)
 
+    def test_print_key_missing_default(self):
+        self.assertEqual(0, oca.main(
+            ['os-config-applier.py', '--metadata', self.path, '--key',
+             'does.not.exist', '--key-default', '']))
+        self.stdout.seek(0)
+        self.assertEqual('', self.stdout.read().strip())
+        self.assertEqual('', self.logger.output)
+
     def test_print_key_wrong_type(self):
         self.assertEqual(1, oca.main(
             ['os-config-applier.py', '--metadata', self.path, '--key',
