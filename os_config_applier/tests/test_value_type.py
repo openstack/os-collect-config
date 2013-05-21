@@ -35,3 +35,11 @@ class ValueTypeTestCase(testtools.TestCase):
     def test_default_bad(self):
         self.assertRaises(config_exception.ConfigException,
                           value_types.ensure_type, "foo\nbar", "default")
+
+    def test_default_empty(self):
+        self.assertEqual('',
+                         value_types.ensure_type('', 'default'))
+
+    def test_raw_empty(self):
+        self.assertEqual('',
+                         value_types.ensure_type('', 'raw'))

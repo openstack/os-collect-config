@@ -19,8 +19,8 @@ from config_exception import ConfigException
 
 TYPES = {
     "int": "^[0-9]+$",
-    "default": "^[A-Za-z0-9]+$",
-    "raw": "."
+    "default": "^[A-Za-z0-9]*$",
+    "raw": ""
 }
 
 
