@@ -43,3 +43,25 @@ class ValueTypeTestCase(testtools.TestCase):
     def test_raw_empty(self):
         self.assertEqual('',
                          value_types.ensure_type('', 'raw'))
+
+    def test_net_address_ipv4(self):
+        self.assertEqual('192.0.2.1', value_types.ensure_type('192.0.2.1',
+                                                              'netaddress'))
+
+    def test_net_address_cidr(self):
+        self.assertEqual('192.0.2.0/24',
+                         value_types.ensure_type('192.0.2.0/24', 'netaddress'))
+
+    def test_ent_address_ipv6(self):
+        self.assertEqual('::', value_types.ensure_type('::', 'netaddress'))
+        self.assertEqual('2001:db8::2:1', value_types.ensure_type(
+            '2001:db8::2:1', 'netaddress'))
+
+    def test_net_address_dns(self):
+        self.assertEqual('host.0domain-name.test',
+                         value_types.ensure_type('host.0domain-name.test',
+                                                 'netaddress'))
+
+    def test_net_address_bad(self):
+        self.assertRaises(config_exception.ConfigException,
+                          value_types.ensure_type, "192.0.2.1;DROP TABLE foo")
