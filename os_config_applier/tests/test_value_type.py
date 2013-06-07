@@ -31,6 +31,8 @@ class ValueTypeTestCase(testtools.TestCase):
     def test_default(self):
         self.assertEqual("foobar",
                          value_types.ensure_type("foobar", "default"))
+        self.assertEqual("x86_64",
+                         value_types.ensure_type("x86_64", "default"))
 
     def test_default_bad(self):
         self.assertRaises(config_exception.ConfigException,
