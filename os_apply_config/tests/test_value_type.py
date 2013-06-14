@@ -15,8 +15,8 @@
 
 import testtools
 
-from os_config_applier import config_exception
-from os_config_applier import value_types
+from os_apply_config import config_exception
+from os_apply_config import value_types
 
 
 class ValueTypeTestCase(testtools.TestCase):

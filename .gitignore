@@ -38,3 +38,7 @@ nosetests.xml
 # OpenStack Generated Files
 AUTHORS
 ChangeLog
+
+# Editors
+*~
+*.swp

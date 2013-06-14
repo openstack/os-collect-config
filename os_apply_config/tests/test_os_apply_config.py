@@ -20,8 +20,8 @@ import tempfile
 import fixtures
 import testtools
 
-from os_config_applier import config_exception
-from os_config_applier import os_config_applier as oca
+from os_apply_config import config_exception
+from os_apply_config import os_apply_config as oca
 
 # example template tree
 TEMPLATES = os.path.join(os.path.dirname(__file__), 'templates')
@@ -58,7 +58,7 @@ OUTPUT = {
 def main_path():
     return (
         os.path.dirname(os.path.realpath(__file__)) +
-        '/../os_config_applier.py')
+        '/../os_apply_config.py')
 
 
 def template(relpath):
@@ -75,7 +75,7 @@ class TestRunOSConfigApplier(testtools.TestCase):
         stderr = self.useFixture(fixtures.StringStream('stderr')).stream
         self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
         self.logger = self.useFixture(
-            fixtures.FakeLogger(name="os-config-applier"))
+            fixtures.FakeLogger(name="os-apply-config"))
         fd, self.path = tempfile.mkstemp()
         with os.fdopen(fd, 'w') as t:
             t.write(json.dumps(CONFIG))
@@ -83,7 +83,7 @@ class TestRunOSConfigApplier(testtools.TestCase):
 
     def test_print_key(self):
         self.assertEqual(0, oca.main(
-            ['os-config-applier.py', '--metadata', self.path, '--key',
+            ['os-apply-config.py', '--metadata', self.path, '--key',
              'database.url', '--type', 'raw']))
         self.stdout.seek(0)
         self.assertEqual(CONFIG['database']['url'],
@@ -92,13 +92,13 @@ class TestRunOSConfigApplier(testtools.TestCase):
 
     def test_print_key_missing(self):
         self.assertEqual(1, oca.main(
-            ['os-config-applier.py', '--metadata', self.path, '--key',
+            ['os-apply-config.py', '--metadata', self.path, '--key',
              'does.not.exist']))
         self.assertIn('does not exist', self.logger.output)
 
     def test_print_key_missing_default(self):
         self.assertEqual(0, oca.main(
-            ['os-config-applier.py', '--metadata', self.path, '--key',
+            ['os-apply-config.py', '--metadata', self.path, '--key',
              'does.not.exist', '--key-default', '']))
         self.stdout.seek(0)
         self.assertEqual('', self.stdout.read().strip())
@@ -106,12 +106,12 @@ class TestRunOSConfigApplier(testtools.TestCase):
 
     def test_print_key_wrong_type(self):
         self.assertEqual(1, oca.main(
-            ['os-config-applier.py', '--metadata', self.path, '--key',
+            ['os-apply-config.py', '--metadata', self.path, '--key',
              'x', '--type', 'int']))
         self.assertIn('cannot interpret value', self.logger.output)
 
     def test_print_templates(self):
-        oca.main(['os-config-applier', '--print-templates'])
+        oca.main(['os-apply-config', '--print-templates'])
         self.stdout.seek(0)
         self.assertEqual(self.stdout.read().strip(), oca.TEMPLATES_DIR)
         self.assertEqual('', self.logger.output)
@@ -121,7 +121,7 @@ class OSConfigApplierTestCase(testtools.TestCase):
 
     def setUp(self):
         super(OSConfigApplierTestCase, self).setUp()
-        self.useFixture(fixtures.FakeLogger('os-config-applier'))
+        self.useFixture(fixtures.FakeLogger('os-apply-config'))
         self.useFixture(fixtures.NestedTempfile())
 
     def test_install_config(self):

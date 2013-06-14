@@ -18,7 +18,7 @@ import json
 import testtools
 from testtools import content
 
-from os_config_applier import renderers
+from os_apply_config import renderers
 
 TEST_JSON = '{"a":{"b":[1,2,3,"foo"],"c": "the quick brown fox"}}'
 
