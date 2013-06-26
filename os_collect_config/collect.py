@@ -16,6 +16,8 @@
 import httplib2
 import json
 
+from os_collect_config import exc
+
 
 EC2_METADATA_URL = 'http://169.254.169.254/latest/meta-data'
 
@@ -24,7 +26,10 @@ h = httplib2.Http()
 
 def _fetch_metadata(sub_url):
     global h
-    (resp, content) = h.request('%s%s' % (EC2_METADATA_URL, sub_url))
+    try:
+        (resp, content) = h.request('%s%s' % (EC2_METADATA_URL, sub_url))
+    except httplib2.socks.HTTPError:
+        raise exc.Ec2MetadataNotAvailable
     if resp.status != 200:
         raise Exception('Error fetching %s' % sub_url)
     if sub_url[-1] == '/':

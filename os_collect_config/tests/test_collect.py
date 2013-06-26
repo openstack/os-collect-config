@@ -14,12 +14,14 @@
 # limitations under the License.
 
 import fixtures
+import httplib2
 import testtools
 from testtools import matchers
 import urlparse
 import uuid
 
 from os_collect_config import collect
+from os_collect_config import exc
 
 
 META_DATA = {'local-ipv4':     '192.0.2.1',
@@ -67,6 +69,11 @@ class FakeHttp(object):
         return (FakeResponse(), META_DATA[path])
 
 
+class FakeFailHttp(object):
+    def request(self, url):
+        raise httplib2.socks.HTTPError(403, 'Forbidden')
+
+
 class TestCollect(testtools.TestCase):
     def test_collect_ec2(self):
         self.useFixture(
@@ -84,3 +91,10 @@ class TestCollect(testtools.TestCase):
         self.assertEquals(
             {'0': {'openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC'}},
             ec2['public-keys'])
+
+    def test_collect_ec2_fail(self):
+        self.useFixture(
+            fixtures.MonkeyPatch(
+                'os_collect_config.collect.h', FakeFailHttp()))
+        self.assertRaises(exc.Ec2MetadataNotAvailable,
+                          collect.collect_ec2)
