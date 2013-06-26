@@ -4,7 +4,7 @@ from testtools import matchers
 import urlparse
 import uuid
 
-from os_apply_config import collect
+from os_collect_config import collect
 
 
 META_DATA = {'local-ipv4':     '192.0.2.1',
