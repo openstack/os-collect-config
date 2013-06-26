@@ -19,25 +19,33 @@ import json
 
 EC2_METADATA_URL = 'http://169.254.169.254/latest/meta-data'
 
+h = httplib2.Http()
+
 
 def _fetch_metadata(sub_url):
-    h = httplib2.Http()
+    global h
     (resp, content) = h.request('%s%s' % (EC2_METADATA_URL, sub_url))
     if resp.status != 200:
         raise Exception('Error fetching %s' % sub_url)
+    if sub_url[-1] == '/':
+        new_content = {}
+        for subkey in content.split("\n"):
+            if '=' in subkey:
+                subkey = subkey[:subkey.index('=')] + '/'
+            sub_sub_url = sub_url + subkey
+            if subkey[-1] == '/':
+                subkey = subkey[:-1]
+            new_content[subkey] = _fetch_metadata(sub_sub_url)
+        content = new_content
     return content
 
 
 def collect_ec2():
-    ec2_metadata = {}
-    root_list = _fetch_metadata('/')
-    for item in root_list.split("\n"):
-        ec2_metadata[item] = _fetch_metadata('/%s' % item)
-    return ec2_metadata
+    return _fetch_metadata('/')
 
 
 def __main__():
-    print json.dumps(collect_ec2())
+    print json.dumps(collect_ec2(), indent=1)
 
 
 if __name__ == '__main__':

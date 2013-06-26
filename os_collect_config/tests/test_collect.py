@@ -23,16 +23,28 @@ from os_collect_config import collect
 
 
 META_DATA = {'local-ipv4':     '192.0.2.1',
-             'reservation-id': uuid.uuid1(),
+             'reservation-id': str(uuid.uuid1()),
              'local-hostname': 'foo',
              'ami-launch-index': '0',
              'public-hostname': 'foo',
              'hostname': 'foo',
-             'ami-id': uuid.uuid1(),
+             'ami-id': str(uuid.uuid1()),
              'instance-action': 'none',
              'public-ipv4': '192.0.2.1',
              'instance-type': 'flavor.small',
-             'instance-id': uuid.uuid1()}
+             'placement/': 'availability-zone',
+             'placement/availability-zone': 'foo-az',
+             'mpi/': 'foo-keypair',
+             'mpi/foo-keypair': '192.0.2.1 slots=1',
+             'block-device-mapping/': "ami\nroot\nephemeral0",
+             'block-device-mapping/ami': 'vda',
+             'block-device-mapping/root': '/dev/vda',
+             'block-device-mapping/ephemeral0': '/dev/vdb',
+             'public-keys/': '0=foo-keypair',
+             'public-keys/0': 'openssh-key',
+             'public-keys/0/': 'openssh-key',
+             'public-keys/0/openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC',
+             'instance-id': str(uuid.uuid1())}
 
 
 class FakeResponse(dict):
@@ -45,7 +57,10 @@ class FakeHttp(object):
         url = urlparse.urlparse(url)
 
         if url.path == '/latest/meta-data/':
-            return (FakeResponse(), "\n".join(META_DATA.keys()))
+            # Remove keys which have anything after /
+            ks = [x for x in META_DATA.keys() if ('/' not in x
+                                                  or not len(x.split('/')[1]))]
+            return (FakeResponse(), "\n".join(ks))
 
         path = url.path
         path = path.replace('/latest/meta-data/', '')
@@ -54,9 +69,18 @@ class FakeHttp(object):
 
 class TestCollect(testtools.TestCase):
     def test_collect_ec2(self):
-        self.useFixture(fixtures.MonkeyPatch('httplib2.Http', FakeHttp))
+        self.useFixture(
+            fixtures.MonkeyPatch('os_collect_config.collect.h', FakeHttp()))
         ec2 = collect.collect_ec2()
         self.assertThat(ec2, matchers.IsInstance(dict))
-        for md_key, md_value in iter(META_DATA.items()):
-            self.assertIn(md_key, ec2)
-            self.assertEquals(ec2[md_key], META_DATA[md_key])
+
+        for k in ('public-ipv4', 'instance-id', 'hostname'):
+            self.assertIn(k, ec2)
+            self.assertEquals(ec2[k], META_DATA[k])
+
+        self.assertEquals(ec2['block-device-mapping']['ami'], 'vda')
+
+        # SSH keys are special cases
+        self.assertEquals(
+            {'0': {'openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC'}},
+            ec2['public-keys'])
