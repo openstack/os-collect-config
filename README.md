@@ -1,106 +1,47 @@
 os-apply-config
 ===============
 
-Apply configuration from cloud metadata (JSON).
+Collect configuration from cloud metadata sources.
 
 
 # What does it do?
 
-It turns a cloud-metadata file like this:
-```javascript
-{"keystone": {"database": {"host": "127.0.0.1", "user": "keystone", "password": "foobar"}}}
-```
-into service config files like this:
-```
-[sql]
-connection = mysql://keystone:foobar@127.0.0.1/keystone
-...other settings...
-```
+It collects data from defined configuration sources and runs a defined hook whenever the metadata has changed.
 
 # Usage
 
-Just pass it the path to a directory tree of templates:
-```
-sudo os-apply-config -t /home/me/my_templates
-```
+You must define what sources to collect configuration data from in /etc/os-collect-config/sources.ini
 
-# Templates
+The format of this file is
+```ini
+[default]
+command=os-refresh-config
 
-The template directory structure should mimic a root filesystem, and contain templates for only those files you want configured.
+[ec2]
+type=ec2-metadata
 
-e.g.
-```
-~/my_templates$ tree
-.
-└── etc
-    ├── keystone
-    │   └── keystone.conf
-    └── mysql
-        └── mysql.conf
+[cfn]
+type=cloudformation
 ```
 
-An example tree [can be found here](https://github.com/tripleo/openstack_config_templates).
-
-If a template is executable it will be treated as an **executable template**.
-Otherwise, it will be treated as a **mustache template**.
-
-## Mustache Templates
-
-If you don't need any logic, just some string substitution, use a mustache template.
-
-Metadata settings are accessed with dot ('.') notation:
+These sources will be processed in order, and whenever any of them changes, default.command will be run. OS_CONFIG_FILES will be set in the environment as a colon (":") separated list of the current copy of each metadata source. So in the example above, "os-refresh-config" would be executed with something like this in OS_CONFIG_FILES:
 
 ```
-[sql]
-connection = mysql://{{keystone.database.user}}:{{keystone.database.password}@{{keystone.database.host}}/keystone
+/var/run/os-collect-config/ec2.json:/var/run/os-collect-config/cfn.json
 ```
 
-## Executable Templates
+The sources can also be crafted using runtime arguments:
 
-Configuration requiring logic is expressed in executable templates.
-
-An executable template is a script which accepts configuration as a JSON string on standard in, and writes a config file to standard out.
-
-The script should exit non-zero if it encounters a problem, so that os-apply-config knows what's up.
-
-The output of the script will be written to the path corresponding to the executable template's path in the template tree.
-
-
-```ruby
-#!/usr/bin/env ruby
-require 'json'
-params = JSON.parse STDIN.read
-puts "connection = mysql://#{c['keystone']['database']['user']}:#{c['keystone']['database']['password']}@#{c['keystone']['database']['host']}/keystone"
 ```
-
-You could even embed mustache in a heredoc, and use that:
-```ruby
-#!/usr/bin/env ruby
-require 'json'
-require 'mustache'
-params = JSON.parse STDIN.read
-
-template = <<-eos
-[sql]
-connection = mysql://{{keystone.database.user}}:{{keystone.database.password}}@{{keystone.database.host}}/keystone
-
-[log]
-...
-eos
-
-# tweak params here...
-
-puts Mustache.render(template, params)
+os-collect-config --command=os-refresh-config --source ec2:type=ec2-metadata --source cfn:type=cloudformation
 ```
 
 # Quick Start
-```bash
-# install it
-sudo pip install -U git+git://github.com/stackforge/os-config-applier.git
 
-# grab example templates
-git clone git://github.com/stackforge/triple-image-elements /tmp/config
+sudo pip install -U git+git://github.com/stackforge/os-collect-config.git
 
-# run it
-os-apply-config -t /tmp/config/elements/nova/os-config-applier/ -m /tmp/config/elements/boot-stack/config.json -o /tmp/config_output
+# run it on an OpenStack instance with access to ec2 metadata:
+os-collect-config --print --source "ec2:ec2-metadata"
 ```
+
+That should print out a json representation of the entire ec2 metadata tree.

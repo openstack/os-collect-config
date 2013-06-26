@@ -3,4 +3,3 @@ argparse
 d2to1
 httplib2
 pbr
-pystache

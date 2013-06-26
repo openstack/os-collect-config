@@ -20,8 +20,10 @@ def collect_ec2():
         ec2_metadata[item] = _fetch_metadata('/%s' % item)
     return ec2_metadata
 
+
 def __main__():
     print json.dumps(collect_ec2())
+
 
 if __name__ == '__main__':
     __main__()
