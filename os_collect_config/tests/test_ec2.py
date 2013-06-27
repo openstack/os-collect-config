@@ -102,7 +102,7 @@ class TestCollect(testtools.TestCase):
     def test_collect_ec2_fail(self):
         self.useFixture(
             fixtures.MonkeyPatch(
-                'os_collect_config.collect.h', FakeFailHttp()))
+                'os_collect_config.ec2.h', FakeFailHttp()))
         collect.setup_conf()
         self.assertRaises(exc.Ec2MetadataNotAvailable, ec2.collect)
         self.assertIn('Forbidden', self.log.output)
