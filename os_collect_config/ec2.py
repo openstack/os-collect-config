@@ -20,6 +20,7 @@ from openstack.common import log
 from os_collect_config import exc
 
 EC2_METADATA_URL = 'http://169.254.169.254/latest/meta-data'
+CONF = cfg.CONF
 
 h = httplib2.Http()
 
@@ -50,6 +51,6 @@ def _fetch_metadata(fetch_url):
     return content
 
 
-def collect(conf):
-    root_url = '%s/' % (conf.ec2.metadata_url)
+def collect():
+    root_url = '%s/' % (CONF.ec2.metadata_url)
     return _fetch_metadata(root_url)

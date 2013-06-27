@@ -24,29 +24,29 @@ opts = [
                short='c',
                help='Command to run on metadata changes.'),
     cfg.StrOpt('cachedir',
-               short='d',
                default='/var/run/os-collect-config',
                help='Directory in which to store local cache of metadata'),
 ]
+
+CONF = cfg.CONF
 
 
 def setup_conf():
     ec2_group = cfg.OptGroup(name='ec2',
                              title='EC2 Metadata options')
 
-    conf = cfg.ConfigOpts()
-    conf.register_group(ec2_group)
-    conf.register_opts(ec2.opts, group='ec2')
+    CONF.register_group(ec2_group)
+    CONF.register_opts(ec2.opts, group='ec2')
 
-    conf.register_cli_opts(opts)
-    return conf
+    CONF.register_cli_opts(opts)
 
 
 def __main__():
-    conf = setup_conf()
-    conf(prog="os-collect-config")
+    setup_conf()
+    CONF(prog="os-collect-config")
     log.setup("os-collect-config")
-    print json.dumps(ec2.collect(conf), indent=1)
+    print json.dumps(ec2.collect(), indent=1)
+
 
 if __name__ == '__main__':
     __main__()

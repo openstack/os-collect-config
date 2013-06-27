@@ -83,8 +83,8 @@ class TestCollect(testtools.TestCase):
     def test_collect_ec2(self):
         self.useFixture(
             fixtures.MonkeyPatch('os_collect_config.ec2.h', FakeHttp()))
-        conf = collect.setup_conf()
-        ec2_md = ec2.collect(conf)
+        collect.setup_conf()
+        ec2_md = ec2.collect()
         self.assertThat(ec2_md, matchers.IsInstance(dict))
 
         for k in ('public-ipv4', 'instance-id', 'hostname'):
@@ -103,7 +103,6 @@ class TestCollect(testtools.TestCase):
         self.useFixture(
             fixtures.MonkeyPatch(
                 'os_collect_config.collect.h', FakeFailHttp()))
-        conf = collect.setup_conf()
-        self.assertRaises(exc.Ec2MetadataNotAvailable,
-                          ec2.collect, conf)
+        collect.setup_conf()
+        self.assertRaises(exc.Ec2MetadataNotAvailable, ec2.collect)
         self.assertIn('Forbidden', self.log.output)

@@ -17,7 +17,6 @@ import fixtures
 import json
 from oslo.config import cfg
 import testtools
-from testtools import matchers
 
 from os_collect_config import collect
 from os_collect_config.tests import test_ec2
@@ -38,6 +37,5 @@ class TestCollect(testtools.TestCase):
         self.assertIn("reservation-id", result)
 
     def test_setup_conf(self):
-        conf = collect.setup_conf()
-        self.assertThat(conf, matchers.IsInstance(cfg.ConfigOpts))
-        self.assertEquals('/var/run/os-collect-config', conf.cachedir)
+        collect.setup_conf()
+        self.assertEquals('/var/run/os-collect-config', cfg.CONF.cachedir)
