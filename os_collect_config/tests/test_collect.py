@@ -75,6 +75,10 @@ class FakeFailHttp(object):
 
 
 class TestCollect(testtools.TestCase):
+    def setUp(self):
+        super(TestCollect, self).setUp()
+        self.log = self.useFixture(fixtures.FakeLogger())
+
     def test_collect_ec2(self):
         self.useFixture(
             fixtures.MonkeyPatch('os_collect_config.collect.h', FakeHttp()))
@@ -91,6 +95,7 @@ class TestCollect(testtools.TestCase):
         self.assertEquals(
             {'0': {'openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC'}},
             ec2['public-keys'])
+        self.assertEquals('', self.log.output)
 
     def test_collect_ec2_fail(self):
         self.useFixture(
@@ -98,3 +103,4 @@ class TestCollect(testtools.TestCase):
                 'os_collect_config.collect.h', FakeFailHttp()))
         self.assertRaises(exc.Ec2MetadataNotAvailable,
                           collect.collect_ec2)
+        self.assertIn('Forbidden', self.log.output)
