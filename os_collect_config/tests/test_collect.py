@@ -15,6 +15,7 @@
 
 import fixtures
 import json
+import os
 from oslo.config import cfg
 import testtools
 
@@ -23,19 +24,54 @@ from os_collect_config.tests import test_ec2
 
 
 class TestCollect(testtools.TestCase):
-    def test_main(self):
+    def setUp(self):
+        super(TestCollect, self).setUp()
         self.useFixture(
             fixtures.MonkeyPatch(
                 'os_collect_config.ec2.h', test_ec2.FakeHttp()))
-        out = self.useFixture(fixtures.ByteStream('stdout'))
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', out.stream))
-        self.useFixture(
-            fixtures.MonkeyPatch('sys.argv', ['os-collect-config']))
-        collect.__main__()
-        result = json.loads(out.stream.getvalue())
-        self.assertIn("local-ipv4", result)
-        self.assertIn("reservation-id", result)
 
+    def tearDown(self):
+        super(TestCollect, self).tearDown()
+        cfg.CONF.reset()
+
+    def test_main(self):
+        expected_cmd = self.getUniqueString()
+        cache_dir = self.useFixture(fixtures.TempDir())
+        fake_args = [
+            'os-collect-config',
+            '--command',
+            expected_cmd,
+            '--cachedir',
+            cache_dir.path,
+            '--config-file',
+            '/dev/null',
+        ]
+        self.useFixture(
+            fixtures.MonkeyPatch('sys.argv', fake_args))
+        self.called_fake_call = False
+
+        def fake_call(args, env):
+            self.called_fake_call = True
+            self.assertEquals(expected_cmd, args)
+            self.assertIn('OS_CONFIG_FILES', env)
+            self.assertTrue(len(env.keys()) > 0)
+            keys_found = set()
+            for path in env['OS_CONFIG_FILES'].split(':'):
+                self.assertTrue(os.path.exists(path))
+                with open(path) as cfg_file:
+                    contents = json.loads(cfg_file.read())
+                    keys_found.update(set(contents.keys()))
+            self.assertIn("local-ipv4", keys_found)
+            self.assertIn("reservation-id", keys_found)
+
+        self.useFixture(fixtures.MonkeyPatch('subprocess.call', fake_call))
+
+        collect.__main__()
+
+        self.assertTrue(self.called_fake_call)
+
+
+class TestConf(testtools.TestCase):
     def test_setup_conf(self):
         collect.setup_conf()
         self.assertEquals('/var/run/os-collect-config', cfg.CONF.cachedir)

@@ -25,7 +25,7 @@ CONF = cfg.CONF
 h = httplib2.Http()
 
 opts = [
-    cfg.StrOpt('metadata_url',
+    cfg.StrOpt('metadata-url',
                default=EC2_METADATA_URL,
                help='URL to query for EC2 Metadata')
 ]

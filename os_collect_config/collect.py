@@ -14,6 +14,10 @@
 # limitations under the License.
 
 import json
+import os
+import shutil
+import subprocess
+import tempfile
 
 from openstack.common import log
 from os_collect_config import ec2
@@ -36,16 +40,51 @@ def setup_conf():
                              title='EC2 Metadata options')
 
     CONF.register_group(ec2_group)
-    CONF.register_opts(ec2.opts, group='ec2')
+    CONF.register_cli_opts(ec2.opts, group='ec2')
 
     CONF.register_cli_opts(opts)
+
+
+def cache(name, content):
+    if not os.path.exists(CONF.cachedir):
+        os.mkdir(CONF.cachedir)
+
+    changed = False
+    dest_path = os.path.join(CONF.cachedir, '%s.json' % name)
+    orig_path = '%s.orig' % dest_path
+
+    with tempfile.NamedTemporaryFile(dir=CONF.cachedir, delete=False) as new:
+        new.write(json.dumps(content, indent=1))
+        new.flush()
+        if not os.path.exists(orig_path):
+            shutil.copy(new.name, orig_path)
+            changed = True
+        os.rename(new.name, dest_path)
+
+    if not changed:
+        with open(dest_path) as now:
+            with open(orig_path) as then:
+                for now_line in now:
+                    then_line = then.next()
+                    if then_line != now_line:
+                        changed = True
+                        break
+    return (changed, dest_path)
 
 
 def __main__():
     setup_conf()
     CONF(prog="os-collect-config")
     log.setup("os-collect-config")
-    print json.dumps(ec2.collect(), indent=1)
+    ec2_content = ec2.collect()
+
+    if CONF.command:
+        (changed, ec2_path) = cache('ec2', ec2_content)
+        if changed:
+            paths = [ec2_path]
+            env = dict(os.environ)
+            env["OS_CONFIG_FILES"] = ':'.join(paths)
+            subprocess.call(CONF.command, env=env)
 
 
 if __name__ == '__main__':
