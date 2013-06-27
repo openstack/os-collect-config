@@ -15,6 +15,7 @@
 
 import fixtures
 import httplib2
+import json
 import testtools
 from testtools import matchers
 import urlparse
@@ -82,7 +83,7 @@ class TestCollect(testtools.TestCase):
     def test_collect_ec2(self):
         self.useFixture(
             fixtures.MonkeyPatch('os_collect_config.collect.h', FakeHttp()))
-        ec2 = collect.collect_ec2()
+        ec2 = collect.collect_ec2(collect.EC2_METADATA_URL)
         self.assertThat(ec2, matchers.IsInstance(dict))
 
         for k in ('public-ipv4', 'instance-id', 'hostname'):
@@ -102,5 +103,17 @@ class TestCollect(testtools.TestCase):
             fixtures.MonkeyPatch(
                 'os_collect_config.collect.h', FakeFailHttp()))
         self.assertRaises(exc.Ec2MetadataNotAvailable,
-                          collect.collect_ec2)
+                          collect.collect_ec2, collect.EC2_METADATA_URL)
         self.assertIn('Forbidden', self.log.output)
+
+
+class TestMain(testtools.TestCase):
+    def test_main(self):
+        self.useFixture(
+            fixtures.MonkeyPatch('os_collect_config.collect.h', FakeHttp()))
+        out = self.useFixture(fixtures.ByteStream('stdout'))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', out.stream))
+        collect.__main__()
+        result = json.loads(out.stream.getvalue())
+        self.assertIn("local-ipv4", result)
+        self.assertIn("reservation-id", result)
