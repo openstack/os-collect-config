@@ -38,3 +38,4 @@ class TestCollect(testtools.TestCase):
     def test_setup_conf(self):
         conf = collect.setup_conf()
         self.assertThat(conf, matchers.IsInstance(cfg.ConfigOpts))
+        self.assertEquals('/var/run/os-collect-config', conf.cachedir)

@@ -20,6 +20,17 @@ from os_collect_config import ec2
 from oslo.config import cfg
 
 
+opts = [
+    cfg.StrOpt('command',
+               short='c',
+               help='Command to run on metadata changes.'),
+    cfg.StrOpt('cachedir',
+               short='d',
+               default='/var/run/os-collect-config',
+               help='Directory in which to store local cache of metadata')
+]
+
+
 def setup_conf():
     ec2_group = cfg.OptGroup(name='ec2',
                              title='EC2 Metadata options')
@@ -27,6 +38,8 @@ def setup_conf():
     conf = cfg.ConfigOpts()
     conf.register_group(ec2_group)
     conf.register_opts(ec2.opts, group='ec2')
+
+    conf.register_opts(opts)
     return conf
 
 
@@ -34,3 +47,6 @@ def __main__():
     conf = setup_conf()
     log.setup("os-collect-config")
     print json.dumps(ec2.collect(conf), indent=1)
+
+if __name__ == '__main__':
+    __main__()

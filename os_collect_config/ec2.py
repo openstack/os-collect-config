@@ -35,7 +35,7 @@ def _fetch_metadata(fetch_url):
     try:
         (resp, content) = h.request(fetch_url)
     except httplib2.socks.HTTPError as e:
-        log.getLogger().warn(e)
+        log.getLogger(__name__).warn(e)
         raise exc.Ec2MetadataNotAvailable
     if fetch_url[-1] == '/':
         new_content = {}
