@@ -13,61 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import httplib2
 import json
 
 from openstack.common import log
-from os_collect_config import exc
+from os_collect_config import ec2
 from oslo.config import cfg
 
 
-EC2_METADATA_URL = 'http://169.254.169.254/latest/meta-data'
-
-h = httplib2.Http()
-
-ec2_opts = [
-    cfg.StrOpt('metadata_url',
-               default=EC2_METADATA_URL,
-               help='URL to query for EC2 Metadata')
-]
-
-
-def _fetch_metadata(fetch_url):
-    global h
-    try:
-        (resp, content) = h.request(fetch_url)
-    except httplib2.socks.HTTPError as e:
-        log.getLogger().warn(e)
-        raise exc.Ec2MetadataNotAvailable
-    if fetch_url[-1] == '/':
-        new_content = {}
-        for subkey in content.split("\n"):
-            if '=' in subkey:
-                subkey = subkey[:subkey.index('=')] + '/'
-            sub_fetch_url = fetch_url + subkey
-            if subkey[-1] == '/':
-                subkey = subkey[:-1]
-            new_content[subkey] = _fetch_metadata(sub_fetch_url)
-        content = new_content
-    return content
-
-
-def collect_ec2(ec2_url):
-    root_url = '%s/' % (ec2_url)
-    return _fetch_metadata(root_url)
-
-
-def __main__():
+def setup_conf():
     ec2_group = cfg.OptGroup(name='ec2',
                              title='EC2 Metadata options')
 
     conf = cfg.ConfigOpts()
     conf.register_group(ec2_group)
-    conf.register_opts(ec2_opts, group='ec2')
+    conf.register_opts(ec2.opts, group='ec2')
+    return conf
 
+
+def __main__():
+    conf = setup_conf()
     log.setup("os-collect-config")
-    print json.dumps(collect_ec2(conf.ec2.metadata_url), indent=1)
-
-
-if __name__ == '__main__':
-    __main__()
+    print json.dumps(ec2.collect(conf), indent=1)

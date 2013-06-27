@@ -14,106 +14,27 @@
 # limitations under the License.
 
 import fixtures
-import httplib2
 import json
+from oslo.config import cfg
 import testtools
 from testtools import matchers
-import urlparse
-import uuid
 
 from os_collect_config import collect
-from os_collect_config import exc
-
-
-META_DATA = {'local-ipv4':     '192.0.2.1',
-             'reservation-id': str(uuid.uuid1()),
-             'local-hostname': 'foo',
-             'ami-launch-index': '0',
-             'public-hostname': 'foo',
-             'hostname': 'foo',
-             'ami-id': str(uuid.uuid1()),
-             'instance-action': 'none',
-             'public-ipv4': '192.0.2.1',
-             'instance-type': 'flavor.small',
-             'placement/': 'availability-zone',
-             'placement/availability-zone': 'foo-az',
-             'mpi/': 'foo-keypair',
-             'mpi/foo-keypair': '192.0.2.1 slots=1',
-             'block-device-mapping/': "ami\nroot\nephemeral0",
-             'block-device-mapping/ami': 'vda',
-             'block-device-mapping/root': '/dev/vda',
-             'block-device-mapping/ephemeral0': '/dev/vdb',
-             'public-keys/': '0=foo-keypair',
-             'public-keys/0': 'openssh-key',
-             'public-keys/0/': 'openssh-key',
-             'public-keys/0/openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC',
-             'instance-id': str(uuid.uuid1())}
-
-
-class FakeResponse(dict):
-    status = 200
-
-
-class FakeHttp(object):
-
-    def request(self, url):
-        url = urlparse.urlparse(url)
-
-        if url.path == '/latest/meta-data/':
-            # Remove keys which have anything after /
-            ks = [x for x in META_DATA.keys() if ('/' not in x
-                                                  or not len(x.split('/')[1]))]
-            return (FakeResponse(), "\n".join(ks))
-
-        path = url.path
-        path = path.replace('/latest/meta-data/', '')
-        return (FakeResponse(), META_DATA[path])
-
-
-class FakeFailHttp(object):
-    def request(self, url):
-        raise httplib2.socks.HTTPError(403, 'Forbidden')
+from os_collect_config.tests import test_ec2
 
 
 class TestCollect(testtools.TestCase):
-    def setUp(self):
-        super(TestCollect, self).setUp()
-        self.log = self.useFixture(fixtures.FakeLogger())
-
-    def test_collect_ec2(self):
-        self.useFixture(
-            fixtures.MonkeyPatch('os_collect_config.collect.h', FakeHttp()))
-        ec2 = collect.collect_ec2(collect.EC2_METADATA_URL)
-        self.assertThat(ec2, matchers.IsInstance(dict))
-
-        for k in ('public-ipv4', 'instance-id', 'hostname'):
-            self.assertIn(k, ec2)
-            self.assertEquals(ec2[k], META_DATA[k])
-
-        self.assertEquals(ec2['block-device-mapping']['ami'], 'vda')
-
-        # SSH keys are special cases
-        self.assertEquals(
-            {'0': {'openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC'}},
-            ec2['public-keys'])
-        self.assertEquals('', self.log.output)
-
-    def test_collect_ec2_fail(self):
-        self.useFixture(
-            fixtures.MonkeyPatch(
-                'os_collect_config.collect.h', FakeFailHttp()))
-        self.assertRaises(exc.Ec2MetadataNotAvailable,
-                          collect.collect_ec2, collect.EC2_METADATA_URL)
-        self.assertIn('Forbidden', self.log.output)
-
-
-class TestMain(testtools.TestCase):
     def test_main(self):
         self.useFixture(
-            fixtures.MonkeyPatch('os_collect_config.collect.h', FakeHttp()))
+            fixtures.MonkeyPatch(
+                'os_collect_config.ec2.h', test_ec2.FakeHttp()))
         out = self.useFixture(fixtures.ByteStream('stdout'))
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', out.stream))
         collect.__main__()
         result = json.loads(out.stream.getvalue())
         self.assertIn("local-ipv4", result)
         self.assertIn("reservation-id", result)
+
+    def test_setup_conf(self):
+        conf = collect.setup_conf()
+        self.assertThat(conf, matchers.IsInstance(cfg.ConfigOpts))
