@@ -16,6 +16,7 @@
 import httplib2
 import json
 
+from openstack.common import log
 from os_collect_config import exc
 
 
@@ -28,10 +29,9 @@ def _fetch_metadata(sub_url):
     global h
     try:
         (resp, content) = h.request('%s%s' % (EC2_METADATA_URL, sub_url))
-    except httplib2.socks.HTTPError:
+    except httplib2.socks.HTTPError as e:
+        log.getLogger().warn(e)
         raise exc.Ec2MetadataNotAvailable
-    if resp.status != 200:
-        raise Exception('Error fetching %s' % sub_url)
     if sub_url[-1] == '/':
         new_content = {}
         for subkey in content.split("\n"):
@@ -50,6 +50,7 @@ def collect_ec2():
 
 
 def __main__():
+    log.setup("os-collect-config")
     print json.dumps(collect_ec2(), indent=1)
 
 
