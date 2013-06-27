@@ -30,6 +30,8 @@ class TestCollect(testtools.TestCase):
                 'os_collect_config.ec2.h', test_ec2.FakeHttp()))
         out = self.useFixture(fixtures.ByteStream('stdout'))
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', out.stream))
+        self.useFixture(
+            fixtures.MonkeyPatch('sys.argv', ['os-collect-config']))
         collect.__main__()
         result = json.loads(out.stream.getvalue())
         self.assertIn("local-ipv4", result)

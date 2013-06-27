@@ -19,7 +19,6 @@ from openstack.common import log
 from os_collect_config import ec2
 from oslo.config import cfg
 
-
 opts = [
     cfg.StrOpt('command',
                short='c',
@@ -27,7 +26,7 @@ opts = [
     cfg.StrOpt('cachedir',
                short='d',
                default='/var/run/os-collect-config',
-               help='Directory in which to store local cache of metadata')
+               help='Directory in which to store local cache of metadata'),
 ]
 
 
@@ -39,12 +38,13 @@ def setup_conf():
     conf.register_group(ec2_group)
     conf.register_opts(ec2.opts, group='ec2')
 
-    conf.register_opts(opts)
+    conf.register_cli_opts(opts)
     return conf
 
 
 def __main__():
     conf = setup_conf()
+    conf(prog="os-collect-config")
     log.setup("os-collect-config")
     print json.dumps(ec2.collect(conf), indent=1)
 
