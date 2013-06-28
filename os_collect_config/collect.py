@@ -63,7 +63,6 @@ def cache(name, content):
         new.flush()
         if not os.path.exists(orig_path):
             shutil.copy(new.name, orig_path)
-            shutil.copy(new.name, last_path)
             changed = True
         os.rename(new.name, dest_path)
 
