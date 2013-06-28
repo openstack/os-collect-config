@@ -36,13 +36,18 @@ class TestCache(testtools.TestCase):
         cache_dir = os.path.join(cache_root.path, 'cache')
         collect.setup_conf()
         cfg.CONF(['--cachedir', cache_dir])
+
+        # Never seen, so changed is expected.
         (changed, path) = cache.store('foo', {'a': 1})
         self.assertTrue(changed)
         self.assertTrue(os.path.exists(cache_dir))
         self.assertTrue(os.path.exists(path))
         orig_path = '%s.orig' % path
         self.assertTrue(os.path.exists(orig_path))
+        last_path = '%s.last' % path
+        self.assertFalse(os.path.exists(last_path))
 
+        # .orig exists now but not .last so this will shortcut to changed
         (changed, path) = cache.store('foo', {'a': 2})
         self.assertTrue(changed)
         orig_path = '%s.orig' % path
@@ -50,6 +55,17 @@ class TestCache(testtools.TestCase):
             with open(orig_path) as then:
                 self.assertNotEquals(now.read(), then.read())
 
+        # Saves the current copy as .last
         cache.commit('foo')
+        last_path = '%s.last' % path
+        self.assertTrue(os.path.exists(last_path))
+
+        # We committed this already, so we should have no changes
         (changed, path) = cache.store('foo', {'a': 2})
         self.assertFalse(changed)
+
+        cache.commit('foo')
+        # Fully exercising the line-by-line matching now that a .last exists
+        (changed, path) = cache.store('foo', {'a': 3})
+        self.assertTrue(changed)
+        self.assertTrue(os.path.exists(path))
