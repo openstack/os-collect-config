@@ -101,6 +101,9 @@ def __main__():
             logger.info("Executing %s" % CONF.command)
             subprocess.call(CONF.command, env=env, shell=True)
             commit_cache('ec2')
+    else:
+        content = {'ec2': ec2_content}
+        print json.dumps(content, indent=1)
 
 
 if __name__ == '__main__':

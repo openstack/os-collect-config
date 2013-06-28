@@ -18,6 +18,7 @@ import json
 import os
 from oslo.config import cfg
 import testtools
+from testtools import matchers
 
 from os_collect_config import collect
 from os_collect_config.tests import test_ec2
@@ -69,6 +70,22 @@ class TestCollect(testtools.TestCase):
         collect.__main__()
 
         self.assertTrue(self.called_fake_call)
+
+    def test_main_no_command(self):
+        fake_args = [
+            'os-collect-config',
+            '--config-file',
+            '/dev/null',
+        ]
+        self.useFixture(
+            fixtures.MonkeyPatch('sys.argv', fake_args))
+        output = self.useFixture(fixtures.ByteStream('stdout'))
+        self.useFixture(
+            fixtures.MonkeyPatch('sys.stdout', output.stream))
+        collect.__main__()
+        out_struct = json.loads(output.stream.getvalue())
+        self.assertThat(out_struct, matchers.IsInstance(dict))
+        self.assertIn('ec2', out_struct)
 
 
 class TestConf(testtools.TestCase):
