@@ -33,6 +33,7 @@ opts = [
 ]
 
 CONF = cfg.CONF
+logger = log.getLogger('os-collect-config')
 
 
 def setup_conf():
@@ -97,7 +98,8 @@ def __main__():
             paths = [ec2_path]
             env = dict(os.environ)
             env["OS_CONFIG_FILES"] = ':'.join(paths)
-            subprocess.call(CONF.command, env=env)
+            logger.info("Executing %s" % CONF.command)
+            subprocess.call(CONF.command, env=env, shell=True)
             commit_cache('ec2')
 
 
