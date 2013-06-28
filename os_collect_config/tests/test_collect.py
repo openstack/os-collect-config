@@ -50,7 +50,7 @@ class TestCollect(testtools.TestCase):
             fixtures.MonkeyPatch('sys.argv', fake_args))
         self.called_fake_call = False
 
-        def fake_call(args, env):
+        def fake_call(args, env, shell):
             self.called_fake_call = True
             self.assertEquals(expected_cmd, args)
             self.assertIn('OS_CONFIG_FILES', env)
