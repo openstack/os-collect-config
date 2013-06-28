@@ -13,16 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import httplib2
 from oslo.config import cfg
+import requests
 
 from openstack.common import log
 from os_collect_config import exc
 
 EC2_METADATA_URL = 'http://169.254.169.254/latest/meta-data'
 CONF = cfg.CONF
-
-h = httplib2.Http()
 
 opts = [
     cfg.StrOpt('metadata-url',
@@ -34,10 +32,14 @@ opts = [
 def _fetch_metadata(fetch_url):
     global h
     try:
-        (resp, content) = h.request(fetch_url)
-    except httplib2.socks.HTTPError as e:
+        r = requests.get(fetch_url)
+        r.raise_for_status()
+    except (requests.HTTPError,
+            requests.ConnectionError,
+            requests.Timeout) as e:
         log.getLogger(__name__).warn(e)
         raise exc.Ec2MetadataNotAvailable
+    content = r.text
     if fetch_url[-1] == '/':
         new_content = {}
         for subkey in content.split("\n"):

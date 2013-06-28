@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import fixtures
-import httplib2
+import requests
 import testtools
 from testtools import matchers
 import urlparse
@@ -51,28 +51,29 @@ META_DATA = {'local-ipv4':     '192.0.2.1',
 
 
 class FakeResponse(dict):
-    status = 200
+    def __init__(self, text):
+        self.text = text
+
+    def raise_for_status(self):
+        pass
 
 
-class FakeHttp(object):
+def fake_get(url):
+    url = urlparse.urlparse(url)
 
-    def request(self, url):
-        url = urlparse.urlparse(url)
+    if url.path == '/latest/meta-data/':
+        # Remove keys which have anything after /
+        ks = [x for x in META_DATA.keys() if ('/' not in x
+                                              or not len(x.split('/')[1]))]
+        return FakeResponse("\n".join(ks))
 
-        if url.path == '/latest/meta-data/':
-            # Remove keys which have anything after /
-            ks = [x for x in META_DATA.keys() if ('/' not in x
-                                                  or not len(x.split('/')[1]))]
-            return (FakeResponse(), "\n".join(ks))
-
-        path = url.path
-        path = path.replace('/latest/meta-data/', '')
-        return (FakeResponse(), META_DATA[path])
+    path = url.path
+    path = path.replace('/latest/meta-data/', '')
+    return FakeResponse(META_DATA[path])
 
 
-class FakeFailHttp(object):
-    def request(self, url):
-        raise httplib2.socks.HTTPError(403, 'Forbidden')
+def fake_fail_get(url):
+    raise requests.exceptions.HTTPError(403, 'Forbidden')
 
 
 class TestCollect(testtools.TestCase):
@@ -82,7 +83,7 @@ class TestCollect(testtools.TestCase):
 
     def test_collect_ec2(self):
         self.useFixture(
-            fixtures.MonkeyPatch('os_collect_config.ec2.h', FakeHttp()))
+            fixtures.MonkeyPatch('requests.get', fake_get))
         collect.setup_conf()
         ec2_md = ec2.collect()
         self.assertThat(ec2_md, matchers.IsInstance(dict))
@@ -102,7 +103,7 @@ class TestCollect(testtools.TestCase):
     def test_collect_ec2_fail(self):
         self.useFixture(
             fixtures.MonkeyPatch(
-                'os_collect_config.ec2.h', FakeFailHttp()))
+                'requests.get', fake_fail_get))
         collect.setup_conf()
         self.assertRaises(exc.Ec2MetadataNotAvailable, ec2.collect)
         self.assertIn('Forbidden', self.log.output)
