@@ -75,3 +75,36 @@ class TestConf(testtools.TestCase):
     def test_setup_conf(self):
         collect.setup_conf()
         self.assertEquals('/var/run/os-collect-config', cfg.CONF.cachedir)
+
+
+class TestCache(testtools.TestCase):
+    def setUp(self):
+        super(TestCache, self).setUp()
+        cfg.CONF.reset()
+
+    def tearDown(self):
+        cfg.CONF.reset()
+        super(TestCache, self).tearDown()
+
+    def test_cache(self):
+        cache_root = self.useFixture(fixtures.TempDir())
+        cache_dir = os.path.join(cache_root.path, 'cache')
+        collect.setup_conf()
+        cfg.CONF(['--cachedir', cache_dir])
+        (changed, path) = collect.cache('foo', {'a': 1})
+        self.assertTrue(changed)
+        self.assertTrue(os.path.exists(cache_dir))
+        self.assertTrue(os.path.exists(path))
+        orig_path = '%s.orig' % path
+        self.assertTrue(os.path.exists(orig_path))
+
+        (changed, path) = collect.cache('foo', {'a': 2})
+        self.assertTrue(changed)
+        orig_path = '%s.orig' % path
+        with open(path) as now:
+            with open(orig_path) as then:
+                self.assertNotEquals(now.read(), then.read())
+
+        collect.commit_cache('foo')
+        (changed, path) = collect.cache('foo', {'a': 2})
+        self.assertFalse(changed)

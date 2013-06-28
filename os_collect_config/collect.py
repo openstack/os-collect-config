@@ -45,31 +45,45 @@ def setup_conf():
     CONF.register_cli_opts(opts)
 
 
+def cache_path(name):
+    return os.path.join(CONF.cachedir, '%s.json' % name)
+
+
 def cache(name, content):
     if not os.path.exists(CONF.cachedir):
         os.mkdir(CONF.cachedir)
 
     changed = False
-    dest_path = os.path.join(CONF.cachedir, '%s.json' % name)
+    dest_path = cache_path(name)
     orig_path = '%s.orig' % dest_path
+    last_path = '%s.last' % dest_path
 
     with tempfile.NamedTemporaryFile(dir=CONF.cachedir, delete=False) as new:
         new.write(json.dumps(content, indent=1))
         new.flush()
         if not os.path.exists(orig_path):
             shutil.copy(new.name, orig_path)
+            shutil.copy(new.name, last_path)
             changed = True
         os.rename(new.name, dest_path)
 
     if not changed:
         with open(dest_path) as now:
-            with open(orig_path) as then:
-                for now_line in now:
-                    then_line = then.next()
-                    if then_line != now_line:
-                        changed = True
-                        break
+            if os.path.exists(last_path):
+                with open(last_path) as then:
+                    for now_line in now:
+                        then_line = then.next()
+                        if then_line != now_line:
+                            changed = True
+                            break
+            else:
+                changed = True
     return (changed, dest_path)
+
+
+def commit_cache(name):
+    dest_path = cache_path(name)
+    shutil.copy(dest_path, '%s.last' % dest_path)
 
 
 def __main__():
@@ -85,6 +99,7 @@ def __main__():
             env = dict(os.environ)
             env["OS_CONFIG_FILES"] = ':'.join(paths)
             subprocess.call(CONF.command, env=env)
+            commit_cache('ec2')
 
 
 if __name__ == '__main__':
