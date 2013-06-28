@@ -58,22 +58,24 @@ class FakeResponse(dict):
         pass
 
 
-def fake_get(url):
-    url = urlparse.urlparse(url)
+class FakeSession(object):
+    def get(self, url):
+        url = urlparse.urlparse(url)
 
-    if url.path == '/latest/meta-data/':
-        # Remove keys which have anything after /
-        ks = [x for x in META_DATA.keys() if ('/' not in x
-                                              or not len(x.split('/')[1]))]
-        return FakeResponse("\n".join(ks))
+        if url.path == '/latest/meta-data/':
+            # Remove keys which have anything after /
+            ks = [x for x in META_DATA.keys() if ('/' not in x
+                                                  or not len(x.split('/')[1]))]
+            return FakeResponse("\n".join(ks))
 
-    path = url.path
-    path = path.replace('/latest/meta-data/', '')
-    return FakeResponse(META_DATA[path])
+        path = url.path
+        path = path.replace('/latest/meta-data/', '')
+        return FakeResponse(META_DATA[path])
 
 
-def fake_fail_get(url):
-    raise requests.exceptions.HTTPError(403, 'Forbidden')
+class FakeFailSession(object):
+    def get(self, url):
+        raise requests.exceptions.HTTPError(403, 'Forbidden')
 
 
 class TestCollect(testtools.TestCase):
@@ -83,7 +85,7 @@ class TestCollect(testtools.TestCase):
 
     def test_collect_ec2(self):
         self.useFixture(
-            fixtures.MonkeyPatch('requests.get', fake_get))
+            fixtures.MonkeyPatch('requests.Session', FakeSession))
         collect.setup_conf()
         ec2_md = ec2.collect()
         self.assertThat(ec2_md, matchers.IsInstance(dict))
@@ -103,7 +105,7 @@ class TestCollect(testtools.TestCase):
     def test_collect_ec2_fail(self):
         self.useFixture(
             fixtures.MonkeyPatch(
-                'requests.get', fake_fail_get))
+                'requests.Session', FakeFailSession))
         collect.setup_conf()
         self.assertRaises(exc.Ec2MetadataNotAvailable, ec2.collect)
         self.assertIn('Forbidden', self.log.output)

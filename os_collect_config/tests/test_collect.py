@@ -29,7 +29,7 @@ class TestCollect(testtools.TestCase):
         super(TestCollect, self).setUp()
         self.useFixture(
             fixtures.MonkeyPatch(
-                'requests.get', test_ec2.fake_get))
+                'requests.Session', test_ec2.FakeSession))
 
     def tearDown(self):
         super(TestCollect, self).tearDown()

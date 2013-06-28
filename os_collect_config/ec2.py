@@ -29,10 +29,9 @@ opts = [
 ]
 
 
-def _fetch_metadata(fetch_url):
-    global h
+def _fetch_metadata(fetch_url, session):
     try:
-        r = requests.get(fetch_url)
+        r = session.get(fetch_url)
         r.raise_for_status()
     except (requests.HTTPError,
             requests.ConnectionError,
@@ -48,11 +47,12 @@ def _fetch_metadata(fetch_url):
             sub_fetch_url = fetch_url + subkey
             if subkey[-1] == '/':
                 subkey = subkey[:-1]
-            new_content[subkey] = _fetch_metadata(sub_fetch_url)
+            new_content[subkey] = _fetch_metadata(sub_fetch_url, session)
         content = new_content
     return content
 
 
 def collect():
     root_url = '%s/' % (CONF.ec2.metadata_url)
-    return _fetch_metadata(root_url)
+    session = requests.Session()
+    return _fetch_metadata(root_url, session)
