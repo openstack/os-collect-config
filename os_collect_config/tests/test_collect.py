@@ -25,12 +25,6 @@ from os_collect_config.tests import test_ec2
 
 
 class TestCollect(testtools.TestCase):
-    def setUp(self):
-        super(TestCollect, self).setUp()
-        self.useFixture(
-            fixtures.MonkeyPatch(
-                'requests.Session', test_ec2.FakeSession))
-
     def tearDown(self):
         super(TestCollect, self).tearDown()
         cfg.CONF.reset()
@@ -67,7 +61,7 @@ class TestCollect(testtools.TestCase):
 
         self.useFixture(fixtures.MonkeyPatch('subprocess.call', fake_call))
 
-        collect.__main__()
+        collect.__main__(ec2_requests=test_ec2.FakeRequests)
 
         self.assertTrue(self.called_fake_call)
 
@@ -82,7 +76,7 @@ class TestCollect(testtools.TestCase):
         output = self.useFixture(fixtures.ByteStream('stdout'))
         self.useFixture(
             fixtures.MonkeyPatch('sys.stdout', output.stream))
-        collect.__main__()
+        collect.__main__(ec2_requests=test_ec2.FakeRequests)
         out_struct = json.loads(output.stream.getvalue())
         self.assertThat(out_struct, matchers.IsInstance(dict))
         self.assertIn('ec2', out_struct)

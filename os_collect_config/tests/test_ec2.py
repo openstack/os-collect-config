@@ -58,36 +58,40 @@ class FakeResponse(dict):
         pass
 
 
-class FakeSession(object):
-    def get(self, url):
-        url = urlparse.urlparse(url)
+class FakeRequests(object):
+    exceptions = requests.exceptions
 
-        if url.path == '/latest/meta-data/':
-            # Remove keys which have anything after /
-            ks = [x for x in META_DATA.keys() if ('/' not in x
-                                                  or not len(x.split('/')[1]))]
-            return FakeResponse("\n".join(ks))
+    class Session(object):
+        def get(self, url):
+            url = urlparse.urlparse(url)
 
-        path = url.path
-        path = path.replace('/latest/meta-data/', '')
-        return FakeResponse(META_DATA[path])
+            if url.path == '/latest/meta-data/':
+                # Remove keys which have anything after /
+                ks = [x for x in META_DATA.keys() if (
+                    '/' not in x or not len(x.split('/')[1]))]
+                return FakeResponse("\n".join(ks))
 
-
-class FakeFailSession(object):
-    def get(self, url):
-        raise requests.exceptions.HTTPError(403, 'Forbidden')
+            path = url.path
+            path = path.replace('/latest/meta-data/', '')
+            return FakeResponse(META_DATA[path])
 
 
-class TestCollect(testtools.TestCase):
+class FakeFailRequests(object):
+    exceptions = requests.exceptions
+
+    class Session(object):
+        def get(self, url):
+            raise requests.exceptions.HTTPError(403, 'Forbidden')
+
+
+class TestEc2(testtools.TestCase):
     def setUp(self):
-        super(TestCollect, self).setUp()
+        super(TestEc2, self).setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
 
     def test_collect_ec2(self):
-        self.useFixture(
-            fixtures.MonkeyPatch('requests.Session', FakeSession))
         collect.setup_conf()
-        ec2_md = ec2.collect()
+        ec2_md = ec2.CollectEc2(requests_impl=FakeRequests).collect()
         self.assertThat(ec2_md, matchers.IsInstance(dict))
 
         for k in ('public-ipv4', 'instance-id', 'hostname'):
@@ -103,9 +107,7 @@ class TestCollect(testtools.TestCase):
         self.assertEquals('', self.log.output)
 
     def test_collect_ec2_fail(self):
-        self.useFixture(
-            fixtures.MonkeyPatch(
-                'requests.Session', FakeFailSession))
         collect.setup_conf()
-        self.assertRaises(exc.Ec2MetadataNotAvailable, ec2.collect)
+        collect_ec2 = ec2.CollectEc2(requests_impl=FakeFailRequests)
+        self.assertRaises(exc.Ec2MetadataNotAvailable, collect_ec2.collect)
         self.assertIn('Forbidden', self.log.output)

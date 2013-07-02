@@ -19,6 +19,7 @@ import subprocess
 
 from openstack.common import log
 from os_collect_config import cache
+from os_collect_config import common
 from os_collect_config import ec2
 from oslo.config import cfg
 
@@ -45,11 +46,11 @@ def setup_conf():
     CONF.register_cli_opts(opts)
 
 
-def __main__():
+def __main__(ec2_requests=common.requests):
     setup_conf()
     CONF(prog="os-collect-config")
     log.setup("os-collect-config")
-    ec2_content = ec2.collect()
+    ec2_content = ec2.CollectEc2(requests_impl=ec2_requests).collect()
 
     if CONF.command:
         (changed, ec2_path) = cache.store('ec2', ec2_content)
