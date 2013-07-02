@@ -62,7 +62,6 @@ def collect_all(collectors, store=False, requests_impl_map=None):
         paths_or_content = {}
 
     for collector in collectors:
-        print [store, any_changed, collector]
         if requests_impl_map and collector.name in requests_impl_map:
             requests_impl = requests_impl_map[collector.name]
         else:
@@ -84,27 +83,12 @@ def __main__(requests_impl_map=None):
     CONF(prog="os-collect-config")
     log.setup("os-collect-config")
 
-    final_content = {}
-    paths = []
-    for collector in COLLECTORS:
-        if requests_impl_map and collector.name in requests_impl_map:
-            requests_impl = requests_impl_map[collector.name]
-        else:
-            requests_impl = common.requests
-        content = collector.Collector(requests_impl=requests_impl).collect()
-
-        any_changed = False
-        if CONF.command:
-            (changed, path) = cache.store(collector.name, content)
-            any_changed |= changed
-            paths.append(path)
-        else:
-            final_content[collector.name] = content
-
+    (any_changed, content) = collect_all(COLLECTORS, store=bool(CONF.command),
+                                         requests_impl_map=requests_impl_map)
     if CONF.command:
         if any_changed:
             env = dict(os.environ)
-            env["OS_CONFIG_FILES"] = ':'.join(paths)
+            env["OS_CONFIG_FILES"] = ':'.join(content)
             logger.info("Executing %s" % CONF.command)
             subprocess.call(CONF.command, env=env, shell=True)
             for collector in COLLECTORS:
@@ -112,7 +96,7 @@ def __main__(requests_impl_map=None):
         else:
             logger.debug("No changes detected.")
     else:
-        print json.dumps(final_content, indent=1)
+        print json.dumps(content, indent=1)
 
 
 if __name__ == '__main__':

@@ -117,6 +117,10 @@ class TestCollectAll(testtools.TestCase):
         cfg.CONF.cfn.path = ['foo.Metadata']
         self.addCleanup(cfg.CONF.reset)
 
+    def tearDown(self):
+        cfg.CONF.reset()
+        super(TestCollectAll, self).tearDown()
+
     def _call_collect_all(self, store):
         requests_impl_map = {'ec2': test_ec2.FakeRequests,
                              'cfn': test_cfn.FakeRequests(self)}
