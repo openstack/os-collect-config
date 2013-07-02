@@ -19,6 +19,7 @@ import subprocess
 
 from openstack.common import log
 from os_collect_config import cache
+from os_collect_config import cfn
 from os_collect_config import common
 from os_collect_config import ec2
 from oslo.config import cfg
@@ -40,8 +41,13 @@ def setup_conf():
     ec2_group = cfg.OptGroup(name='ec2',
                              title='EC2 Metadata options')
 
+    cfn_group = cfg.OptGroup(name='cfn',
+                             title='CloudFormation API Metadata options')
+
     CONF.register_group(ec2_group)
+    CONF.register_group(cfn_group)
     CONF.register_cli_opts(ec2.opts, group='ec2')
+    CONF.register_cli_opts(cfn.opts, group='cfn')
 
     CONF.register_cli_opts(opts)
 

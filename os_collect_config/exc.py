@@ -8,3 +8,7 @@ class Ec2MetadataNotAvailable(SourceNotAvailable):
 
 class CfnMetadataNotAvailable(SourceNotAvailable):
     """The cfn metadata service is not available."""
+
+
+class CfnMetadataNotConfigured(SourceNotAvailable):
+    """The cfn metadata service is not fully configured."""

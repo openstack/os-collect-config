@@ -13,47 +13,70 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from oslo.config import cfg
-import requests
 
 from openstack.common import log
+from os_collect_config import common
 from os_collect_config import exc
 
 EC2_METADATA_URL = 'http://169.254.169.254/latest/meta-data'
 CONF = cfg.CONF
+logger = log.getLogger(__name__)
 
 opts = [
     cfg.StrOpt('metadata-url',
                help='URL to query for CloudFormation Metadata'),
+    cfg.StrOpt('stack-name',
+               help='Stack name to describe'),
     cfg.MultiStrOpt('path',
                     help='Path to Metadata'),
 ]
 
 
-def _fetch_metadata(fetch_url, session):
-    try:
-        r = session.get(fetch_url)
-        r.raise_for_status()
-    except (requests.HTTPError,
-            requests.ConnectionError,
-            requests.Timeout) as e:
-        log.getLogger(__name__).warn(e)
-        raise exc.Ec2MetadataNotAvailable
-    content = r.text
-    if fetch_url[-1] == '/':
-        new_content = {}
-        for subkey in content.split("\n"):
-            if '=' in subkey:
-                subkey = subkey[:subkey.index('=')] + '/'
-            sub_fetch_url = fetch_url + subkey
-            if subkey[-1] == '/':
-                subkey = subkey[:-1]
-            new_content[subkey] = _fetch_metadata(sub_fetch_url, session)
-        content = new_content
-    return content
+class CollectCfn(object):
+    def __init__(self, requests_impl=common.requests):
+        self._requests_impl = requests_impl
+        self._session = requests_impl.Session()
 
+    def collect(self):
+        if CONF.cfn.metadata_url is None:
+            logger.warn('No metadata_url configured.')
+            raise exc.CfnMetadataNotConfigured
+        url = CONF.cfn.metadata_url
+        stack_name = CONF.cfn.stack_name
+        headers = {'Content-Type': 'application/json'}
+        final_content = {}
+        if CONF.cfn.path is None:
+            logger.warn('No path configured')
+            raise exc.CfnMetadataNotConfigured
 
-def collect():
-    root_url = '%s/' % (CONF.ec2.metadata_url)
-    session = requests.Session()
-    return _fetch_metadata(root_url, session)
+        for path in CONF.cfn.path:
+            if '.' not in path:
+                logger.error('Path not in format resource.field[.x.y] (%s)' %
+                             path)
+                raise exc.CfnMetadataNotConfigured
+            resource, field = path.split('.', 1)
+            if '.' in field:
+                field, sub_path = field.split('.', 1)
+            else:
+                sub_path = ''
+                params = {'Action': 'DescribeStackResource',
+                          'Stackname': stack_name,
+                          'LogicalResourceId': resource}
+            try:
+                content = self._session.get(
+                    url, params=params, headers=headers)
+            except self._requests_impl.exceptions.RequestException as e:
+                logger.warn(e)
+                raise exc.CfnMetadataNotAvailable
+            map_content = json.loads(content.text)
+            if sub_path:
+                if sub_path not in map_content:
+                    logger.warn('Sub-path could not be found for Resource (%s)'
+                                % path)
+                    raise exc.CfnMetadataNotConfigured
+                map_content = map_content[sub_path]
+
+            final_content.update(map_content)
+        return final_content

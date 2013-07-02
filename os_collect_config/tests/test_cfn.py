@@ -15,6 +15,7 @@
 
 import fixtures
 import json
+from oslo.config import cfg
 import requests
 import testtools
 from testtools import matchers
@@ -41,47 +42,65 @@ class FakeResponse(dict):
         pass
 
 
-class FakeSession(object):
-    def get(self, url):
-        url = urlparse.urlparse(url)
-        params = urlparse.parse_qsl(url.query)
-        # TODO(clint-fewbar) Refactor usage of requests to a factory
-        if 'Action' not in params:
-            raise Exception('No Action')
-        if params['Action'] != 'DescribeStackResources':
-            raise Exception('Wrong Action (%s)' % params['Action'])
-        return FakeResponse(json.dumps(META_DATA))
+class FakeRequests(object):
+    exceptions = requests.exceptions
+
+    def __init__(self, testcase):
+        self._test = testcase
+
+    def Session(self):
+        class FakeReqSession(object):
+            def __init__(self, testcase):
+                self._test = testcase
+
+            def get(self, url, params, headers):
+                url = urlparse.urlparse(url)
+                self._test.assertEquals('/', url.path)
+                self._test.assertEquals('application/json',
+                                        headers['Content-Type'])
+                # TODO(clint-fewbar) Refactor usage of requests to a factory
+                self._test.assertIn('Action', params)
+                self._test.assertEquals('DescribeStackResource',
+                                        params['Action'])
+                self._test.assertIn('LogicalResourceId', params)
+                self._test.assertEquals('foo', params['LogicalResourceId'])
+                return FakeResponse(json.dumps(META_DATA))
+        return FakeReqSession(self._test)
 
 
-class FakeFailSession(object):
-    def get(self, url):
-        raise requests.exceptions.HTTPError(403, 'Forbidden')
+class FakeFailRequests(object):
+    exceptions = requests.exceptions
+
+    class Session(object):
+        def get(self, url, params, headers):
+            raise requests.exceptions.HTTPError(403, 'Forbidden')
 
 
 class TestCfn(testtools.TestCase):
     def setUp(self):
         super(TestCfn, self).setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
+        collect.setup_conf()
+        cfg.CONF.cfn.metadata_url = 'http://127.0.0.1:8000/'
+        cfg.CONF.cfn.path = ['foo.Metadata']
 
     def test_collect_cfn(self):
-        self.useFixture(
-            fixtures.MonkeyPatch('requests.Session', FakeSession))
-        collect.setup_conf()
-        cfn_md = cfn.collect()
+        cfn_md = cfn.CollectCfn(requests_impl=FakeRequests(self)).collect()
         self.assertThat(cfn_md, matchers.IsInstance(dict))
 
-        for k in ('int1', 'strfoo', 'mapab'):
+        for k in ('int1', 'strfoo', 'map_ab'):
             self.assertIn(k, cfn_md)
             self.assertEquals(cfn_md[k], META_DATA[k])
-
-        self.assertEquals(cfn_md['block-device-mapping']['ami'], 'vda')
 
         self.assertEquals('', self.log.output)
 
     def test_collect_cfn_fail(self):
-        self.useFixture(
-            fixtures.MonkeyPatch(
-                'requests.Session', FakeFailSession))
-        collect.setup_conf()
-        self.assertRaises(exc.CfnMetadataNotAvailable, cfn.collect)
+        cfn_collect = cfn.CollectCfn(requests_impl=FakeFailRequests)
+        self.assertRaises(exc.CfnMetadataNotAvailable, cfn_collect.collect)
         self.assertIn('Forbidden', self.log.output)
+
+    def test_collect_cfn_no_path(self):
+        cfg.CONF.cfn.path = None
+        cfn_collect = cfn.CollectCfn(requests_impl=FakeRequests(self))
+        self.assertRaises(exc.CfnMetadataNotConfigured, cfn_collect.collect)
+        self.assertIn('No path configured', self.log.output)

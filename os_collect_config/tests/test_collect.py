@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import extras
 import fixtures
 import json
 import os
@@ -86,3 +87,5 @@ class TestConf(testtools.TestCase):
     def test_setup_conf(self):
         collect.setup_conf()
         self.assertEquals('/var/run/os-collect-config', cfg.CONF.cachedir)
+        self.assertTrue(extras.safe_hasattr(cfg.CONF, 'ec2'))
+        self.assertTrue(extras.safe_hasattr(cfg.CONF, 'cfn'))
