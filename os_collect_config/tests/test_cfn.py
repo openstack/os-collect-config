@@ -105,8 +105,28 @@ class TestCfn(testtools.TestCase):
         self.assertRaises(exc.CfnMetadataNotConfigured, cfn_collect.collect)
         self.assertIn('No path configured', self.log.output)
 
+    def test_collect_cfn_bad_path(self):
+        cfg.CONF.cfn.path = ['foo']
+        cfn_collect = cfn.CollectCfn(requests_impl=FakeRequests(self))
+        self.assertRaises(exc.CfnMetadataNotConfigured, cfn_collect.collect)
+        self.assertIn('Path not in format', self.log.output)
+
     def test_collect_cfn_no_metadata_url(self):
         cfg.CONF.cfn.metadata_url = None
         cfn_collect = cfn.CollectCfn(requests_impl=FakeRequests(self))
         self.assertRaises(exc.CfnMetadataNotConfigured, cfn_collect.collect)
         self.assertIn('No metadata_url configured', self.log.output)
+
+    def test_collect_cfn_missing_sub_path(self):
+        cfg.CONF.cfn.path = ['foo.Metadata.not_there']
+        cfn_collect = cfn.CollectCfn(requests_impl=FakeRequests(self))
+        self.assertRaises(exc.CfnMetadataNotConfigured, cfn_collect.collect)
+        self.assertIn('Sub-path could not be found', self.log.output)
+
+    def test_collect_cfn_sub_path(self):
+        cfg.CONF.cfn.path = ['foo.Metadata.map_ab']
+        cfn_collect = cfn.CollectCfn(requests_impl=FakeRequests(self))
+        content = cfn_collect.collect()
+        self.assertThat(content, matchers.IsInstance(dict))
+        self.assertIn(u'b', content)
+        self.assertEquals(u'banana', content[u'b'])

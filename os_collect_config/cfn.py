@@ -61,12 +61,13 @@ class CollectCfn(object):
                 field, sub_path = field.split('.', 1)
             else:
                 sub_path = ''
-                params = {'Action': 'DescribeStackResource',
-                          'Stackname': stack_name,
-                          'LogicalResourceId': resource}
+            params = {'Action': 'DescribeStackResource',
+                      'Stackname': stack_name,
+                      'LogicalResourceId': resource}
             try:
                 content = self._session.get(
                     url, params=params, headers=headers)
+                content.raise_for_status()
             except self._requests_impl.exceptions.RequestException as e:
                 logger.warn(e)
                 raise exc.CfnMetadataNotAvailable
