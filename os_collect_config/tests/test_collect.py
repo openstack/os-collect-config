@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import extras
 import fixtures
 import json
@@ -111,19 +112,21 @@ class TestCollectAll(testtools.TestCase):
         self.useFixture(fixtures.FakeLogger())
         collect.setup_conf()
         self.cache_dir = self.useFixture(fixtures.TempDir())
+        self.clean_conf = copy.copy(cfg.CONF)
+
+        def restore_copy():
+            cfg.CONF = self.clean_conf
+        self.addCleanup(restore_copy)
+
         cfg.CONF.cachedir = self.cache_dir.path
         cfg.CONF.cfn.metadata_url = 'http://127.0.0.1:8000/'
         cfg.CONF.cfn.stack_name = 'foo'
         cfg.CONF.cfn.path = ['foo.Metadata']
-        self.addCleanup(cfg.CONF.reset)
 
-    def tearDown(self):
-        cfg.CONF.reset()
-        super(TestCollectAll, self).tearDown()
-
-    def _call_collect_all(self, store):
-        requests_impl_map = {'ec2': test_ec2.FakeRequests,
-                             'cfn': test_cfn.FakeRequests(self)}
+    def _call_collect_all(self, store, requests_impl_map=None):
+        if requests_impl_map is None:
+            requests_impl_map = {'ec2': test_ec2.FakeRequests,
+                                 'cfn': test_cfn.FakeRequests(self)}
         return collect.collect_all(
             collect.COLLECTORS,
             store=store,
@@ -146,6 +149,15 @@ class TestCollectAll(testtools.TestCase):
         for collector in collect.COLLECTORS:
             self.assertIn(collector.name, content)
             self.assertThat(content[collector.name], matchers.IsInstance(dict))
+
+    def test_collect_all_ec2_unavailable(self):
+        requests_impl_map = {'ec2': test_ec2.FakeFailRequests,
+                             'cfn': test_cfn.FakeRequests(self)}
+        (any_changed, content) = self._call_collect_all(
+            store=False, requests_impl_map=requests_impl_map)
+        self.assertFalse(any_changed)
+        self.assertThat(content, matchers.IsInstance(dict))
+        self.assertNotIn('ec2', content)
 
 
 class TestConf(testtools.TestCase):

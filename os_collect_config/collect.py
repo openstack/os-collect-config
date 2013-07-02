@@ -22,6 +22,7 @@ from os_collect_config import cache
 from os_collect_config import cfn
 from os_collect_config import common
 from os_collect_config import ec2
+from os_collect_config import exc
 from oslo.config import cfg
 
 opts = [
@@ -66,7 +67,13 @@ def collect_all(collectors, store=False, requests_impl_map=None):
             requests_impl = requests_impl_map[collector.name]
         else:
             requests_impl = common.requests
-        content = collector.Collector(requests_impl=requests_impl).collect()
+
+        try:
+            content = collector.Collector(
+                requests_impl=requests_impl).collect()
+        except exc.SourceNotAvailable:
+            logger.warn('Source [%s] Unavailable.' % collector.name)
+            continue
 
         if store:
             (changed, path) = cache.store(collector.name, content)
