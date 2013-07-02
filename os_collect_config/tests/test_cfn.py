@@ -104,3 +104,9 @@ class TestCfn(testtools.TestCase):
         cfn_collect = cfn.CollectCfn(requests_impl=FakeRequests(self))
         self.assertRaises(exc.CfnMetadataNotConfigured, cfn_collect.collect)
         self.assertIn('No path configured', self.log.output)
+
+    def test_collect_cfn_no_metadata_url(self):
+        cfg.CONF.cfn.metadata_url = None
+        cfn_collect = cfn.CollectCfn(requests_impl=FakeRequests(self))
+        self.assertRaises(exc.CfnMetadataNotConfigured, cfn_collect.collect)
+        self.assertIn('No metadata_url configured', self.log.output)
