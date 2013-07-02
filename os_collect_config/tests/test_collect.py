@@ -31,6 +31,14 @@ class TestCollect(testtools.TestCase):
         super(TestCollect, self).tearDown()
         cfg.CONF.reset()
 
+    def _call_main(self, fake_args):
+        self.useFixture(
+            fixtures.MonkeyPatch('sys.argv', fake_args))
+
+        requests_impl_map = {'ec2': test_ec2.FakeRequests,
+                             'cfn': test_cfn.FakeRequests(self)}
+        collect.__main__(requests_impl_map=requests_impl_map)
+
     def test_main(self):
         expected_cmd = self.getUniqueString()
         cache_dir = self.useFixture(fixtures.TempDir())
@@ -49,8 +57,6 @@ class TestCollect(testtools.TestCase):
             '--cfn-path',
             'foo.Metadata'
         ]
-        self.useFixture(
-            fixtures.MonkeyPatch('sys.argv', fake_args))
         self.called_fake_call = False
 
         def fake_call(args, env, shell):
@@ -73,9 +79,7 @@ class TestCollect(testtools.TestCase):
 
         self.useFixture(fixtures.MonkeyPatch('subprocess.call', fake_call))
 
-        requests_impl_map = {'ec2': test_ec2.FakeRequests,
-                             'cfn': test_cfn.FakeRequests(self)}
-        collect.__main__(requests_impl_map=requests_impl_map)
+        self._call_main(fake_args)
 
         self.assertTrue(self.called_fake_call)
 
@@ -91,14 +95,10 @@ class TestCollect(testtools.TestCase):
             '--cfn-path',
             'foo.Metadata'
         ]
-        self.useFixture(
-            fixtures.MonkeyPatch('sys.argv', fake_args))
         output = self.useFixture(fixtures.ByteStream('stdout'))
         self.useFixture(
             fixtures.MonkeyPatch('sys.stdout', output.stream))
-        requests_impl_map = {'ec2': test_ec2.FakeRequests,
-                             'cfn': test_cfn.FakeRequests(self)}
-        collect.__main__(requests_impl_map=requests_impl_map)
+        self._call_main(fake_args)
         out_struct = json.loads(output.stream.getvalue())
         self.assertThat(out_struct, matchers.IsInstance(dict))
         self.assertIn('ec2', out_struct)
