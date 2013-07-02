@@ -36,6 +36,8 @@ opts = [
 CONF = cfg.CONF
 logger = log.getLogger('os-collect-config')
 
+COLLECTORS = (ec2, cfn)
+
 
 def setup_conf():
     ec2_group = cfg.OptGroup(name='ec2',
@@ -52,24 +54,40 @@ def setup_conf():
     CONF.register_cli_opts(opts)
 
 
-def __main__(ec2_requests=common.requests):
+def __main__(requests_impl_map=None):
     setup_conf()
     CONF(prog="os-collect-config")
     log.setup("os-collect-config")
-    ec2_content = ec2.CollectEc2(requests_impl=ec2_requests).collect()
+
+    final_content = {}
+    paths = []
+    for collector in COLLECTORS:
+        if requests_impl_map and collector.name in requests_impl_map:
+            requests_impl = requests_impl_map[collector.name]
+        else:
+            requests_impl = common.requests
+        content = collector.Collector(requests_impl=requests_impl).collect()
+
+        any_changed = False
+        if CONF.command:
+            (changed, path) = cache.store(collector.name, content)
+            any_changed |= changed
+            paths.append(path)
+        else:
+            final_content[collector.name] = content
 
     if CONF.command:
-        (changed, ec2_path) = cache.store('ec2', ec2_content)
-        if changed:
-            paths = [ec2_path]
+        if any_changed:
             env = dict(os.environ)
             env["OS_CONFIG_FILES"] = ':'.join(paths)
             logger.info("Executing %s" % CONF.command)
             subprocess.call(CONF.command, env=env, shell=True)
-            cache.commit('ec2')
+            for collector in COLLECTORS:
+                cache.commit(collector.name)
+        else:
+            logger.debug("No changes detected.")
     else:
-        content = {'ec2': ec2_content}
-        print json.dumps(content, indent=1)
+        print json.dumps(final_content, indent=1)
 
 
 if __name__ == '__main__':

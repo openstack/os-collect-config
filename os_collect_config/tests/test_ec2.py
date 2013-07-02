@@ -91,7 +91,7 @@ class TestEc2(testtools.TestCase):
 
     def test_collect_ec2(self):
         collect.setup_conf()
-        ec2_md = ec2.CollectEc2(requests_impl=FakeRequests).collect()
+        ec2_md = ec2.Collector(requests_impl=FakeRequests).collect()
         self.assertThat(ec2_md, matchers.IsInstance(dict))
 
         for k in ('public-ipv4', 'instance-id', 'hostname'):
@@ -108,6 +108,6 @@ class TestEc2(testtools.TestCase):
 
     def test_collect_ec2_fail(self):
         collect.setup_conf()
-        collect_ec2 = ec2.CollectEc2(requests_impl=FakeFailRequests)
+        collect_ec2 = ec2.Collector(requests_impl=FakeFailRequests)
         self.assertRaises(exc.Ec2MetadataNotAvailable, collect_ec2.collect)
         self.assertIn('Forbidden', self.log.output)

@@ -32,9 +32,10 @@ opts = [
     cfg.MultiStrOpt('path',
                     help='Path to Metadata'),
 ]
+name = 'cfn'
 
 
-class CollectCfn(object):
+class Collector(object):
     def __init__(self, requests_impl=common.requests):
         self._requests_impl = requests_impl
         self._session = requests_impl.Session()

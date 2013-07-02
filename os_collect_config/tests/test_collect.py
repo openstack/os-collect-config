@@ -22,6 +22,7 @@ import testtools
 from testtools import matchers
 
 from os_collect_config import collect
+from os_collect_config.tests import test_cfn
 from os_collect_config.tests import test_ec2
 
 
@@ -41,6 +42,12 @@ class TestCollect(testtools.TestCase):
             cache_dir.path,
             '--config-file',
             '/dev/null',
+            '--cfn-metadata-url',
+            'http://127.0.0.1:8000/',
+            '--cfn-stack-name',
+            'foo',
+            '--cfn-path',
+            'foo.Metadata'
         ]
         self.useFixture(
             fixtures.MonkeyPatch('sys.argv', fake_args))
@@ -57,12 +64,18 @@ class TestCollect(testtools.TestCase):
                 with open(path) as cfg_file:
                     contents = json.loads(cfg_file.read())
                     keys_found.update(set(contents.keys()))
+            # From test_ec2.FakeRequests
             self.assertIn("local-ipv4", keys_found)
             self.assertIn("reservation-id", keys_found)
+            # From test_cfn.FakeRequests
+            self.assertIn("int1", keys_found)
+            self.assertIn("map_ab", keys_found)
 
         self.useFixture(fixtures.MonkeyPatch('subprocess.call', fake_call))
 
-        collect.__main__(ec2_requests=test_ec2.FakeRequests)
+        requests_impl_map = {'ec2': test_ec2.FakeRequests,
+                             'cfn': test_cfn.FakeRequests(self)}
+        collect.__main__(requests_impl_map=requests_impl_map)
 
         self.assertTrue(self.called_fake_call)
 
@@ -71,16 +84,25 @@ class TestCollect(testtools.TestCase):
             'os-collect-config',
             '--config-file',
             '/dev/null',
+            '--cfn-metadata-url',
+            'http://127.0.0.1:8000/',
+            '--cfn-stack-name',
+            'foo',
+            '--cfn-path',
+            'foo.Metadata'
         ]
         self.useFixture(
             fixtures.MonkeyPatch('sys.argv', fake_args))
         output = self.useFixture(fixtures.ByteStream('stdout'))
         self.useFixture(
             fixtures.MonkeyPatch('sys.stdout', output.stream))
-        collect.__main__(ec2_requests=test_ec2.FakeRequests)
+        requests_impl_map = {'ec2': test_ec2.FakeRequests,
+                             'cfn': test_cfn.FakeRequests(self)}
+        collect.__main__(requests_impl_map=requests_impl_map)
         out_struct = json.loads(output.stream.getvalue())
         self.assertThat(out_struct, matchers.IsInstance(dict))
         self.assertIn('ec2', out_struct)
+        self.assertIn('cfn', out_struct)
 
 
 class TestConf(testtools.TestCase):

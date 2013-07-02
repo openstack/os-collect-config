@@ -27,9 +27,10 @@ opts = [
                default=EC2_METADATA_URL,
                help='URL to query for EC2 Metadata')
 ]
+name = 'ec2'
 
 
-class CollectEc2(object):
+class Collector(object):
     def __init__(self, requests_impl=common.requests):
         self._requests_impl = requests_impl
         self.session = requests_impl.Session()
