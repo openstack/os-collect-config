@@ -105,6 +105,45 @@ class TestCollect(testtools.TestCase):
         self.assertIn('cfn', out_struct)
 
 
+class TestCollectAll(testtools.TestCase):
+    def setUp(self):
+        super(TestCollectAll, self).setUp()
+        self.useFixture(fixtures.FakeLogger())
+        collect.setup_conf()
+        self.cache_dir = self.useFixture(fixtures.TempDir())
+        cfg.CONF.cachedir = self.cache_dir.path
+        cfg.CONF.cfn.metadata_url = 'http://127.0.0.1:8000/'
+        cfg.CONF.cfn.stack_name = 'foo'
+        cfg.CONF.cfn.path = ['foo.Metadata']
+        self.addCleanup(cfg.CONF.reset)
+
+    def _call_collect_all(self, store):
+        requests_impl_map = {'ec2': test_ec2.FakeRequests,
+                             'cfn': test_cfn.FakeRequests(self)}
+        return collect.collect_all(
+            collect.COLLECTORS,
+            store=store,
+            requests_impl_map=requests_impl_map)
+
+    def test_collect_all_store(self):
+        (any_changed, paths) = self._call_collect_all(store=True)
+        self.assertTrue(any_changed)
+        self.assertThat(paths, matchers.IsInstance(list))
+        for collector in collect.COLLECTORS:
+            self.assertIn(os.path.join(self.cache_dir.path, '%s.json' %
+                                                            collector.name),
+                          paths)
+            self.assertTrue(any_changed)
+
+    def test_collect_all_nostore(self):
+        (any_changed, content) = self._call_collect_all(store=False)
+        self.assertFalse(any_changed)
+        self.assertThat(content, matchers.IsInstance(dict))
+        for collector in collect.COLLECTORS:
+            self.assertIn(collector.name, content)
+            self.assertThat(content[collector.name], matchers.IsInstance(dict))
+
+
 class TestConf(testtools.TestCase):
     def test_setup_conf(self):
         collect.setup_conf()

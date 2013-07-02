@@ -54,6 +54,31 @@ def setup_conf():
     CONF.register_cli_opts(opts)
 
 
+def collect_all(collectors, store=False, requests_impl_map=None):
+    any_changed = False
+    if store:
+        paths_or_content = []
+    else:
+        paths_or_content = {}
+
+    for collector in collectors:
+        print [store, any_changed, collector]
+        if requests_impl_map and collector.name in requests_impl_map:
+            requests_impl = requests_impl_map[collector.name]
+        else:
+            requests_impl = common.requests
+        content = collector.Collector(requests_impl=requests_impl).collect()
+
+        if store:
+            (changed, path) = cache.store(collector.name, content)
+            any_changed |= changed
+            paths_or_content.append(path)
+        else:
+            paths_or_content[collector.name] = content
+
+    return (any_changed, paths_or_content)
+
+
 def __main__(requests_impl_map=None):
     setup_conf()
     CONF(prog="os-collect-config")
