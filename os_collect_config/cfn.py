@@ -14,7 +14,9 @@
 # limitations under the License.
 
 import json
+from keystoneclient.contrib.ec2 import utils as ec2_utils
 from oslo.config import cfg
+import urlparse
 
 from openstack.common import log
 from os_collect_config import common
@@ -31,6 +33,10 @@ opts = [
                help='Stack name to describe'),
     cfg.MultiStrOpt('path',
                     help='Path to Metadata'),
+    cfg.StrOpt('secret-access-key',
+               help='Secret Access Key'),
+    cfg.StrOpt('access-key-id',
+               help='Access Key ID'),
 ]
 name = 'cfn'
 
@@ -44,6 +50,12 @@ class Collector(object):
         if CONF.cfn.metadata_url is None:
             logger.warn('No metadata_url configured.')
             raise exc.CfnMetadataNotConfigured
+        if CONF.cfn.access_key_id is None:
+            logger.warn('No Access Key ID configured.')
+            raise exc.CfnMetadataNotConfigured
+        if CONF.cfn.secret_access_key is None:
+            logger.warn('No Secret Access Key configured.')
+            raise exc.CfnMetadataNotConfigured
         url = CONF.cfn.metadata_url
         stack_name = CONF.cfn.stack_name
         headers = {'Content-Type': 'application/json'}
@@ -52,6 +64,7 @@ class Collector(object):
             logger.warn('No path configured')
             raise exc.CfnMetadataNotConfigured
 
+        signer = ec2_utils.Ec2Signer(secret_key=CONF.cfn.secret_access_key)
         for path in CONF.cfn.path:
             if '.' not in path:
                 logger.error('Path not in format resource.field[.x.y] (%s)' %
@@ -64,7 +77,15 @@ class Collector(object):
                 sub_path = ''
             params = {'Action': 'DescribeStackResource',
                       'Stackname': stack_name,
-                      'LogicalResourceId': resource}
+                      'LogicalResourceId': resource,
+                      'AWSAccessKeyId': CONF.cfn.access_key_id,
+                      'SignatureVersion': '2'}
+            parsed_url = urlparse.urlparse(url)
+            credentials = {'params': params,
+                           'verb': 'GET',
+                           'host': parsed_url.netloc,
+                           'path': parsed_url.path}
+            params['Authorization'] = signer.generate(credentials)
             try:
                 content = self._session.get(
                     url, params=params, headers=headers)

@@ -33,12 +33,9 @@ class TestCollect(testtools.TestCase):
         cfg.CONF.reset()
 
     def _call_main(self, fake_args):
-        self.useFixture(
-            fixtures.MonkeyPatch('sys.argv', fake_args))
-
         requests_impl_map = {'ec2': test_ec2.FakeRequests,
                              'cfn': test_cfn.FakeRequests(self)}
-        collect.__main__(requests_impl_map=requests_impl_map)
+        collect.__main__(args=fake_args, requests_impl_map=requests_impl_map)
 
     def test_main(self):
         expected_cmd = self.getUniqueString()
@@ -56,7 +53,12 @@ class TestCollect(testtools.TestCase):
             '--cfn-stack-name',
             'foo',
             '--cfn-path',
-            'foo.Metadata'
+            'foo.Metadata',
+            '--cfn-access-key-id',
+            '0123456789ABCDEF',
+            '--cfn-secret-access-key',
+            'FEDCBA9876543210',
+
         ]
         self.called_fake_call = False
 
@@ -94,7 +96,11 @@ class TestCollect(testtools.TestCase):
             '--cfn-stack-name',
             'foo',
             '--cfn-path',
-            'foo.Metadata'
+            'foo.Metadata',
+            '--cfn-access-key-id',
+            '0123456789ABCDEF',
+            '--cfn-secret-access-key',
+            'FEDCBA9876543210',
         ]
         output = self.useFixture(fixtures.ByteStream('stdout'))
         self.useFixture(
@@ -122,6 +128,8 @@ class TestCollectAll(testtools.TestCase):
         cfg.CONF.cfn.metadata_url = 'http://127.0.0.1:8000/'
         cfg.CONF.cfn.stack_name = 'foo'
         cfg.CONF.cfn.path = ['foo.Metadata']
+        cfg.CONF.cfn.access_key_id = '0123456789ABCDEF'
+        cfg.CONF.cfn.secret_access_key = 'FEDCBA9876543210'
 
     def _call_collect_all(self, store, requests_impl_map=None):
         if requests_impl_map is None:

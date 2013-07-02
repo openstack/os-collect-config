@@ -16,6 +16,7 @@
 import json
 import os
 import subprocess
+import sys
 
 from openstack.common import log
 from os_collect_config import cache
@@ -85,9 +86,9 @@ def collect_all(collectors, store=False, requests_impl_map=None):
     return (any_changed, paths_or_content)
 
 
-def __main__(requests_impl_map=None):
+def __main__(args=sys.argv, requests_impl_map=None):
     setup_conf()
-    CONF(prog="os-collect-config")
+    CONF(args=args[1:], prog="os-collect-config")
     log.setup("os-collect-config")
 
     (any_changed, content) = collect_all(COLLECTORS, store=bool(CONF.command),

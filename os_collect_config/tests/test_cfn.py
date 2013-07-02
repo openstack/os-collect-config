@@ -58,7 +58,9 @@ class FakeRequests(object):
                 self._test.assertEquals('/', url.path)
                 self._test.assertEquals('application/json',
                                         headers['Content-Type'])
-                # TODO(clint-fewbar) Refactor usage of requests to a factory
+                self._test.assertIn('SignatureVersion', params)
+                self._test.assertEquals('2', params['SignatureVersion'])
+                self._test.assertIn('Authorization', params)
                 self._test.assertIn('Action', params)
                 self._test.assertEquals('DescribeStackResource',
                                         params['Action'])
@@ -83,6 +85,8 @@ class TestCfn(testtools.TestCase):
         collect.setup_conf()
         cfg.CONF.cfn.metadata_url = 'http://127.0.0.1:8000/'
         cfg.CONF.cfn.path = ['foo.Metadata']
+        cfg.CONF.cfn.access_key_id = '0123456789ABCDEF'
+        cfg.CONF.cfn.secret_access_key = 'FEDCBA9876543210'
 
     def test_collect_cfn(self):
         cfn_md = cfn.Collector(requests_impl=FakeRequests(self)).collect()
