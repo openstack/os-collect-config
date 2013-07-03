@@ -17,31 +17,28 @@ The format of this file is
 [default]
 command=os-refresh-config
 
-[ec2]
-type=ec2-metadata
-
 [cfn]
-type=cloudformation
+metadata_url=http://192.0.2.99:8000/v1/
+access_key_id = ABCDEFGHIJLMNOP01234567890
+secret_access_key = 01234567890ABCDEFGHIJKLMNOP
+path = MyResource
+stack_name = my.stack
 ```
 
-These sources will be processed in order, and whenever any of them changes, default.command will be run. OS_CONFIG_FILES will be set in the environment as a colon (":") separated list of the current copy of each metadata source. So in the example above, "os-refresh-config" would be executed with something like this in OS_CONFIG_FILES:
+These sources will be polled and whenever any of them changes, default.command will be run. OS_CONFIG_FILES will be set in the environment as a colon (":") separated list of the current copy of each metadata source. So in the example above, "os-refresh-config" would be executed with something like this in OS_CONFIG_FILES:
 
 ```
 /var/run/os-collect-config/ec2.json:/var/run/os-collect-config/cfn.json
 ```
 
-The sources can also be crafted using runtime arguments:
-
-```
-os-collect-config --command=os-refresh-config --source ec2:type=ec2-metadata --source cfn:type=cloudformation
-```
+When run without a command, the metadata sources are printed as a json document.
 
 # Quick Start
 
 sudo pip install -U git+git://github.com/stackforge/os-collect-config.git
 
 # run it on an OpenStack instance with access to ec2 metadata:
-os-collect-config --print --source "ec2:ec2-metadata"
+os-collect-config
 ```
 
 That should print out a json representation of the entire ec2 metadata tree.
