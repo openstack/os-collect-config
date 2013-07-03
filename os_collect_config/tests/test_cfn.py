@@ -15,6 +15,7 @@
 
 import fixtures
 import json
+from lxml import etree
 from oslo.config import cfg
 import requests
 import testtools
@@ -60,13 +61,18 @@ class FakeRequests(object):
                                         headers['Content-Type'])
                 self._test.assertIn('SignatureVersion', params)
                 self._test.assertEquals('2', params['SignatureVersion'])
-                self._test.assertIn('Authorization', params)
+                self._test.assertIn('Signature', params)
                 self._test.assertIn('Action', params)
                 self._test.assertEquals('DescribeStackResource',
                                         params['Action'])
                 self._test.assertIn('LogicalResourceId', params)
                 self._test.assertEquals('foo', params['LogicalResourceId'])
-                return FakeResponse(json.dumps(META_DATA))
+                root = etree.Element('DescribeStackResourceResponse')
+                result = etree.SubElement(root, 'DescribeStackResourceResult')
+                detail = etree.SubElement(result, 'StackResourceDetail')
+                metadata = etree.SubElement(detail, 'Metadata')
+                metadata.text = json.dumps(META_DATA)
+                return FakeResponse(etree.tostring(root))
         return FakeReqSession(self._test)
 
 
@@ -124,8 +130,8 @@ class TestCfn(testtools.TestCase):
     def test_collect_cfn_missing_sub_path(self):
         cfg.CONF.cfn.path = ['foo.Metadata.not_there']
         cfn_collect = cfn.Collector(requests_impl=FakeRequests(self))
-        self.assertRaises(exc.CfnMetadataNotConfigured, cfn_collect.collect)
-        self.assertIn('Sub-path could not be found', self.log.output)
+        self.assertRaises(exc.CfnMetadataNotAvailable, cfn_collect.collect)
+        self.assertIn('Sub-key not_there does not exist', self.log.output)
 
     def test_collect_cfn_sub_path(self):
         cfg.CONF.cfn.path = ['foo.Metadata.map_ab']

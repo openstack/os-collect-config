@@ -15,6 +15,7 @@
 
 import json
 from keystoneclient.contrib.ec2 import utils as ec2_utils
+from lxml import etree
 from oslo.config import cfg
 import urlparse
 
@@ -76,7 +77,7 @@ class Collector(object):
             else:
                 sub_path = ''
             params = {'Action': 'DescribeStackResource',
-                      'Stackname': stack_name,
+                      'StackName': stack_name,
                       'LogicalResourceId': resource,
                       'AWSAccessKeyId': CONF.cfn.access_key_id,
                       'SignatureVersion': '2'}
@@ -85,7 +86,7 @@ class Collector(object):
                            'verb': 'GET',
                            'host': parsed_url.netloc,
                            'path': parsed_url.path}
-            params['Authorization'] = signer.generate(credentials)
+            params['Signature'] = signer.generate(credentials)
             try:
                 content = self._session.get(
                     url, params=params, headers=headers)
@@ -93,13 +94,26 @@ class Collector(object):
             except self._requests_impl.exceptions.RequestException as e:
                 logger.warn(e)
                 raise exc.CfnMetadataNotAvailable
-            map_content = json.loads(content.text)
+            map_content = etree.fromstring(content.text)
+            resource_detail = map_content.find(
+                'DescribeStackResourceResult').find('StackResourceDetail')
+            sub_element = resource_detail.find(field)
+            if sub_element is None:
+                logger.warn('Path %s does not exist.' % (path))
+                raise exc.CfnMetadataNotAvailable
+            try:
+                value = json.loads(sub_element.text)
+            except ValueError as e:
+                logger.warn(
+                    'Path %s failed to parse as json. (%s)' % (path, e))
+                raise exc.CfnMetadataNotAvailable
             if sub_path:
-                if sub_path not in map_content:
-                    logger.warn('Sub-path could not be found for Resource (%s)'
-                                % path)
-                    raise exc.CfnMetadataNotConfigured
-                map_content = map_content[sub_path]
-
-            final_content.update(map_content)
+                for subkey in sub_path.split('.'):
+                    try:
+                        value = value[subkey]
+                    except KeyError:
+                        logger.warn(
+                            'Sub-key %s does not exist. (%s)' % (subkey, path))
+                        raise exc.CfnMetadataNotAvailable
+            final_content.update(value)
         return final_content
