@@ -1,5 +1,5 @@
-os-apply-config
-===============
+os-collect-config
+=================
 
 Collect configuration from cloud metadata sources.
 
