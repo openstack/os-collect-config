@@ -51,6 +51,7 @@ class Collector(object):
                     else:
                         final_content = value
         if not final_content:
-            logger.warn('Local metadata not found')
+            logger.warn('Local metadata not found (%s)' %
+                        cfg.CONF.heat_local.path)
             raise exc.HeatLocalMetadataNotAvailable
         return final_content

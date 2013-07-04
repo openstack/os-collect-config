@@ -19,12 +19,22 @@ import fixtures
 import json
 import os
 from oslo.config import cfg
+import tempfile
 import testtools
 from testtools import matchers
 
 from os_collect_config import collect
 from os_collect_config.tests import test_cfn
 from os_collect_config.tests import test_ec2
+from os_collect_config.tests import test_heat_local
+
+
+def _setup_local_metadata(test_case):
+    test_case.useFixture(fixtures.NestedTempfile())
+    local_md = tempfile.NamedTemporaryFile(delete=False)
+    local_md.write(json.dumps(test_heat_local.META_DATA))
+    local_md.flush()
+    return local_md.name
 
 
 class TestCollect(testtools.TestCase):
@@ -58,8 +68,10 @@ class TestCollect(testtools.TestCase):
             '0123456789ABCDEF',
             '--cfn-secret-access-key',
             'FEDCBA9876543210',
-
         ]
+        fake_metadata = _setup_local_metadata(self)
+        fake_args.append('--heat_local-path')
+        fake_args.append(fake_metadata)
         self.called_fake_call = False
 
         def fake_call(args, env, shell):
@@ -102,6 +114,9 @@ class TestCollect(testtools.TestCase):
             '--cfn-secret-access-key',
             'FEDCBA9876543210',
         ]
+        fake_metadata = _setup_local_metadata(self)
+        fake_args.append('--heat_local-path')
+        fake_args.append(fake_metadata)
         output = self.useFixture(fixtures.ByteStream('stdout'))
         self.useFixture(
             fixtures.MonkeyPatch('sys.stdout', output.stream))
@@ -130,6 +145,7 @@ class TestCollectAll(testtools.TestCase):
         cfg.CONF.cfn.path = ['foo.Metadata']
         cfg.CONF.cfn.access_key_id = '0123456789ABCDEF'
         cfg.CONF.cfn.secret_access_key = 'FEDCBA9876543210'
+        cfg.CONF.heat_local.path = [_setup_local_metadata(self)]
 
     def _call_collect_all(self, store, requests_impl_map=None):
         if requests_impl_map is None:

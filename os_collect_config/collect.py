@@ -39,7 +39,7 @@ opts = [
 CONF = cfg.CONF
 logger = log.getLogger('os-collect-config')
 
-COLLECTORS = (ec2, cfn)
+COLLECTORS = (ec2, cfn, heat_local)
 
 
 def setup_conf():
@@ -49,7 +49,7 @@ def setup_conf():
     cfn_group = cfg.OptGroup(name='cfn',
                              title='CloudFormation API Metadata options')
 
-    heat_local_group = cfg.OptGroup(name='heat-local',
+    heat_local_group = cfg.OptGroup(name='heat_local',
                                     title='Heat Local Metadata options')
 
     CONF.register_group(ec2_group)
