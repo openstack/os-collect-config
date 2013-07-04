@@ -24,6 +24,7 @@ from os_collect_config import cfn
 from os_collect_config import common
 from os_collect_config import ec2
 from os_collect_config import exc
+from os_collect_config import heat_local
 from oslo.config import cfg
 
 opts = [
@@ -48,10 +49,15 @@ def setup_conf():
     cfn_group = cfg.OptGroup(name='cfn',
                              title='CloudFormation API Metadata options')
 
+    heat_local_group = cfg.OptGroup(name='heat-local',
+                                    title='Heat Local Metadata options')
+
     CONF.register_group(ec2_group)
     CONF.register_group(cfn_group)
+    CONF.register_group(heat_local_group)
     CONF.register_cli_opts(ec2.opts, group='ec2')
     CONF.register_cli_opts(cfn.opts, group='cfn')
+    CONF.register_cli_opts(heat_local.opts, group='heat_local')
 
     CONF.register_cli_opts(opts)
 
