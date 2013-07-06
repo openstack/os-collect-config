@@ -106,7 +106,14 @@ def collect_all(collectors, store=False, requests_impl_map=None):
 def __main__(args=sys.argv, requests_impl_map=None):
     setup_conf()
     CONF(args=args[1:], prog="os-collect-config")
+
     log.setup("os-collect-config")
+
+    unknown_collectors = set(CONF.collectors) - set(DEFAULT_COLLECTORS)
+    if unknown_collectors:
+        raise exc.InvalidArguments(
+            'Unknown collectors %s. Valid collectors are: %s' %
+            (list(unknown_collectors), DEFAULT_COLLECTORS))
 
     (any_changed, content) = collect_all(cfg.CONF.collectors,
                                          store=bool(CONF.command),

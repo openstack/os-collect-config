@@ -24,6 +24,7 @@ import testtools
 from testtools import matchers
 
 from os_collect_config import collect
+from os_collect_config import exc
 from os_collect_config.tests import test_cfn
 from os_collect_config.tests import test_ec2
 from os_collect_config.tests import test_heat_local
@@ -125,6 +126,10 @@ class TestCollect(testtools.TestCase):
         self.assertThat(out_struct, matchers.IsInstance(dict))
         self.assertIn('ec2', out_struct)
         self.assertIn('cfn', out_struct)
+
+    def test_main_invalid_collector(self):
+        fake_args = ['os-collect-config', 'invalid']
+        self.assertRaises(exc.InvalidArguments, self._call_main, fake_args)
 
 
 class TestCollectAll(testtools.TestCase):
