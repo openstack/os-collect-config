@@ -147,12 +147,15 @@ class TestCollectAll(testtools.TestCase):
         cfg.CONF.cfn.secret_access_key = 'FEDCBA9876543210'
         cfg.CONF.heat_local.path = [_setup_local_metadata(self)]
 
-    def _call_collect_all(self, store, requests_impl_map=None):
+    def _call_collect_all(
+            self, store, requests_impl_map=None, collectors=None):
         if requests_impl_map is None:
             requests_impl_map = {'ec2': test_ec2.FakeRequests,
                                  'cfn': test_cfn.FakeRequests(self)}
+        if collectors is None:
+            collectors = cfg.CONF.collectors
         return collect.collect_all(
-            collect.COLLECTORS,
+            collectors,
             store=store,
             requests_impl_map=requests_impl_map)
 
@@ -160,19 +163,31 @@ class TestCollectAll(testtools.TestCase):
         (any_changed, paths) = self._call_collect_all(store=True)
         self.assertTrue(any_changed)
         self.assertThat(paths, matchers.IsInstance(list))
-        for collector in collect.COLLECTORS:
+        for collector in cfg.CONF.collectors:
             self.assertIn(os.path.join(self.cache_dir.path, '%s.json' %
-                                                            collector.name),
+                                                            collector),
                           paths)
             self.assertTrue(any_changed)
+
+    def test_collect_all_store_alt_order(self):
+        # Ensure different than default
+        new_list = list(reversed(cfg.CONF.collectors))
+        (any_changed, paths) = self._call_collect_all(store=True,
+                                                      collectors=new_list)
+        self.assertTrue(any_changed)
+        self.assertThat(paths, matchers.IsInstance(list))
+        expected_paths = [
+            os.path.join(self.cache_dir.path, '%s.json' % collector)
+            for collector in new_list]
+        self.assertEquals(expected_paths, paths)
 
     def test_collect_all_nostore(self):
         (any_changed, content) = self._call_collect_all(store=False)
         self.assertFalse(any_changed)
         self.assertThat(content, matchers.IsInstance(dict))
-        for collector in collect.COLLECTORS:
-            self.assertIn(collector.name, content)
-            self.assertThat(content[collector.name], matchers.IsInstance(dict))
+        for collector in cfg.CONF.collectors:
+            self.assertIn(collector, content)
+            self.assertThat(content[collector], matchers.IsInstance(dict))
 
     def test_collect_all_ec2_unavailable(self):
         requests_impl_map = {'ec2': test_ec2.FakeFailRequests,

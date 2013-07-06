@@ -27,6 +27,7 @@ from os_collect_config import exc
 from os_collect_config import heat_local
 from oslo.config import cfg
 
+DEFAULT_COLLECTORS = ['ec2', 'cfn', 'heat_local']
 opts = [
     cfg.StrOpt('command',
                short='c',
@@ -34,12 +35,21 @@ opts = [
     cfg.StrOpt('cachedir',
                default='/var/run/os-collect-config',
                help='Directory in which to store local cache of metadata'),
+    cfg.MultiStrOpt(
+        'collectors',
+        positional=True,
+        default=DEFAULT_COLLECTORS,
+        help='List the collectors to use. When command is specified the'
+             'collections will be emitted in the order given by this option.'
+        ' (default: %s)' % ' '.join(DEFAULT_COLLECTORS)),
 ]
 
 CONF = cfg.CONF
 logger = log.getLogger('os-collect-config')
 
-COLLECTORS = (ec2, cfn, heat_local)
+COLLECTORS = {ec2.name: ec2,
+              cfn.name: cfn,
+              heat_local.name: heat_local}
 
 
 def setup_conf():
@@ -70,24 +80,25 @@ def collect_all(collectors, store=False, requests_impl_map=None):
         paths_or_content = {}
 
     for collector in collectors:
-        if requests_impl_map and collector.name in requests_impl_map:
-            requests_impl = requests_impl_map[collector.name]
+        module = COLLECTORS[collector]
+        if requests_impl_map and collector in requests_impl_map:
+            requests_impl = requests_impl_map[collector]
         else:
             requests_impl = common.requests
 
         try:
-            content = collector.Collector(
+            content = module.Collector(
                 requests_impl=requests_impl).collect()
         except exc.SourceNotAvailable:
-            logger.warn('Source [%s] Unavailable.' % collector.name)
+            logger.warn('Source [%s] Unavailable.' % collector)
             continue
 
         if store:
-            (changed, path) = cache.store(collector.name, content)
+            (changed, path) = cache.store(collector, content)
             any_changed |= changed
             paths_or_content.append(path)
         else:
-            paths_or_content[collector.name] = content
+            paths_or_content[collector] = content
 
     return (any_changed, paths_or_content)
 
@@ -97,7 +108,8 @@ def __main__(args=sys.argv, requests_impl_map=None):
     CONF(args=args[1:], prog="os-collect-config")
     log.setup("os-collect-config")
 
-    (any_changed, content) = collect_all(COLLECTORS, store=bool(CONF.command),
+    (any_changed, content) = collect_all(cfg.CONF.collectors,
+                                         store=bool(CONF.command),
                                          requests_impl_map=requests_impl_map)
     if CONF.command:
         if any_changed:
@@ -105,8 +117,8 @@ def __main__(args=sys.argv, requests_impl_map=None):
             env["OS_CONFIG_FILES"] = ':'.join(content)
             logger.info("Executing %s" % CONF.command)
             subprocess.call(CONF.command, env=env, shell=True)
-            for collector in COLLECTORS:
-                cache.commit(collector.name)
+            for collector in cfg.CONF.collectors:
+                cache.commit(collector)
         else:
             logger.debug("No changes detected.")
     else:
