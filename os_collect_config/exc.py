@@ -16,3 +16,7 @@ class CfnMetadataNotConfigured(SourceNotAvailable):
 
 class HeatLocalMetadataNotAvailable(SourceNotAvailable):
     """The local Heat metadata is not available."""
+
+
+class InvalidArguments(ValueError):
+    """Invalid arguments."""
