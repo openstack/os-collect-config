@@ -13,14 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import fixtures
 import json
+import tempfile
+import urlparse
+
+import fixtures
 from lxml import etree
 from oslo.config import cfg
 import requests
 import testtools
+from testtools import content as test_content
 from testtools import matchers
-import urlparse
 
 from os_collect_config import cfn
 from os_collect_config import collect
@@ -46,16 +49,20 @@ class FakeResponse(dict):
 class FakeRequests(object):
     exceptions = requests.exceptions
 
-    def __init__(self, testcase):
+    def __init__(self, testcase, expected_netloc='127.0.0.1:8000'):
         self._test = testcase
+        self._expected_netloc = expected_netloc
 
     def Session(self):
         class FakeReqSession(object):
-            def __init__(self, testcase):
+            def __init__(self, testcase, expected_netloc):
                 self._test = testcase
+                self._expected_netloc = expected_netloc
 
             def get(self, url, params, headers):
+                self._test.addDetail('url', test_content.text_content(url))
                 url = urlparse.urlparse(url)
+                self._test.assertEquals(self._expected_netloc, url.netloc)
                 self._test.assertEquals('/', url.path)
                 self._test.assertEquals('application/json',
                                         headers['Content-Type'])
@@ -73,7 +80,7 @@ class FakeRequests(object):
                 metadata = etree.SubElement(detail, 'Metadata')
                 metadata.text = json.dumps(META_DATA)
                 return FakeResponse(etree.tostring(root))
-        return FakeReqSession(self._test)
+        return FakeReqSession(self._test, self._expected_netloc)
 
 
 class FakeFailRequests(object):
@@ -88,8 +95,14 @@ class TestCfn(testtools.TestCase):
     def setUp(self):
         super(TestCfn, self).setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
+        self.useFixture(fixtures.NestedTempfile())
+        self.hint_file = tempfile.NamedTemporaryFile()
+        self.hint_file.write('http://127.0.0.1:8000/')
+        self.hint_file.flush()
+        self.addCleanup(self.hint_file.close)
         collect.setup_conf()
-        cfg.CONF.cfn.metadata_url = 'http://127.0.0.1:8000/'
+        cfg.CONF.cfn.heat_metadata_hint = self.hint_file.name
+        cfg.CONF.cfn.metadata_url = None
         cfg.CONF.cfn.path = ['foo.Metadata']
         cfg.CONF.cfn.access_key_id = '0123456789ABCDEF'
         cfg.CONF.cfn.secret_access_key = 'FEDCBA9876543210'
@@ -122,7 +135,7 @@ class TestCfn(testtools.TestCase):
         self.assertIn('Path not in format', self.log.output)
 
     def test_collect_cfn_no_metadata_url(self):
-        cfg.CONF.cfn.metadata_url = None
+        cfg.CONF.cfn.heat_metadata_hint = None
         cfn_collect = cfn.Collector(requests_impl=FakeRequests(self))
         self.assertRaises(exc.CfnMetadataNotConfigured, cfn_collect.collect)
         self.assertIn('No metadata_url configured', self.log.output)
@@ -140,3 +153,10 @@ class TestCfn(testtools.TestCase):
         self.assertThat(content, matchers.IsInstance(dict))
         self.assertIn(u'b', content)
         self.assertEquals(u'banana', content[u'b'])
+
+    def test_collect_cfn_metadata_url_overrides_hint(self):
+        cfg.CONF.cfn.metadata_url = 'http://127.0.1.1:8000/'
+        cfn_collect = cfn.Collector(
+            requests_impl=FakeRequests(self,
+                                       expected_netloc='127.0.1.1:8000'))
+        cfn_collect.collect()

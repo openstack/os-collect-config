@@ -14,6 +14,8 @@
 # limitations under the License.
 
 import json
+import os
+
 from keystoneclient.contrib.ec2 import utils as ec2_utils
 from lxml import etree
 from oslo.config import cfg
@@ -23,13 +25,16 @@ from openstack.common import log
 from os_collect_config import common
 from os_collect_config import exc
 
-EC2_METADATA_URL = 'http://169.254.169.254/latest/meta-data'
 CONF = cfg.CONF
 logger = log.getLogger(__name__)
 
 opts = [
     cfg.StrOpt('metadata-url',
                help='URL to query for CloudFormation Metadata'),
+    cfg.StrOpt('heat-metadata-hint',
+               default='/var/lib/heat-cfntools/cfn-metadata-server',
+               help='Local file to read for metadata url if not explicitly '
+                    ' specified'),
     cfg.StrOpt('stack-name',
                help='Stack name to describe'),
     cfg.MultiStrOpt('path',
@@ -49,8 +54,13 @@ class Collector(object):
 
     def collect(self):
         if CONF.cfn.metadata_url is None:
-            logger.warn('No metadata_url configured.')
-            raise exc.CfnMetadataNotConfigured
+            if (CONF.cfn.heat_metadata_hint
+                    and os.path.exists(CONF.cfn.heat_metadata_hint)):
+                with open(CONF.cfn.heat_metadata_hint) as hint:
+                    CONF.cfn.metadata_url = hint.read().strip()
+            else:
+                logger.warn('No metadata_url configured.')
+                raise exc.CfnMetadataNotConfigured
         if CONF.cfn.access_key_id is None:
             logger.warn('No Access Key ID configured.')
             raise exc.CfnMetadataNotConfigured
