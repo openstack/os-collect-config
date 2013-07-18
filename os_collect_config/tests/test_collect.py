@@ -39,11 +39,18 @@ def _setup_local_metadata(test_case):
 
 
 class TestCollect(testtools.TestCase):
+    def setUp(self):
+        super(TestCollect, self).setUp()
+        self.useFixture(fixtures.FakeLogger())
+
     def tearDown(self):
         super(TestCollect, self).tearDown()
         cfg.CONF.reset()
 
     def _call_main(self, fake_args):
+        # make sure we don't run forever!
+        if '--one-time' not in fake_args:
+            fake_args.append('--one-time')
         requests_impl_map = {'ec2': test_ec2.FakeRequests,
                              'cfn': test_cfn.FakeRequests(self)}
         collect.__main__(args=fake_args, requests_impl_map=requests_impl_map)
@@ -130,6 +137,29 @@ class TestCollect(testtools.TestCase):
     def test_main_invalid_collector(self):
         fake_args = ['os-collect-config', 'invalid']
         self.assertRaises(exc.InvalidArguments, self._call_main, fake_args)
+
+    def test_main_sleep(self):
+        class ExpectedException(Exception):
+            pass
+
+        def fake_sleep(sleep_time):
+            self.assertEquals(10, sleep_time)
+            raise ExpectedException
+
+        self.useFixture(fixtures.MonkeyPatch('time.sleep', fake_sleep))
+        try:
+            collect.__main__(['os-collect-config', 'heat_local', '-i', '10',
+                              '-c', 'true'])
+        except ExpectedException:
+            pass
+
+    def test_main_no_sleep_with_no_command(self):
+        def fake_sleep(sleep_time):
+            raise Exception(cfg.CONF.command)
+
+        self.useFixture(fixtures.MonkeyPatch('time.sleep', fake_sleep))
+        collect.__main__(['os-collect-config', 'heat_local', '--config-file',
+                          '/dev/null', '-i', '10'])
 
 
 class TestCollectAll(testtools.TestCase):

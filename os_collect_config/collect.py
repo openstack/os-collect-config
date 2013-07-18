@@ -17,6 +17,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 
 from openstack.common import log
 from os_collect_config import cache
@@ -29,9 +30,11 @@ from oslo.config import cfg
 
 DEFAULT_COLLECTORS = ['ec2', 'cfn', 'heat_local']
 opts = [
-    cfg.StrOpt('command',
-               short='c',
-               help='Command to run on metadata changes.'),
+    cfg.StrOpt('command', short='c',
+               help='Command to run on metadata changes. If specified,'
+                    ' os-collect-config will continue to run until killed. If'
+                    ' not specified, os-collect-config will print the'
+                    ' collected data as a json map and exit.'),
     cfg.StrOpt('cachedir',
                default='/var/run/os-collect-config',
                help='Directory in which to store local cache of metadata'),
@@ -42,6 +45,14 @@ opts = [
         help='List the collectors to use. When command is specified the'
              'collections will be emitted in the order given by this option.'
         ' (default: %s)' % ' '.join(DEFAULT_COLLECTORS)),
+    cfg.BoolOpt('one-time',
+                default=False,
+                help='Pass this option to make os-collect-config exit after'
+                ' one execution of command. This behavior is implied if no'
+                ' command is specified.'),
+    cfg.FloatOpt('polling-interval', short='i', default=300,
+                 help='When running continuously, pause this many seconds'
+                      ' between collecting data.'),
 ]
 
 CONF = cfg.CONF
@@ -115,21 +126,29 @@ def __main__(args=sys.argv, requests_impl_map=None):
             'Unknown collectors %s. Valid collectors are: %s' %
             (list(unknown_collectors), DEFAULT_COLLECTORS))
 
-    (any_changed, content) = collect_all(cfg.CONF.collectors,
-                                         store=bool(CONF.command),
-                                         requests_impl_map=requests_impl_map)
-    if CONF.command:
-        if any_changed:
-            env = dict(os.environ)
-            env["OS_CONFIG_FILES"] = ':'.join(content)
-            logger.info("Executing %s" % CONF.command)
-            subprocess.call(CONF.command, env=env, shell=True)
-            for collector in cfg.CONF.collectors:
-                cache.commit(collector)
+    while True:
+        (any_changed, content) = collect_all(
+            cfg.CONF.collectors,
+            store=bool(CONF.command),
+            requests_impl_map=requests_impl_map)
+        if CONF.command:
+            if any_changed:
+                env = dict(os.environ)
+                env["OS_CONFIG_FILES"] = ':'.join(content)
+                logger.info("Executing %s" % CONF.command)
+                subprocess.call(CONF.command, env=env, shell=True)
+                for collector in cfg.CONF.collectors:
+                    cache.commit(collector)
+            else:
+                logger.debug("No changes detected.")
+            if CONF.one_time:
+                break
+            else:
+                logger.info("Sleeping %.2f seconds.", CONF.polling_interval)
+                time.sleep(CONF.polling_interval)
         else:
-            logger.debug("No changes detected.")
-    else:
-        print(json.dumps(content, indent=1))
+            print(json.dumps(content, indent=1))
+            break
 
 
 if __name__ == '__main__':
