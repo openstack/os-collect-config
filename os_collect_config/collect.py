@@ -129,7 +129,7 @@ def __main__(args=sys.argv, requests_impl_map=None):
         else:
             logger.debug("No changes detected.")
     else:
-        print json.dumps(content, indent=1)
+        print(json.dumps(content, indent=1))
 
 
 if __name__ == '__main__':
