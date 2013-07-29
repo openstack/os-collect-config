@@ -18,8 +18,11 @@ import extras
 import fixtures
 import json
 import os
-from oslo.config import cfg
+import signal
+import sys
 import tempfile
+
+from oslo.config import cfg
 import testtools
 from testtools import matchers
 
@@ -39,6 +42,7 @@ def _setup_local_metadata(test_case):
 
 
 class TestCollect(testtools.TestCase):
+
     def setUp(self):
         super(TestCollect, self).setUp()
         self.useFixture(fixtures.FakeLogger())
@@ -235,8 +239,35 @@ class TestCollectAll(testtools.TestCase):
 
 
 class TestConf(testtools.TestCase):
+
     def test_setup_conf(self):
         collect.setup_conf()
         self.assertEquals('/var/run/os-collect-config', cfg.CONF.cachedir)
         self.assertTrue(extras.safe_hasattr(cfg.CONF, 'ec2'))
         self.assertTrue(extras.safe_hasattr(cfg.CONF, 'cfn'))
+
+
+class TestHup(testtools.TestCase):
+
+    def setUp(self):
+        super(TestHup, self).setUp()
+        self.log = self.useFixture(fixtures.FakeLogger())
+
+        def fake_closerange(low, high):
+            self.assertEquals(3, low)
+            self.assertEquals(255, high)
+
+        def fake_execv(path, args):
+            self.assertEquals(sys.argv[0], path)
+            self.assertEquals(sys.argv, args)
+
+        self.useFixture(fixtures.MonkeyPatch('os.execv', fake_execv))
+        self.useFixture(fixtures.MonkeyPatch('os.closerange', fake_closerange))
+
+    def test_reexec_self_signal(self):
+        collect.reexec_self(signal.SIGHUP, None)
+        self.assertIn('Signal received', self.log.output)
+
+    def test_reexec_self(self):
+        collect.reexec_self()
+        self.assertNotIn('Signal received', self.log.output)

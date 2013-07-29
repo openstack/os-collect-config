@@ -15,6 +15,7 @@
 
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -114,7 +115,23 @@ def collect_all(collectors, store=False, requests_impl_map=None):
     return (any_changed, paths_or_content)
 
 
+def reexec_self(signal=None, frame=None):
+    if signal:
+        logger.info('Signal received. Re-executing %s' % sys.argv)
+    # Close all but stdin/stdout/stderr
+    os.closerange(3, 255)
+    os.execv(sys.argv[0], sys.argv)
+
+
+def call_command(files, command):
+    env = dict(os.environ)
+    env["OS_CONFIG_FILES"] = ':'.join(files)
+    logger.info("Executing %s" % command)
+    subprocess.call(CONF.command, env=env, shell=True)
+
+
 def __main__(args=sys.argv, requests_impl_map=None):
+    signal.signal(signal.SIGHUP, reexec_self)
     setup_conf()
     CONF(args=args[1:], prog="os-collect-config")
 
@@ -133,12 +150,13 @@ def __main__(args=sys.argv, requests_impl_map=None):
             requests_impl_map=requests_impl_map)
         if CONF.command:
             if any_changed:
-                env = dict(os.environ)
-                env["OS_CONFIG_FILES"] = ':'.join(content)
-                logger.info("Executing %s" % CONF.command)
-                subprocess.call(CONF.command, env=env, shell=True)
+                # ignore HUP now since we will reexec after commit anyway
+                signal.signal(signal.SIGHUP, signal.SIG_IGN)
+                call_command(content, CONF.command)
                 for collector in cfg.CONF.collectors:
                     cache.commit(collector)
+                if not CONF.one_time:
+                    reexec_self()
             else:
                 logger.debug("No changes detected.")
             if CONF.one_time:
