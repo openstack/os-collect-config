@@ -15,32 +15,35 @@
 
 import fixtures
 import os
-from oslo.config import cfg
 import testtools
 
 from os_collect_config import cache
-from os_collect_config import collect
+
+
+class DummyConf(object):
+    def __init__(self, cachedir):
+        class CONFobj(object):
+            def __init__(self, cachedir):
+                self.cachedir = cachedir
+        self.CONF = CONFobj(cachedir)
 
 
 class TestCache(testtools.TestCase):
     def setUp(self):
         super(TestCache, self).setUp()
-        cfg.CONF.reset()
+        cache_root = self.useFixture(fixtures.TempDir())
+        self.cache_dir = os.path.join(cache_root.path, 'cache')
+        self.useFixture(fixtures.MonkeyPatch('os_collect_config.cache.cfg',
+                                             DummyConf(self.cache_dir)))
 
     def tearDown(self):
-        cfg.CONF.reset()
         super(TestCache, self).tearDown()
 
     def test_cache(self):
-        cache_root = self.useFixture(fixtures.TempDir())
-        cache_dir = os.path.join(cache_root.path, 'cache')
-        collect.setup_conf()
-        cfg.CONF(['--cachedir', cache_dir])
-
         # Never seen, so changed is expected.
         (changed, path) = cache.store('foo', {'a': 1})
         self.assertTrue(changed)
-        self.assertTrue(os.path.exists(cache_dir))
+        self.assertTrue(os.path.exists(self.cache_dir))
         self.assertTrue(os.path.exists(path))
         orig_path = '%s.orig' % path
         self.assertTrue(os.path.exists(orig_path))
@@ -69,3 +72,6 @@ class TestCache(testtools.TestCase):
         (changed, path) = cache.store('foo', {'a': 3})
         self.assertTrue(changed)
         self.assertTrue(os.path.exists(path))
+
+    def test_commit_no_cache(self):
+        self.assertEquals(None, cache.commit('neversaved'))

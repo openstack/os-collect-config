@@ -60,4 +60,5 @@ def store(name, content):
 
 def commit(name):
     dest_path = get_path(name)
-    shutil.copy(dest_path, '%s.last' % dest_path)
+    if os.path.exists(dest_path):
+        shutil.copy(dest_path, '%s.last' % dest_path)
