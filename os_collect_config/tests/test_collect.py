@@ -71,7 +71,7 @@ class TestCollect(testtools.TestCase):
             '--config-file',
             '/dev/null',
             '--cfn-metadata-url',
-            'http://127.0.0.1:8000/',
+            'http://127.0.0.1:8000/v1/',
             '--cfn-stack-name',
             'foo',
             '--cfn-path',
@@ -116,7 +116,7 @@ class TestCollect(testtools.TestCase):
             '--config-file',
             '/dev/null',
             '--cfn-metadata-url',
-            'http://127.0.0.1:8000/',
+            'http://127.0.0.1:8000/v1/',
             '--cfn-stack-name',
             'foo',
             '--cfn-path',
@@ -179,7 +179,7 @@ class TestCollectAll(testtools.TestCase):
         self.addCleanup(restore_copy)
 
         cfg.CONF.cachedir = self.cache_dir.path
-        cfg.CONF.cfn.metadata_url = 'http://127.0.0.1:8000/'
+        cfg.CONF.cfn.metadata_url = 'http://127.0.0.1:8000/v1/'
         cfg.CONF.cfn.stack_name = 'foo'
         cfg.CONF.cfn.path = ['foo.Metadata']
         cfg.CONF.cfn.access_key_id = '0123456789ABCDEF'

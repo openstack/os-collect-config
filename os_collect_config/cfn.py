@@ -57,7 +57,7 @@ class Collector(object):
             if (CONF.cfn.heat_metadata_hint
                     and os.path.exists(CONF.cfn.heat_metadata_hint)):
                 with open(CONF.cfn.heat_metadata_hint) as hint:
-                    CONF.cfn.metadata_url = hint.read().strip()
+                    CONF.cfn.metadata_url = '%s/v1/' % hint.read().strip()
             else:
                 logger.warn('No metadata_url configured.')
                 raise exc.CfnMetadataNotConfigured

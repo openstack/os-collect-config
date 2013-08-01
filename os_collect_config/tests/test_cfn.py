@@ -63,7 +63,7 @@ class FakeRequests(object):
                 self._test.addDetail('url', test_content.text_content(url))
                 url = urlparse.urlparse(url)
                 self._test.assertEquals(self._expected_netloc, url.netloc)
-                self._test.assertEquals('/', url.path)
+                self._test.assertEquals('/v1/', url.path)
                 self._test.assertEquals('application/json',
                                         headers['Content-Type'])
                 self._test.assertIn('SignatureVersion', params)
@@ -97,7 +97,7 @@ class TestCfn(testtools.TestCase):
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         self.hint_file = tempfile.NamedTemporaryFile()
-        self.hint_file.write('http://127.0.0.1:8000/')
+        self.hint_file.write('http://127.0.0.1:8000')
         self.hint_file.flush()
         self.addCleanup(self.hint_file.close)
         collect.setup_conf()
@@ -155,7 +155,7 @@ class TestCfn(testtools.TestCase):
         self.assertEquals(u'banana', content[u'b'])
 
     def test_collect_cfn_metadata_url_overrides_hint(self):
-        cfg.CONF.cfn.metadata_url = 'http://127.0.1.1:8000/'
+        cfg.CONF.cfn.metadata_url = 'http://127.0.1.1:8000/v1/'
         cfn_collect = cfn.Collector(
             requests_impl=FakeRequests(self,
                                        expected_netloc='127.0.1.1:8000'))
