@@ -25,7 +25,7 @@ from os_collect_config import ec2
 from os_collect_config import exc
 
 
-META_DATA = {'local-ipv4':     '192.0.2.1',
+META_DATA = {'local-ipv4': '192.0.2.1',
              'reservation-id': str(uuid.uuid1()),
              'local-hostname': 'foo',
              'ami-launch-index': '0',
