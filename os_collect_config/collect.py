@@ -127,7 +127,7 @@ def call_command(files, command):
     env = dict(os.environ)
     env["OS_CONFIG_FILES"] = ':'.join(files)
     logger.info("Executing %s" % command)
-    subprocess.call(CONF.command, env=env, shell=True)
+    subprocess.check_call(CONF.command, env=env, shell=True)
 
 
 def __main__(args=sys.argv, requests_impl_map=None):
@@ -152,9 +152,18 @@ def __main__(args=sys.argv, requests_impl_map=None):
             if any_changed:
                 # ignore HUP now since we will reexec after commit anyway
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
-                call_command(content, CONF.command)
-                for collector in cfg.CONF.collectors:
-                    cache.commit(collector)
+                try:
+                    call_command(content, CONF.command)
+                except subprocess.CalledProcessError as e:
+                    logger.error('Command failed, will not cache new data. %s'
+                                 % e)
+                    if not CONF.one_time:
+                        logger.warn('Sleeping %.2f seconds before re-exec.' %
+                                    CONF.polling_interval)
+                        time.sleep(CONF.polling_interval)
+                else:
+                    for collector in cfg.CONF.collectors:
+                        cache.commit(collector)
                 if not CONF.one_time:
                     reexec_self()
             else:

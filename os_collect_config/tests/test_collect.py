@@ -106,6 +106,31 @@ class TestCollect(testtools.TestCase):
         self.assertIn("int1", keys_found)
         self.assertIn("map_ab", keys_found)
 
+    def test_main_command_failed_no_caching(self):
+        cache_dir = self.useFixture(fixtures.TempDir())
+        fake_metadata = _setup_local_metadata(self)
+        occ_args = [
+            'os-collect-config',
+            '--command',
+            'foo',
+            '--cachedir',
+            cache_dir.path,
+            '--config-file',
+            '/dev/null',
+            '--heat_local-path',
+            fake_metadata,
+        ]
+        calls = []
+
+        def capture_popen(proc_args):
+            calls.append(proc_args)
+            return dict(returncode=1)
+        self.useFixture(fixtures.FakePopen(capture_popen))
+        self._call_main(occ_args)
+        cache_contents = os.listdir(cache_dir.path)
+        last_files = [name for name in cache_contents if name.endswith('last')]
+        self.assertEqual([], last_files)
+
     def test_main_no_command(self):
         fake_args = [
             'os-collect-config',
