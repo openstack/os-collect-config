@@ -29,7 +29,7 @@ from os_collect_config import exc
 from os_collect_config import heat_local
 from oslo.config import cfg
 
-DEFAULT_COLLECTORS = ['ec2', 'cfn', 'heat_local']
+DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn']
 opts = [
     cfg.StrOpt('command', short='c',
                help='Command to run on metadata changes. If specified,'
