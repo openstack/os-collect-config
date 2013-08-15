@@ -46,10 +46,7 @@ class TestCollect(testtools.TestCase):
     def setUp(self):
         super(TestCollect, self).setUp()
         self.useFixture(fixtures.FakeLogger())
-
-    def tearDown(self):
-        super(TestCollect, self).tearDown()
-        cfg.CONF.reset()
+        self.addCleanup(cfg.CONF.reset)
 
     def _call_main(self, fake_args):
         # make sure we don't run forever!
