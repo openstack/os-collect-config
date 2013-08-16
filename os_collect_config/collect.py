@@ -135,8 +135,6 @@ def __main__(args=sys.argv, requests_impl_map=None):
     setup_conf()
     CONF(args=args[1:], prog="os-collect-config")
 
-    log.setup("os-collect-config")
-
     unknown_collectors = set(CONF.collectors) - set(DEFAULT_COLLECTORS)
     if unknown_collectors:
         raise exc.InvalidArguments(
@@ -179,4 +177,8 @@ def __main__(args=sys.argv, requests_impl_map=None):
 
 
 if __name__ == '__main__':
+    # This resets the logging infrastructure which prevents capturing log
+    # output in tests cleanly, so do it only if we're running as an actual
+    # process.
+    log.setup("os-collect-config")
     __main__()
