@@ -125,11 +125,11 @@ class TestCollect(testtools.TestCase):
         fake_metadata = _setup_local_metadata(self)
         fake_args.append('--heat_local-path')
         fake_args.append(fake_metadata)
-        output = self.useFixture(fixtures.ByteStream('stdout'))
+        output = self.useFixture(fixtures.StringStream('stdout'))
         self.useFixture(
             fixtures.MonkeyPatch('sys.stdout', output.stream))
         self._call_main(fake_args)
-        out_struct = json.loads(output.stream.getvalue())
+        out_struct = json.loads(output.getDetails()['stdout'].as_text())
         self.assertThat(out_struct, matchers.IsInstance(dict))
         self.assertIn('ec2', out_struct)
         self.assertIn('cfn', out_struct)
