@@ -62,7 +62,8 @@ class TestCollect(testtools.TestCase):
     def test_main(self):
         expected_cmd = self.getUniqueString()
         cache_dir = self.useFixture(fixtures.TempDir())
-        fake_args = [
+        fake_metadata = _setup_local_metadata(self)
+        occ_args = [
             'os-collect-config',
             '--command',
             expected_cmd,
@@ -80,35 +81,30 @@ class TestCollect(testtools.TestCase):
             '0123456789ABCDEF',
             '--cfn-secret-access-key',
             'FEDCBA9876543210',
+            '--heat_local-path',
+            fake_metadata,
         ]
-        fake_metadata = _setup_local_metadata(self)
-        fake_args.append('--heat_local-path')
-        fake_args.append(fake_metadata)
-        self.called_fake_call = False
+        calls = []
 
-        def fake_call(args, env, shell):
-            self.called_fake_call = True
-            self.assertEquals(expected_cmd, args)
-            self.assertIn('OS_CONFIG_FILES', env)
-            self.assertTrue(len(env.keys()) > 0)
-            keys_found = set()
-            for path in env['OS_CONFIG_FILES'].split(':'):
-                self.assertTrue(os.path.exists(path))
-                with open(path) as cfg_file:
-                    contents = json.loads(cfg_file.read())
-                    keys_found.update(set(contents.keys()))
-            # From test_ec2.FakeRequests
-            self.assertIn("local-ipv4", keys_found)
-            self.assertIn("reservation-id", keys_found)
-            # From test_cfn.FakeRequests
-            self.assertIn("int1", keys_found)
-            self.assertIn("map_ab", keys_found)
-
-        self.useFixture(fixtures.MonkeyPatch('subprocess.call', fake_call))
-
-        self._call_main(fake_args)
-
-        self.assertTrue(self.called_fake_call)
+        def capture_popen(proc_args):
+            calls.append(proc_args)
+            return dict(returncode=0)
+        self.useFixture(fixtures.FakePopen(capture_popen))
+        self._call_main(occ_args)
+        proc_args = calls[0]
+        self.assertEqual(expected_cmd, proc_args['args'])
+        keys_found = set()
+        for path in proc_args['env']['OS_CONFIG_FILES'].split(':'):
+            self.assertTrue(os.path.exists(path))
+            with open(path) as cfg_file:
+                contents = json.loads(cfg_file.read())
+                keys_found.update(set(contents.keys()))
+        # From test_ec2.FakeRequests
+        self.assertIn("local-ipv4", keys_found)
+        self.assertIn("reservation-id", keys_found)
+        # From test_cfn.FakeRequests
+        self.assertIn("int1", keys_found)
+        self.assertIn("map_ab", keys_found)
 
     def test_main_no_command(self):
         fake_args = [
