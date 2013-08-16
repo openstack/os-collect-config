@@ -13,6 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Metadata cache.
+
+Files within the cache as passed to hook commands invoked by
+os-collect-command.
+
+The cache also stores the last version of a file in order to detect changes
+that occur - hook commands are only automatically invoked when one or more
+metadata sources have changed things.
+
+The last version of a file is available under $FILENAME.last.
+"""
+
 import json
 import os
 import shutil

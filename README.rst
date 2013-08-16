@@ -31,6 +31,8 @@ These sources will be polled and whenever any of them changes, default.command w
 /var/run/os-collect-config/ec2.json:/var/run/os-collect-config/cfn.json
 ```
 
+The previous version of the metadata from a source (if available) is present at $FILENAME.last.
+
 When run without a command, the metadata sources are printed as a json document.
 
 # Quick Start
