@@ -1,4 +1,4 @@
 [gerrit]
 host=review.openstack.org
 port=29418
-project=stackforge/os-collect-config.git
+project=openstack/os-collect-config.git
