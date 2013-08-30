@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import hashlib
 import json
 import os
 import signal
@@ -130,6 +131,25 @@ def call_command(files, command):
     subprocess.check_call(CONF.command, env=env, shell=True)
 
 
+def getfilehash(files):
+    """Calculates the md5sum of the contents of a list of files.
+
+    For each readable file in the provided list returns the md5sum of the
+    concatenation of each file
+    :param files: a list of files to be read
+    :returns: string -- resulting md5sum
+    """
+    m = hashlib.md5()
+    for filename in files:
+        try:
+            with open(filename) as fp:
+                data = fp.read()
+            m.update(data)
+        except IOError:
+            pass
+    return m.hexdigest()
+
+
 def __main__(args=sys.argv, requests_impl_map=None):
     signal.signal(signal.SIGHUP, reexec_self)
     setup_conf()
@@ -147,6 +167,8 @@ def __main__(args=sys.argv, requests_impl_map=None):
             'Unknown collectors %s. Valid collectors are: %s' %
             (list(unknown_collectors), DEFAULT_COLLECTORS))
 
+    config_files = CONF.config_file
+    config_hash = getfilehash(config_files)
     while True:
         (any_changed, content) = collect_all(
             cfg.CONF.collectors,
@@ -162,9 +184,19 @@ def __main__(args=sys.argv, requests_impl_map=None):
                     logger.error('Command failed, will not cache new data. %s'
                                  % e)
                     if not CONF.one_time:
-                        logger.warn('Sleeping %.2f seconds before re-exec.' %
-                                    CONF.polling_interval)
-                        time.sleep(CONF.polling_interval)
+                        new_config_hash = getfilehash(config_files)
+                        if config_hash == new_config_hash:
+                            logger.warn(
+                                'Sleeping %.2f seconds before re-exec.' %
+                                CONF.polling_interval
+                            )
+                            time.sleep(CONF.polling_interval)
+                        else:
+                            # The command failed but the config file has
+                            # changed re-exec now as the config file change
+                            # may have fixed things.
+                            logger.warn('Config changed, re-execing now')
+                            config_hash = new_config_hash
                 else:
                     for collector in cfg.CONF.collectors:
                         cache.commit(collector)

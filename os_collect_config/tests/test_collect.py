@@ -289,3 +289,39 @@ class TestHup(testtools.TestCase):
     def test_reexec_self(self):
         collect.reexec_self()
         self.assertNotIn('Signal received', self.log.output)
+
+
+class TestFileHash(testtools.TestCase):
+    def setUp(self):
+        super(TestFileHash, self).setUp()
+
+        self.file_1 = tempfile.mkstemp()[1]
+        with open(self.file_1, "w") as fp:
+            fp.write("test string")
+
+        self.file_2 = tempfile.mkstemp()[1]
+        with open(self.file_2, "w") as fp:
+            fp.write("test string2")
+
+    def tearDown(self):
+        super(TestFileHash, self).tearDown()
+        os.unlink(self.file_1)
+        os.unlink(self.file_2)
+
+    def test_getfilehash_nofile(self):
+        h = collect.getfilehash([])
+        self.assertEquals(h, "d41d8cd98f00b204e9800998ecf8427e")
+
+    def test_getfilehash_onefile(self):
+        h = collect.getfilehash([self.file_1])
+        self.assertEquals(h, "6f8db599de986fab7a21625b7916589c")
+
+    def test_getfilehash_twofiles(self):
+        h = collect.getfilehash([self.file_1, self.file_2])
+        self.assertEquals(h, "a8e1b2b743037b1ec17b5d4b49369872")
+
+    def test_getfilehash_filenotfound(self):
+        self.assertEquals(
+            collect.getfilehash([self.file_1, self.file_2]),
+            collect.getfilehash([self.file_1, "/i/dont/exist", self.file_2])
+        )
