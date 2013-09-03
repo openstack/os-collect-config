@@ -295,6 +295,9 @@ class TestFileHash(testtools.TestCase):
     def setUp(self):
         super(TestFileHash, self).setUp()
 
+        # Deletes tempfiles during teardown
+        self.useFixture(fixtures.NestedTempfile())
+
         self.file_1 = tempfile.mkstemp()[1]
         with open(self.file_1, "w") as fp:
             fp.write("test string")
@@ -302,11 +305,6 @@ class TestFileHash(testtools.TestCase):
         self.file_2 = tempfile.mkstemp()[1]
         with open(self.file_2, "w") as fp:
             fp.write("test string2")
-
-    def tearDown(self):
-        super(TestFileHash, self).tearDown()
-        os.unlink(self.file_1)
-        os.unlink(self.file_2)
 
     def test_getfilehash_nofile(self):
         h = collect.getfilehash([])
