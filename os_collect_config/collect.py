@@ -62,6 +62,11 @@ opts = [
                 default=False,
                 help='Pass this to force running the command even if nothing'
                 ' has changed.'),
+    cfg.BoolOpt('print', dest='print_only',
+                default=False,
+                help='Query normally, print the resulting configs as a json'
+                ' map, and exit immediately without running command if it is'
+                ' configured.'),
 ]
 
 CONF = cfg.CONF
@@ -183,12 +188,13 @@ def __main__(args=sys.argv, requests_impl_map=None):
     config_files = CONF.config_file
     config_hash = getfilehash(config_files)
     while True:
+        store_and_run = bool(CONF.command and not CONF.print_only)
         (any_changed, content) = collect_all(
             cfg.CONF.collectors,
-            store=bool(CONF.command),
+            store=store_and_run,
             requests_impl_map=requests_impl_map)
-        if CONF.command:
-            if any_changed or cfg.CONF.force:
+        if store_and_run:
+            if any_changed or CONF.force:
                 # ignore HUP now since we will reexec after commit anyway
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
                 try:

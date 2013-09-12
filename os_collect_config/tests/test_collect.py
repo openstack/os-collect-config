@@ -192,12 +192,48 @@ class TestCollect(testtools.TestCase):
             '--config-file', '/dev/null',
             '--print-cachedir',
         ]
+
         output = self.useFixture(fixtures.StringStream('stdout'))
         self.useFixture(
             fixtures.MonkeyPatch('sys.stdout', output.stream))
         self._call_main(fake_args)
         cache_dir = output.getDetails()['stdout'].as_text().strip()
         self.assertEquals(fake_cachedir.path, cache_dir)
+
+    def test_main_print_only(self):
+        cache_dir = self.useFixture(fixtures.TempDir())
+        fake_metadata = _setup_local_metadata(self)
+        args = [
+            'os-collect-config',
+            '--command', 'bar',
+            '--cachedir', cache_dir.path,
+            '--config-file', '/dev/null',
+            '--print',
+            '--cfn-metadata-url',
+            'http://127.0.0.1:8000/v1/',
+            '--cfn-stack-name',
+            'foo',
+            '--cfn-path',
+            'foo.Metadata',
+            '--cfn-access-key-id',
+            '0123456789ABCDEF',
+            '--cfn-secret-access-key',
+            'FEDCBA9876543210',
+            '--heat_local-path', fake_metadata,
+        ]
+
+        def fake_popen(args):
+            self.fail('Called command instead of printing')
+        self.useFixture(fixtures.FakePopen(fake_popen))
+        output = self.useFixture(fixtures.StringStream('stdout'))
+        self.useFixture(
+            fixtures.MonkeyPatch('sys.stdout', output.stream))
+        self._call_main(args)
+        out_struct = json.loads(output.getDetails()['stdout'].as_text())
+        self.assertThat(out_struct, matchers.IsInstance(dict))
+        self.assertIn('cfn', out_struct)
+        self.assertIn('heat_local', out_struct)
+        self.assertIn('ec2', out_struct)
 
     def test_main_invalid_collector(self):
         fake_args = ['os-collect-config', 'invalid']
