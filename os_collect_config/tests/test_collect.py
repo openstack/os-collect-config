@@ -56,6 +56,16 @@ class TestCollect(testtools.TestCase):
                              'cfn': test_cfn.FakeRequests(self)}
         collect.__main__(args=fake_args, requests_impl_map=requests_impl_map)
 
+    def _fake_popen_call_main(self, occ_args):
+        calls = []
+
+        def capture_popen(proc_args):
+            calls.append(proc_args)
+            return dict(returncode=0)
+        self.useFixture(fixtures.FakePopen(capture_popen))
+        self._call_main(occ_args)
+        return calls
+
     def test_main(self):
         expected_cmd = self.getUniqueString()
         cache_dir = self.useFixture(fixtures.TempDir())
@@ -81,13 +91,7 @@ class TestCollect(testtools.TestCase):
             '--heat_local-path',
             fake_metadata,
         ]
-        calls = []
-
-        def capture_popen(proc_args):
-            calls.append(proc_args)
-            return dict(returncode=0)
-        self.useFixture(fixtures.FakePopen(capture_popen))
-        self._call_main(occ_args)
+        calls = self._fake_popen_call_main(occ_args)
         proc_args = calls[0]
         self.assertEqual(expected_cmd, proc_args['args'])
         list_path = os.path.join(cache_dir.path, 'os_config_files.json')
@@ -108,6 +112,24 @@ class TestCollect(testtools.TestCase):
         # From test_cfn.FakeRequests
         self.assertIn("int1", keys_found)
         self.assertIn("map_ab", keys_found)
+
+    def test_main_force_command(self):
+        cache_dir = self.useFixture(fixtures.TempDir())
+        fake_metadata = _setup_local_metadata(self)
+        occ_args = [
+            'os-collect-config',
+            '--command', 'foo',
+            '--cachedir', cache_dir.path,
+            '--config-file', '/dev/null',
+            '--heat_local-path', fake_metadata,
+            '--force',
+        ]
+        calls = self._fake_popen_call_main(occ_args)
+        self.assertIn('OS_CONFIG_FILES', calls[0]['env'])
+        cfg.CONF.reset()
+        # First time caches data, run again, make sure we run command again
+        calls = self._fake_popen_call_main(occ_args)
+        self.assertIn('OS_CONFIG_FILES', calls[0]['env'])
 
     def test_main_command_failed_no_caching(self):
         cache_dir = self.useFixture(fixtures.TempDir())
