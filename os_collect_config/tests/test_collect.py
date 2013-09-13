@@ -156,6 +156,21 @@ class TestCollect(testtools.TestCase):
         self.assertIn('ec2', out_struct)
         self.assertIn('cfn', out_struct)
 
+    def test_main_print_cachedir(self):
+        fake_cachedir = self.useFixture(fixtures.TempDir())
+        fake_args = [
+            'os-collect-config',
+            '--cachedir', fake_cachedir.path,
+            '--config-file', '/dev/null',
+            '--print-cachedir',
+        ]
+        output = self.useFixture(fixtures.StringStream('stdout'))
+        self.useFixture(
+            fixtures.MonkeyPatch('sys.stdout', output.stream))
+        self._call_main(fake_args)
+        cache_dir = output.getDetails()['stdout'].as_text().strip()
+        self.assertEquals(fake_cachedir.path, cache_dir)
+
     def test_main_invalid_collector(self):
         fake_args = ['os-collect-config', 'invalid']
         self.assertRaises(exc.InvalidArguments, self._call_main, fake_args)

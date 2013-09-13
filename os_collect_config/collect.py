@@ -55,6 +55,9 @@ opts = [
     cfg.FloatOpt('polling-interval', short='i', default=300,
                  help='When running continuously, pause this many seconds'
                       ' between collecting data.'),
+    cfg.BoolOpt('print-cachedir',
+                default=False,
+                help='Print out the value of cachedir and exit immediately.'),
 ]
 
 CONF = cfg.CONF
@@ -160,6 +163,10 @@ def __main__(args=sys.argv, requests_impl_map=None):
     # handlers defined i.e. not in unit tests
     if not log.getLogger(None).logger.handlers:
         log.setup("os-collect-config")
+
+    if CONF.print_cachedir:
+        print(CONF.cachedir)
+        return
 
     unknown_collectors = set(CONF.collectors) - set(DEFAULT_COLLECTORS)
     if unknown_collectors:
