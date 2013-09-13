@@ -116,6 +116,8 @@ def collect_all(collectors, store=False, requests_impl_map=None):
         else:
             paths_or_content[collector] = content
 
+    if any_changed:
+        cache.store_meta_list('os_config_files', collectors)
     return (any_changed, paths_or_content)
 
 

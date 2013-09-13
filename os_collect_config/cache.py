@@ -74,3 +74,15 @@ def commit(name):
     dest_path = get_path(name)
     if os.path.exists(dest_path):
         shutil.copy(dest_path, '%s.last' % dest_path)
+
+
+def store_meta_list(name, data_keys):
+    '''Store a json list of the files that should be present after store.'''
+    final_list = [get_path(k) for k in data_keys]
+    dest = get_path(name)
+    with tempfile.NamedTemporaryFile(prefix='tmp_meta_list.',
+                                     dir=os.path.dirname(dest),
+                                     delete=False) as out:
+        out.write(json.dumps(final_list))
+    os.rename(out.name, dest)
+    return dest

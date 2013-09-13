@@ -25,7 +25,7 @@ path = MyResource
 stack_name = my.stack
 ```
 
-These sources will be polled and whenever any of them changes, default.command will be run. OS_CONFIG_FILES will be set in the environment as a colon (":") separated list of the current copy of each metadata source. So in the example above, "os-refresh-config" would be executed with something like this in OS_CONFIG_FILES:
+These sources will be polled and whenever any of them changes, default.command will be run. A file will be written to the cache dir, os_config_files.json, which will be a json list of the file paths to the current copy of each metadata source. This list will also be set as a colon separated list in the environment variable OS_CONFIG_FILES for the command that is run. So in the example above, "os-refresh-config" would be executed with something like this in OS_CONFIG_FILES:
 
 ```
 /var/run/os-collect-config/ec2.json:/var/run/os-collect-config/cfn.json

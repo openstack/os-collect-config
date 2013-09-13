@@ -14,8 +14,10 @@
 # limitations under the License.
 
 import fixtures
+import json
 import os
 import testtools
+from testtools import matchers
 
 from os_collect_config import cache
 
@@ -72,6 +74,14 @@ class TestCache(testtools.TestCase):
         (changed, path) = cache.store('foo', {'a': 3})
         self.assertTrue(changed)
         self.assertTrue(os.path.exists(path))
+
+        # And the meta list
+        list_path = cache.store_meta_list('foo_list', ['foo'])
+        self.assertTrue(os.path.exists(list_path))
+        with open(list_path) as list_file:
+            list_list = json.loads(list_file.read())
+        self.assertThat(list_list, matchers.IsInstance(list))
+        self.assertIn(path, list_list)
 
     def test_commit_no_cache(self):
         self.assertEquals(None, cache.commit('neversaved'))

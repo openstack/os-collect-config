@@ -90,8 +90,14 @@ class TestCollect(testtools.TestCase):
         self._call_main(occ_args)
         proc_args = calls[0]
         self.assertEqual(expected_cmd, proc_args['args'])
+        list_path = os.path.join(cache_dir.path, 'os_config_files.json')
+        with open(list_path) as list_file:
+            config_list = json.loads(list_file.read())
+        self.assertThat(config_list, matchers.IsInstance(list))
+        env_config_list = proc_args['env']['OS_CONFIG_FILES'].split(':')
+        self.assertEquals(env_config_list, config_list)
         keys_found = set()
-        for path in proc_args['env']['OS_CONFIG_FILES'].split(':'):
+        for path in env_config_list:
             self.assertTrue(os.path.exists(path))
             with open(path) as cfg_file:
                 contents = json.loads(cfg_file.read())
