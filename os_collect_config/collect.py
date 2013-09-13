@@ -58,6 +58,10 @@ opts = [
     cfg.BoolOpt('print-cachedir',
                 default=False,
                 help='Print out the value of cachedir and exit immediately.'),
+    cfg.BoolOpt('force',
+                default=False,
+                help='Pass this to force running the command even if nothing'
+                ' has changed.'),
 ]
 
 CONF = cfg.CONF
@@ -184,7 +188,7 @@ def __main__(args=sys.argv, requests_impl_map=None):
             store=bool(CONF.command),
             requests_impl_map=requests_impl_map)
         if CONF.command:
-            if any_changed:
+            if any_changed or cfg.CONF.force:
                 # ignore HUP now since we will reexec after commit anyway
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
                 try:
