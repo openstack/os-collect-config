@@ -37,7 +37,7 @@ When run without a command, the metadata sources are printed as a json document.
 
 # Quick Start
 
-sudo pip install -U git+git://github.com/openstack/os-collect-config.git
+sudo pip install -U git+git://git.openstack.org/openstack/os-collect-config.git
 
 # run it on an OpenStack instance with access to ec2 metadata:
 os-collect-config
