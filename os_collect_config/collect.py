@@ -28,6 +28,7 @@ from os_collect_config import common
 from os_collect_config import ec2
 from os_collect_config import exc
 from os_collect_config import heat_local
+from os_collect_config import version
 from oslo.config import cfg
 
 DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn']
@@ -167,7 +168,8 @@ def getfilehash(files):
 def __main__(args=sys.argv, requests_impl_map=None):
     signal.signal(signal.SIGHUP, reexec_self)
     setup_conf()
-    CONF(args=args[1:], prog="os-collect-config")
+    CONF(args=args[1:], prog="os-collect-config",
+         version=version.version_info.version_string())
 
     # This resets the logging infrastructure which prevents capturing log
     # output in tests cleanly, so should only be called if there isn't already
