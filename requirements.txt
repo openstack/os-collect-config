@@ -7,5 +7,5 @@ python-keystoneclient>=0.3.2
 requests>=1.1
 iso8601>=0.1.4
 lxml>=2.3
-oslo.config>=1.1.0
-six<1.4.0
+oslo.config>=1.2.0
+six
