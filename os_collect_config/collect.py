@@ -62,7 +62,7 @@ opts = [
     cfg.BoolOpt('force',
                 default=False,
                 help='Pass this to force running the command even if nothing'
-                ' has changed.'),
+                ' has changed. Implies --one-time.'),
     cfg.BoolOpt('print', dest='print_only',
                 default=False,
                 help='Query normally, print the resulting configs as a json'
@@ -186,6 +186,9 @@ def __main__(args=sys.argv, requests_impl_map=None):
         raise exc.InvalidArguments(
             'Unknown collectors %s. Valid collectors are: %s' %
             (list(unknown_collectors), DEFAULT_COLLECTORS))
+
+    if CONF.force:
+        CONF.set_override('one_time', True)
 
     config_files = CONF.config_file
     config_hash = getfilehash(config_files)
