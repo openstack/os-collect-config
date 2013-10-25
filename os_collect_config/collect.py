@@ -53,7 +53,7 @@ opts = [
                 help='Pass this option to make os-collect-config exit after'
                 ' one execution of command. This behavior is implied if no'
                 ' command is specified.'),
-    cfg.FloatOpt('polling-interval', short='i', default=300,
+    cfg.FloatOpt('polling-interval', short='i', default=30,
                  help='When running continuously, pause this many seconds'
                       ' between collecting data.'),
     cfg.BoolOpt('print-cachedir',
