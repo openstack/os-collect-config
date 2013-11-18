@@ -62,18 +62,18 @@ class FakeRequests(object):
             def get(self, url, params, headers):
                 self._test.addDetail('url', test_content.text_content(url))
                 url = urlparse.urlparse(url)
-                self._test.assertEquals(self._expected_netloc, url.netloc)
-                self._test.assertEquals('/v1/', url.path)
-                self._test.assertEquals('application/json',
-                                        headers['Content-Type'])
+                self._test.assertEqual(self._expected_netloc, url.netloc)
+                self._test.assertEqual('/v1/', url.path)
+                self._test.assertEqual('application/json',
+                                       headers['Content-Type'])
                 self._test.assertIn('SignatureVersion', params)
-                self._test.assertEquals('2', params['SignatureVersion'])
+                self._test.assertEqual('2', params['SignatureVersion'])
                 self._test.assertIn('Signature', params)
                 self._test.assertIn('Action', params)
-                self._test.assertEquals('DescribeStackResource',
-                                        params['Action'])
+                self._test.assertEqual('DescribeStackResource',
+                                       params['Action'])
                 self._test.assertIn('LogicalResourceId', params)
-                self._test.assertEquals('foo', params['LogicalResourceId'])
+                self._test.assertEqual('foo', params['LogicalResourceId'])
                 root = etree.Element('DescribeStackResourceResponse')
                 result = etree.SubElement(root, 'DescribeStackResourceResult')
                 detail = etree.SubElement(result, 'StackResourceDetail')
@@ -113,9 +113,9 @@ class TestCfn(testtools.TestCase):
 
         for k in ('int1', 'strfoo', 'map_ab'):
             self.assertIn(k, cfn_md)
-            self.assertEquals(cfn_md[k], META_DATA[k])
+            self.assertEqual(cfn_md[k], META_DATA[k])
 
-        self.assertEquals('', self.log.output)
+        self.assertEqual('', self.log.output)
 
     def test_collect_cfn_fail(self):
         cfn_collect = cfn.Collector(requests_impl=FakeFailRequests)
@@ -152,7 +152,7 @@ class TestCfn(testtools.TestCase):
         content = cfn_collect.collect()
         self.assertThat(content, matchers.IsInstance(dict))
         self.assertIn(u'b', content)
-        self.assertEquals(u'banana', content[u'b'])
+        self.assertEqual(u'banana', content[u'b'])
 
     def test_collect_cfn_metadata_url_overrides_hint(self):
         cfg.CONF.cfn.metadata_url = 'http://127.0.1.1:8000/v1/'

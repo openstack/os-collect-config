@@ -58,7 +58,7 @@ class TestCache(testtools.TestCase):
         orig_path = '%s.orig' % path
         with open(path) as now:
             with open(orig_path) as then:
-                self.assertNotEquals(now.read(), then.read())
+                self.assertNotEqual(now.read(), then.read())
 
         # Saves the current copy as .last
         cache.commit('foo')
@@ -84,4 +84,4 @@ class TestCache(testtools.TestCase):
         self.assertIn(path, list_list)
 
     def test_commit_no_cache(self):
-        self.assertEquals(None, cache.commit('neversaved'))
+        self.assertEqual(None, cache.commit('neversaved'))

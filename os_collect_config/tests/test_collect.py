@@ -99,7 +99,7 @@ class TestCollect(testtools.TestCase):
             config_list = json.loads(list_file.read())
         self.assertThat(config_list, matchers.IsInstance(list))
         env_config_list = proc_args['env']['OS_CONFIG_FILES'].split(':')
-        self.assertEquals(env_config_list, config_list)
+        self.assertEqual(env_config_list, config_list)
         keys_found = set()
         for path in env_config_list:
             self.assertTrue(os.path.exists(path))
@@ -198,7 +198,7 @@ class TestCollect(testtools.TestCase):
             fixtures.MonkeyPatch('sys.stdout', output.stream))
         self._call_main(fake_args)
         cache_dir = output.getDetails()['stdout'].as_text().strip()
-        self.assertEquals(fake_cachedir.path, cache_dir)
+        self.assertEqual(fake_cachedir.path, cache_dir)
 
     def test_main_print_only(self):
         cache_dir = self.useFixture(fixtures.TempDir())
@@ -244,7 +244,7 @@ class TestCollect(testtools.TestCase):
             pass
 
         def fake_sleep(sleep_time):
-            self.assertEquals(10, sleep_time)
+            self.assertEqual(10, sleep_time)
             raise ExpectedException
 
         self.useFixture(fixtures.MonkeyPatch('time.sleep', fake_sleep))
@@ -315,7 +315,7 @@ class TestCollectAll(testtools.TestCase):
         expected_paths = [
             os.path.join(self.cache_dir.path, '%s.json' % collector)
             for collector in new_list]
-        self.assertEquals(expected_paths, paths)
+        self.assertEqual(expected_paths, paths)
 
     def test_collect_all_nostore(self):
         (any_changed, content) = self._call_collect_all(store=False)
@@ -339,7 +339,7 @@ class TestConf(testtools.TestCase):
 
     def test_setup_conf(self):
         collect.setup_conf()
-        self.assertEquals('/var/run/os-collect-config', cfg.CONF.cachedir)
+        self.assertEqual('/var/run/os-collect-config', cfg.CONF.cachedir)
         self.assertTrue(extras.safe_hasattr(cfg.CONF, 'ec2'))
         self.assertTrue(extras.safe_hasattr(cfg.CONF, 'cfn'))
 
@@ -351,12 +351,12 @@ class TestHup(testtools.TestCase):
         self.log = self.useFixture(fixtures.FakeLogger())
 
         def fake_closerange(low, high):
-            self.assertEquals(3, low)
-            self.assertEquals(255, high)
+            self.assertEqual(3, low)
+            self.assertEqual(255, high)
 
         def fake_execv(path, args):
-            self.assertEquals(sys.argv[0], path)
-            self.assertEquals(sys.argv, args)
+            self.assertEqual(sys.argv[0], path)
+            self.assertEqual(sys.argv, args)
 
         self.useFixture(fixtures.MonkeyPatch('os.execv', fake_execv))
         self.useFixture(fixtures.MonkeyPatch('os.closerange', fake_closerange))
@@ -387,18 +387,18 @@ class TestFileHash(testtools.TestCase):
 
     def test_getfilehash_nofile(self):
         h = collect.getfilehash([])
-        self.assertEquals(h, "d41d8cd98f00b204e9800998ecf8427e")
+        self.assertEqual(h, "d41d8cd98f00b204e9800998ecf8427e")
 
     def test_getfilehash_onefile(self):
         h = collect.getfilehash([self.file_1])
-        self.assertEquals(h, "6f8db599de986fab7a21625b7916589c")
+        self.assertEqual(h, "6f8db599de986fab7a21625b7916589c")
 
     def test_getfilehash_twofiles(self):
         h = collect.getfilehash([self.file_1, self.file_2])
-        self.assertEquals(h, "a8e1b2b743037b1ec17b5d4b49369872")
+        self.assertEqual(h, "a8e1b2b743037b1ec17b5d4b49369872")
 
     def test_getfilehash_filenotfound(self):
-        self.assertEquals(
+        self.assertEqual(
             collect.getfilehash([self.file_1, self.file_2]),
             collect.getfilehash([self.file_1, "/i/dont/exist", self.file_2])
         )

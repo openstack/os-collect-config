@@ -60,9 +60,9 @@ class TestHeatLocal(testtools.TestCase):
 
         for k in ('localstrA', 'localint9', 'localmap_xy'):
             self.assertIn(k, local_md)
-            self.assertEquals(local_md[k], META_DATA[k])
+            self.assertEqual(local_md[k], META_DATA[k])
 
-        self.assertEquals('', self.log.output)
+        self.assertEqual('', self.log.output)
 
     def test_collect_ec2_nofile(self):
         tdir = self.useFixture(fixtures.TempDir())

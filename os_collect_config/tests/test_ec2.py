@@ -96,15 +96,15 @@ class TestEc2(testtools.TestCase):
 
         for k in ('public-ipv4', 'instance-id', 'hostname'):
             self.assertIn(k, ec2_md)
-            self.assertEquals(ec2_md[k], META_DATA[k])
+            self.assertEqual(ec2_md[k], META_DATA[k])
 
-        self.assertEquals(ec2_md['block-device-mapping']['ami'], 'vda')
+        self.assertEqual(ec2_md['block-device-mapping']['ami'], 'vda')
 
         # SSH keys are special cases
-        self.assertEquals(
+        self.assertEqual(
             {'0': {'openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC'}},
             ec2_md['public-keys'])
-        self.assertEquals('', self.log.output)
+        self.assertEqual('', self.log.output)
 
     def test_collect_ec2_fail(self):
         collect.setup_conf()
