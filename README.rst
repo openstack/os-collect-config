@@ -10,7 +10,7 @@ It collects data from defined configuration sources and runs a defined hook when
 
 # Usage
 
-You must define what sources to collect configuration data from in /etc/os-collect-config/sources.ini
+You must define what sources to collect configuration data from in /etc/os-collect-config.conf
 
 The format of this file is::
 
