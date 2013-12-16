@@ -142,7 +142,8 @@ def reexec_self(signal=None, frame=None):
 def call_command(files, command):
     env = dict(os.environ)
     env["OS_CONFIG_FILES"] = ':'.join(files)
-    logger.info("Executing %s" % command)
+    logger.info("Executing %s with OS_CONFIG_FILES=%s" %
+                (command, env["OS_CONFIG_FILES"]))
     subprocess.check_call(CONF.command, env=env, shell=True)
 
 
