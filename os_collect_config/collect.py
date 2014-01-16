@@ -16,6 +16,7 @@
 import hashlib
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -39,8 +40,11 @@ opts = [
                     ' not specified, os-collect-config will print the'
                     ' collected data as a json map and exit.'),
     cfg.StrOpt('cachedir',
-               default='/var/run/os-collect-config',
+               default='/var/lib/os-collect-config',
                help='Directory in which to store local cache of metadata'),
+    cfg.StrOpt('backup-cachedir',
+               default='/var/run/os-collect-config',
+               help='Copy cache contents to this directory as well.'),
     cfg.MultiStrOpt(
         'collectors',
         positional=True,
@@ -128,6 +132,10 @@ def collect_all(collectors, store=False, requests_impl_map=None):
 
     if any_changed:
         cache.store_meta_list('os_config_files', collectors)
+        if os.path.exists(CONF.backup_cachedir):
+            shutil.rmtree(CONF.backup_cachedir)
+        if os.path.exists(CONF.cachedir):
+            shutil.copytree(CONF.cachedir, CONF.backup_cachedir)
     return (any_changed, paths_or_content)
 
 

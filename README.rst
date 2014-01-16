@@ -39,7 +39,7 @@ set as a colon separated list in the environment variable
 above, *os-refresh-config* would be executed with something like this
 in *OS_CONFIG_FILES*::
 
-  /var/run/os-collect-config/ec2.json:/var/run/os-collect-config/cfn.json
+  /var/lib/os-collect-config/ec2.json:/var/lib/os-collect-config/cfn.json
 
 The previous version of the metadata from a source (if available) is present at $FILENAME.last.
 

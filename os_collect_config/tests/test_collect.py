@@ -69,6 +69,7 @@ class TestCollect(testtools.TestCase):
     def test_main(self):
         expected_cmd = self.getUniqueString()
         cache_dir = self.useFixture(fixtures.TempDir())
+        backup_cache_dir = self.useFixture(fixtures.TempDir())
         fake_metadata = _setup_local_metadata(self)
         occ_args = [
             'os-collect-config',
@@ -76,6 +77,8 @@ class TestCollect(testtools.TestCase):
             expected_cmd,
             '--cachedir',
             cache_dir.path,
+            '--backup-cachedir',
+            backup_cache_dir.path,
             '--config-file',
             '/dev/null',
             '--cfn-metadata-url',
@@ -94,32 +97,35 @@ class TestCollect(testtools.TestCase):
         calls = self._fake_popen_call_main(occ_args)
         proc_args = calls[0]
         self.assertEqual(expected_cmd, proc_args['args'])
-        list_path = os.path.join(cache_dir.path, 'os_config_files.json')
-        with open(list_path) as list_file:
-            config_list = json.loads(list_file.read())
-        self.assertThat(config_list, matchers.IsInstance(list))
-        env_config_list = proc_args['env']['OS_CONFIG_FILES'].split(':')
-        self.assertEqual(env_config_list, config_list)
-        keys_found = set()
-        for path in env_config_list:
-            self.assertTrue(os.path.exists(path))
-            with open(path) as cfg_file:
-                contents = json.loads(cfg_file.read())
-                keys_found.update(set(contents.keys()))
-        # From test_ec2.FakeRequests
-        self.assertIn("local-ipv4", keys_found)
-        self.assertIn("reservation-id", keys_found)
-        # From test_cfn.FakeRequests
-        self.assertIn("int1", keys_found)
-        self.assertIn("map_ab", keys_found)
+        for test_dir in (cache_dir, backup_cache_dir):
+            list_path = os.path.join(test_dir.path, 'os_config_files.json')
+            with open(list_path) as list_file:
+                config_list = json.loads(list_file.read())
+            self.assertThat(config_list, matchers.IsInstance(list))
+            env_config_list = proc_args['env']['OS_CONFIG_FILES'].split(':')
+            self.assertEqual(env_config_list, config_list)
+            keys_found = set()
+            for path in env_config_list:
+                self.assertTrue(os.path.exists(path))
+                with open(path) as cfg_file:
+                    contents = json.loads(cfg_file.read())
+                    keys_found.update(set(contents.keys()))
+            # From test_ec2.FakeRequests
+            self.assertIn("local-ipv4", keys_found)
+            self.assertIn("reservation-id", keys_found)
+            # From test_cfn.FakeRequests
+            self.assertIn("int1", keys_found)
+            self.assertIn("map_ab", keys_found)
 
     def test_main_force_command(self):
         cache_dir = self.useFixture(fixtures.TempDir())
+        backup_cache_dir = self.useFixture(fixtures.TempDir())
         fake_metadata = _setup_local_metadata(self)
         occ_args = [
             'os-collect-config',
             '--command', 'foo',
             '--cachedir', cache_dir.path,
+            '--backup-cachedir', backup_cache_dir.path,
             '--config-file', '/dev/null',
             '--heat_local-path', fake_metadata,
             '--force',
@@ -133,6 +139,7 @@ class TestCollect(testtools.TestCase):
 
     def test_main_command_failed_no_caching(self):
         cache_dir = self.useFixture(fixtures.TempDir())
+        backup_cache_dir = self.useFixture(fixtures.TempDir())
         fake_metadata = _setup_local_metadata(self)
         occ_args = [
             'os-collect-config',
@@ -140,6 +147,8 @@ class TestCollect(testtools.TestCase):
             'foo',
             '--cachedir',
             cache_dir.path,
+            '--backup-cachedir',
+            backup_cache_dir.path,
             '--config-file',
             '/dev/null',
             '--heat_local-path',
@@ -152,9 +161,10 @@ class TestCollect(testtools.TestCase):
             return dict(returncode=1)
         self.useFixture(fixtures.FakePopen(capture_popen))
         self._call_main(occ_args)
-        cache_contents = os.listdir(cache_dir.path)
-        last_files = [name for name in cache_contents if name.endswith('last')]
-        self.assertEqual([], last_files)
+        for test_dir in (cache_dir, backup_cache_dir):
+            cache_contents = os.listdir(test_dir.path)
+            last_files = [n for n in cache_contents if n.endswith('last')]
+            self.assertEqual([], last_files)
 
     def test_main_no_command(self):
         fake_args = [
@@ -202,11 +212,13 @@ class TestCollect(testtools.TestCase):
 
     def test_main_print_only(self):
         cache_dir = self.useFixture(fixtures.TempDir())
+        backup_cache_dir = self.useFixture(fixtures.TempDir())
         fake_metadata = _setup_local_metadata(self)
         args = [
             'os-collect-config',
             '--command', 'bar',
             '--cachedir', cache_dir.path,
+            '--backup-cachedir', backup_cache_dir.path,
             '--config-file', '/dev/null',
             '--print',
             '--cfn-metadata-url',
@@ -269,6 +281,7 @@ class TestCollectAll(testtools.TestCase):
         self.useFixture(fixtures.FakeLogger())
         collect.setup_conf()
         self.cache_dir = self.useFixture(fixtures.TempDir())
+        self.backup_cache_dir = self.useFixture(fixtures.TempDir())
         self.clean_conf = copy.copy(cfg.CONF)
 
         def restore_copy():
@@ -276,6 +289,7 @@ class TestCollectAll(testtools.TestCase):
         self.addCleanup(restore_copy)
 
         cfg.CONF.cachedir = self.cache_dir.path
+        cfg.CONF.backup_cachedir = self.backup_cache_dir.path
         cfg.CONF.cfn.metadata_url = 'http://127.0.0.1:8000/v1/'
         cfg.CONF.cfn.stack_name = 'foo'
         cfg.CONF.cfn.path = ['foo.Metadata']
@@ -339,7 +353,7 @@ class TestConf(testtools.TestCase):
 
     def test_setup_conf(self):
         collect.setup_conf()
-        self.assertEqual('/var/run/os-collect-config', cfg.CONF.cachedir)
+        self.assertEqual('/var/lib/os-collect-config', cfg.CONF.cachedir)
         self.assertTrue(extras.safe_hasattr(cfg.CONF, 'ec2'))
         self.assertTrue(extras.safe_hasattr(cfg.CONF, 'cfn'))
 
