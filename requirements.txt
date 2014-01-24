@@ -3,7 +3,7 @@ pbr>=0.5.21,<1.0
 anyjson>=0.3.3
 argparse
 eventlet>=0.13.0
-python-keystoneclient>=0.4.1
+python-keystoneclient>=0.4.2
 requests>=1.1
 iso8601>=0.1.8
 lxml>=2.3
