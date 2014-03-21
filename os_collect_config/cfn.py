@@ -43,6 +43,12 @@ opts = [
                help='Secret Access Key'),
     cfg.StrOpt('access-key-id',
                help='Access Key ID'),
+    cfg.MultiStrOpt('deployment-key',
+                    default=['deployments'],
+                    help='Key(s) to explode into multiple collected outputs. '
+                    'Parsed according to the expected Metadata created by '
+                    'OS::Heat::StructuredDeployment. Only Exploded if seen at '
+                    'the root of the Metadata.')
 ]
 name = 'cfn'
 
@@ -126,4 +132,25 @@ class Collector(object):
                             'Sub-key %s does not exist. (%s)' % (subkey, path))
                         raise exc.CfnMetadataNotAvailable
             final_content.update(value)
-        return [('cfn', final_content)]
+        final_list = []
+        for depkey in cfg.CONF.cfn.deployment_key:
+            if depkey in final_content:
+                deployments = final_content[depkey]
+                if not isinstance(deployments, list):
+                    logger.warn(
+                        'Deployment-key %s was found but does not contain a '
+                        'list.' % (depkey,))
+                    continue
+                logger.debug(
+                    'Deployment found for %s' % (depkey,))
+                for deployment in deployments:
+                    if 'name' not in deployment:
+                        logger.warn(
+                            'No name found for a deployment under %s.' %
+                            (depkey,))
+                        continue
+                    final_list.append((deployment['name'],
+                                       deployment['config']))
+                del final_content[depkey]
+        final_list.insert(0, ('cfn', final_content))
+        return final_list
