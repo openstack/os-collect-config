@@ -126,4 +126,4 @@ class Collector(object):
                             'Sub-key %s does not exist. (%s)' % (subkey, path))
                         raise exc.CfnMetadataNotAvailable
             final_content.update(value)
-        return final_content
+        return [('cfn', final_content)]

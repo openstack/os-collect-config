@@ -54,4 +54,4 @@ class Collector(object):
             logger.warn('Local metadata not found (%s)' %
                         cfg.CONF.heat_local.path)
             raise exc.HeatLocalMetadataNotAvailable
-        return final_content
+        return [('heat_local', final_content)]

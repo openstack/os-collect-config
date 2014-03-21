@@ -92,7 +92,9 @@ class TestEc2(testtools.TestCase):
     def test_collect_ec2(self):
         collect.setup_conf()
         ec2_md = ec2.Collector(requests_impl=FakeRequests).collect()
-        self.assertThat(ec2_md, matchers.IsInstance(dict))
+        self.assertThat(ec2_md, matchers.IsInstance(list))
+        self.assertEqual('ec2', ec2_md[0][0])
+        ec2_md = ec2_md[0][1]
 
         for k in ('public-ipv4', 'instance-id', 'hostname'):
             self.assertIn(k, ec2_md)

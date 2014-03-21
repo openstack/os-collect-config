@@ -57,4 +57,4 @@ class Collector(object):
 
     def collect(self):
         root_url = '%s/' % (CONF.ec2.metadata_url)
-        return self._fetch_metadata(root_url)
+        return [('ec2', self._fetch_metadata(root_url))]

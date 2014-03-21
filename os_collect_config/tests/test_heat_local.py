@@ -48,7 +48,9 @@ class TestHeatLocal(testtools.TestCase):
 
     def _call_collect(self, temp_name):
         cfg.CONF.heat_local.path = [temp_name]
-        return heat_local.Collector().collect()
+        md = heat_local.Collector().collect()
+        self.assertEqual('heat_local', md[0][0])
+        return md[0][1]
 
     def test_collect_heat_local(self):
         with tempfile.NamedTemporaryFile() as md:

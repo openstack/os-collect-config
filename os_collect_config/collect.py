@@ -124,11 +124,12 @@ def collect_all(collectors, store=False, requests_impl_map=None):
             continue
 
         if store:
-            (changed, path) = cache.store(collector, content)
-            any_changed |= changed
-            paths_or_content.append(path)
+            for output_key, output_content in content:
+                (changed, path) = cache.store(output_key, output_content)
+                any_changed |= changed
+                paths_or_content.append(path)
         else:
-            paths_or_content[collector] = content
+            paths_or_content.update(content)
 
     if any_changed:
         cache.store_meta_list('os_config_files', collectors)

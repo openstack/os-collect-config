@@ -109,7 +109,9 @@ class TestCfn(testtools.TestCase):
 
     def test_collect_cfn(self):
         cfn_md = cfn.Collector(requests_impl=FakeRequests(self)).collect()
-        self.assertThat(cfn_md, matchers.IsInstance(dict))
+        self.assertThat(cfn_md, matchers.IsInstance(list))
+        self.assertEqual('cfn', cfn_md[0][0])
+        cfn_md = cfn_md[0][1]
 
         for k in ('int1', 'strfoo', 'map_ab'):
             self.assertIn(k, cfn_md)
@@ -150,7 +152,9 @@ class TestCfn(testtools.TestCase):
         cfg.CONF.cfn.path = ['foo.Metadata.map_ab']
         cfn_collect = cfn.Collector(requests_impl=FakeRequests(self))
         content = cfn_collect.collect()
-        self.assertThat(content, matchers.IsInstance(dict))
+        self.assertThat(content, matchers.IsInstance(list))
+        self.assertEqual('cfn', content[0][0])
+        content = content[0][1]
         self.assertIn(u'b', content)
         self.assertEqual(u'banana', content[u'b'])
 
