@@ -38,12 +38,74 @@ META_DATA = {u'int1': 1,
              }}
 
 
+SOFTWARE_CONFIG_DATA = {
+    u'old-style': u'value',
+    u'deployments': [
+        {
+            u'inputs': [
+                {
+                    u'type': u'String',
+                    u'name': u'input1',
+                    u'value': u'value1'
+                }
+            ],
+            u'group': 'Heat::Ungrouped',
+            u'name': 'dep-name1',
+            u'outputs': None,
+            u'options': None,
+            u'config': {
+                u'config1': 'value1'
+            }
+        }
+    ]
+}
+
+
+SOFTWARE_CONFIG_IMPOSTER_DATA = {
+    u'old-style': u'value',
+    u'deployments': {
+        u"not": u"a list"
+    }
+}
+
+
 class FakeResponse(dict):
     def __init__(self, text):
         self.text = text
 
     def raise_for_status(self):
         pass
+
+
+class FakeReqSession(object):
+
+    SESSION_META_DATA = META_DATA
+
+    def __init__(self, testcase, expected_netloc):
+        self._test = testcase
+        self._expected_netloc = expected_netloc
+
+    def get(self, url, params, headers):
+        self._test.addDetail('url', test_content.text_content(url))
+        url = urlparse.urlparse(url)
+        self._test.assertEqual(self._expected_netloc, url.netloc)
+        self._test.assertEqual('/v1/', url.path)
+        self._test.assertEqual('application/json',
+                               headers['Content-Type'])
+        self._test.assertIn('SignatureVersion', params)
+        self._test.assertEqual('2', params['SignatureVersion'])
+        self._test.assertIn('Signature', params)
+        self._test.assertIn('Action', params)
+        self._test.assertEqual('DescribeStackResource',
+                               params['Action'])
+        self._test.assertIn('LogicalResourceId', params)
+        self._test.assertEqual('foo', params['LogicalResourceId'])
+        root = etree.Element('DescribeStackResourceResponse')
+        result = etree.SubElement(root, 'DescribeStackResourceResult')
+        detail = etree.SubElement(result, 'StackResourceDetail')
+        metadata = etree.SubElement(detail, 'Metadata')
+        metadata.text = json.dumps(self.SESSION_META_DATA)
+        return FakeResponse(etree.tostring(root))
 
 
 class FakeRequests(object):
@@ -54,33 +116,31 @@ class FakeRequests(object):
         self._expected_netloc = expected_netloc
 
     def Session(self):
-        class FakeReqSession(object):
-            def __init__(self, testcase, expected_netloc):
-                self._test = testcase
-                self._expected_netloc = expected_netloc
 
-            def get(self, url, params, headers):
-                self._test.addDetail('url', test_content.text_content(url))
-                url = urlparse.urlparse(url)
-                self._test.assertEqual(self._expected_netloc, url.netloc)
-                self._test.assertEqual('/v1/', url.path)
-                self._test.assertEqual('application/json',
-                                       headers['Content-Type'])
-                self._test.assertIn('SignatureVersion', params)
-                self._test.assertEqual('2', params['SignatureVersion'])
-                self._test.assertIn('Signature', params)
-                self._test.assertIn('Action', params)
-                self._test.assertEqual('DescribeStackResource',
-                                       params['Action'])
-                self._test.assertIn('LogicalResourceId', params)
-                self._test.assertEqual('foo', params['LogicalResourceId'])
-                root = etree.Element('DescribeStackResourceResponse')
-                result = etree.SubElement(root, 'DescribeStackResourceResult')
-                detail = etree.SubElement(result, 'StackResourceDetail')
-                metadata = etree.SubElement(detail, 'Metadata')
-                metadata.text = json.dumps(META_DATA)
-                return FakeResponse(etree.tostring(root))
         return FakeReqSession(self._test, self._expected_netloc)
+
+
+class FakeReqSessionSoftwareConfig(FakeReqSession):
+
+    SESSION_META_DATA = SOFTWARE_CONFIG_DATA
+
+
+class FakeRequestsSoftwareConfig(FakeRequests):
+
+    FAKE_SESSION = FakeReqSessionSoftwareConfig
+
+    def Session(self):
+        return self.FAKE_SESSION(self._test, self._expected_netloc)
+
+
+class FakeReqSessionConfigImposter(FakeReqSession):
+
+    SESSION_META_DATA = SOFTWARE_CONFIG_IMPOSTER_DATA
+
+
+class FakeRequestsConfigImposter(FakeRequestsSoftwareConfig):
+
+    FAKE_SESSION = FakeReqSessionConfigImposter
 
 
 class FakeFailRequests(object):
@@ -91,9 +151,9 @@ class FakeFailRequests(object):
             raise requests.exceptions.HTTPError(403, 'Forbidden')
 
 
-class TestCfn(testtools.TestCase):
+class TestCfnBase(testtools.TestCase):
     def setUp(self):
-        super(TestCfn, self).setUp()
+        super(TestCfnBase, self).setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         self.hint_file = tempfile.NamedTemporaryFile()
@@ -107,6 +167,8 @@ class TestCfn(testtools.TestCase):
         cfg.CONF.cfn.access_key_id = '0123456789ABCDEF'
         cfg.CONF.cfn.secret_access_key = 'FEDCBA9876543210'
 
+
+class TestCfn(TestCfnBase):
     def test_collect_cfn(self):
         cfn_md = cfn.Collector(requests_impl=FakeRequests(self)).collect()
         self.assertThat(cfn_md, matchers.IsInstance(list))
@@ -164,3 +226,24 @@ class TestCfn(testtools.TestCase):
             requests_impl=FakeRequests(self,
                                        expected_netloc='127.0.1.1:8000'))
         cfn_collect.collect()
+
+
+class TestCfnSoftwareConfig(TestCfnBase):
+    def test_collect_cfn_software_config(self):
+        cfn_md = cfn.Collector(
+            requests_impl=FakeRequestsSoftwareConfig(self)).collect()
+        self.assertThat(cfn_md, matchers.IsInstance(list))
+        self.assertEqual('cfn', cfn_md[0][0])
+        cfn_config = cfn_md[0][1]
+        self.assertEqual({'old-style': 'value'}, cfn_config)
+        self.assertEqual('dep-name1', cfn_md[1][0])
+        config = cfn_md[1][1]
+        self.assertEqual('value1', config['config1'])
+
+    def test_collect_cfn_deployments_not_list(self):
+        cfn_md = cfn.Collector(
+            requests_impl=FakeRequestsConfigImposter(self)).collect()
+        self.assertEqual(1, len(cfn_md))
+        self.assertEqual('cfn', cfn_md[0][0])
+        self.assertIn('not', cfn_md[0][1]['deployments'])
+        self.assertEqual('a list', cfn_md[0][1]['deployments']['not'])
