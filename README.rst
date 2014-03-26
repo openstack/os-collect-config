@@ -12,6 +12,10 @@ What does it do?
 It collects data from defined configuration sources and runs a defined
 hook whenever the metadata has been changed.
 
+.. image:: os-collect-config-and-friends.svg
+
+[#update_svg]_
+
 Usage
 =====
 
@@ -57,3 +61,5 @@ Run it on an OpenStack instance with access to ec2 metadata::
   os-collect-config
 
 That should print out a json representation of the entire ec2 metadata tree.
+
+.. [#update_svg] Recommend using LibreOffice draw to edit os-collect-config-and-friends.odg and regenerate the svg file. Alternatively edit the svg directly, but remove the .odg file if that is done.
