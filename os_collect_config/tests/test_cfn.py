@@ -235,7 +235,16 @@ class TestCfnSoftwareConfig(TestCfnBase):
         self.assertThat(cfn_md, matchers.IsInstance(list))
         self.assertEqual('cfn', cfn_md[0][0])
         cfn_config = cfn_md[0][1]
-        self.assertEqual({'old-style': 'value'}, cfn_config)
+        self.assertThat(cfn_config, matchers.IsInstance(dict))
+        self.assertEqual(set(['old-style', 'deployments']),
+                         set(cfn_config.keys()))
+        self.assertIn('deployments', cfn_config)
+        self.assertThat(cfn_config['deployments'], matchers.IsInstance(list))
+        self.assertEqual(1, len(cfn_config['deployments']))
+        deployment = cfn_config['deployments'][0]
+        self.assertIn('inputs', deployment)
+        self.assertThat(deployment['inputs'], matchers.IsInstance(list))
+        self.assertEqual(1, len(deployment['inputs']))
         self.assertEqual('dep-name1', cfn_md[1][0])
         config = cfn_md[1][1]
         self.assertEqual('value1', config['config1'])

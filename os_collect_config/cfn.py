@@ -151,6 +151,5 @@ class Collector(object):
                         continue
                     final_list.append((deployment['name'],
                                        deployment['config']))
-                del final_content[depkey]
         final_list.insert(0, ('cfn', final_content))
         return final_list
