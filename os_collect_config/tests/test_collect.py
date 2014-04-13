@@ -309,15 +309,22 @@ class TestCollectAll(testtools.TestCase):
             store=store,
             requests_impl_map=requests_impl_map)
 
-    def test_collect_all_store(self):
-        (any_changed, paths) = self._call_collect_all(store=True)
+    def _test_collect_all_store(self, requests_impl_map=None):
+        (any_changed, paths) = self._call_collect_all(
+            store=True, requests_impl_map=requests_impl_map)
         self.assertTrue(any_changed)
         self.assertThat(paths, matchers.IsInstance(list))
-        for collector in cfg.CONF.collectors:
-            self.assertIn(os.path.join(self.cache_dir.path, '%s.json' %
-                                                            collector),
-                          paths)
-            self.assertTrue(any_changed)
+        for path in paths:
+            self.assertTrue(os.path.exists(path))
+            self.assertTrue(os.path.exists('%s.orig' % path))
+
+    def test_collect_all_store(self):
+        self._test_collect_all_store()
+
+    def test_collect_all_store_softwareconfig(self):
+        soft_config_map = {'ec2': test_ec2.FakeRequests,
+                           'cfn': test_cfn.FakeRequestsSoftwareConfig(self)}
+        self._test_collect_all_store(requests_impl_map=soft_config_map)
 
     def test_collect_all_store_alt_order(self):
         # Ensure different than default
