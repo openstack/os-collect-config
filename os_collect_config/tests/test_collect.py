@@ -26,6 +26,7 @@ from oslo.config import cfg
 import testtools
 from testtools import matchers
 
+from os_collect_config import cache
 from os_collect_config import collect
 from os_collect_config import exc
 from os_collect_config.tests import test_cfn
@@ -337,6 +338,16 @@ class TestCollectAll(testtools.TestCase):
             os.path.join(self.cache_dir.path, '%s.json' % collector)
             for collector in new_list]
         self.assertEqual(expected_paths, paths)
+
+    def test_collect_all_no_change(self):
+        (any_changed, paths) = self._call_collect_all(store=True)
+        self.assertTrue(any_changed)
+        # Commit
+        for collector in cfg.CONF.collectors:
+            cache.commit(collector)
+        (any_changed, paths2) = self._call_collect_all(store=True)
+        self.assertFalse(any_changed)
+        self.assertEqual(paths, paths2)
 
     def test_collect_all_nostore(self):
         (any_changed, content) = self._call_collect_all(store=False)
