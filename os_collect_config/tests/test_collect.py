@@ -310,10 +310,13 @@ class TestCollectAll(testtools.TestCase):
             store=store,
             requests_impl_map=requests_impl_map)
 
-    def _test_collect_all_store(self, requests_impl_map=None):
-        (any_changed, paths) = self._call_collect_all(
+    def _test_collect_all_store(self, requests_impl_map=None,
+                                expected_changed=None):
+        (changed_keys, paths) = self._call_collect_all(
             store=True, requests_impl_map=requests_impl_map)
-        self.assertTrue(any_changed)
+        if expected_changed is None:
+            expected_changed = set(['heat_local', 'cfn', 'ec2'])
+        self.assertEqual(expected_changed, changed_keys)
         self.assertThat(paths, matchers.IsInstance(list))
         for path in paths:
             self.assertTrue(os.path.exists(path))
@@ -325,14 +328,16 @@ class TestCollectAll(testtools.TestCase):
     def test_collect_all_store_softwareconfig(self):
         soft_config_map = {'ec2': test_ec2.FakeRequests,
                            'cfn': test_cfn.FakeRequestsSoftwareConfig(self)}
-        self._test_collect_all_store(requests_impl_map=soft_config_map)
+        expected_changed = set(('heat_local', 'ec2', 'cfn', 'dep-name1'))
+        self._test_collect_all_store(requests_impl_map=soft_config_map,
+                                     expected_changed=expected_changed)
 
     def test_collect_all_store_alt_order(self):
         # Ensure different than default
         new_list = list(reversed(cfg.CONF.collectors))
-        (any_changed, paths) = self._call_collect_all(store=True,
-                                                      collectors=new_list)
-        self.assertTrue(any_changed)
+        (changed_keys, paths) = self._call_collect_all(
+            store=True, collectors=new_list)
+        self.assertEqual(set(cfg.CONF.collectors), changed_keys)
         self.assertThat(paths, matchers.IsInstance(list))
         expected_paths = [
             os.path.join(self.cache_dir.path, '%s.json' % collector)
@@ -340,18 +345,34 @@ class TestCollectAll(testtools.TestCase):
         self.assertEqual(expected_paths, paths)
 
     def test_collect_all_no_change(self):
-        (any_changed, paths) = self._call_collect_all(store=True)
-        self.assertTrue(any_changed)
+        (changed_keys, paths) = self._call_collect_all(store=True)
+        self.assertEqual(set(cfg.CONF.collectors), changed_keys)
         # Commit
-        for collector in cfg.CONF.collectors:
-            cache.commit(collector)
-        (any_changed, paths2) = self._call_collect_all(store=True)
-        self.assertFalse(any_changed)
+        for changed in changed_keys:
+            cache.commit(changed)
+        (changed_keys, paths2) = self._call_collect_all(store=True)
+        self.assertEqual(set(), changed_keys)
+        self.assertEqual(paths, paths2)
+
+    def test_collect_all_no_change_softwareconfig(self):
+        soft_config_map = {'ec2': test_ec2.FakeRequests,
+                           'cfn': test_cfn.FakeRequestsSoftwareConfig(self)}
+        (changed_keys, paths) = self._call_collect_all(
+            store=True, requests_impl_map=soft_config_map)
+        expected_changed = set(cfg.CONF.collectors)
+        expected_changed.add('dep-name1')
+        self.assertEqual(expected_changed, changed_keys)
+        # Commit
+        for changed in changed_keys:
+            cache.commit(changed)
+        (changed_keys, paths2) = self._call_collect_all(
+            store=True, requests_impl_map=soft_config_map)
+        self.assertEqual(set(), changed_keys)
         self.assertEqual(paths, paths2)
 
     def test_collect_all_nostore(self):
-        (any_changed, content) = self._call_collect_all(store=False)
-        self.assertFalse(any_changed)
+        (changed_keys, content) = self._call_collect_all(store=False)
+        self.assertEqual(set(), changed_keys)
         self.assertThat(content, matchers.IsInstance(dict))
         for collector in cfg.CONF.collectors:
             self.assertIn(collector, content)
@@ -360,9 +381,9 @@ class TestCollectAll(testtools.TestCase):
     def test_collect_all_ec2_unavailable(self):
         requests_impl_map = {'ec2': test_ec2.FakeFailRequests,
                              'cfn': test_cfn.FakeRequests(self)}
-        (any_changed, content) = self._call_collect_all(
+        (changed_keys, content) = self._call_collect_all(
             store=False, requests_impl_map=requests_impl_map)
-        self.assertFalse(any_changed)
+        self.assertEqual(set(), changed_keys)
         self.assertThat(content, matchers.IsInstance(dict))
         self.assertNotIn('ec2', content)
 

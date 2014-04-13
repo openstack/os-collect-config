@@ -103,7 +103,8 @@ def setup_conf():
 
 
 def collect_all(collectors, store=False, requests_impl_map=None):
-    any_changed = False
+    changed_keys = set()
+    all_keys = list()
     if store:
         paths_or_content = []
     else:
@@ -125,19 +126,21 @@ def collect_all(collectors, store=False, requests_impl_map=None):
 
         if store:
             for output_key, output_content in content:
+                all_keys.append(output_key)
                 (changed, path) = cache.store(output_key, output_content)
-                any_changed |= changed
+                if changed:
+                    changed_keys.add(output_key)
                 paths_or_content.append(path)
         else:
             paths_or_content.update(content)
 
-    if any_changed:
-        cache.store_meta_list('os_config_files', collectors)
+    if changed_keys:
+        cache.store_meta_list('os_config_files', all_keys)
         if os.path.exists(CONF.backup_cachedir):
             shutil.rmtree(CONF.backup_cachedir)
         if os.path.exists(CONF.cachedir):
             shutil.copytree(CONF.cachedir, CONF.backup_cachedir)
-    return (any_changed, paths_or_content)
+    return (changed_keys, paths_or_content)
 
 
 def reexec_self(signal=None, frame=None):
@@ -204,12 +207,12 @@ def __main__(args=sys.argv, requests_impl_map=None):
     config_hash = getfilehash(config_files)
     while True:
         store_and_run = bool(CONF.command and not CONF.print_only)
-        (any_changed, content) = collect_all(
+        (changed_keys, content) = collect_all(
             cfg.CONF.collectors,
             store=store_and_run,
             requests_impl_map=requests_impl_map)
         if store_and_run:
-            if any_changed or CONF.force:
+            if changed_keys or CONF.force:
                 # ignore HUP now since we will reexec after commit anyway
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
                 try:
@@ -232,8 +235,8 @@ def __main__(args=sys.argv, requests_impl_map=None):
                             logger.warn('Config changed, re-execing now')
                             config_hash = new_config_hash
                 else:
-                    for collector in cfg.CONF.collectors:
-                        cache.commit(collector)
+                    for changed in changed_keys:
+                        cache.commit(changed)
                 if not CONF.one_time:
                     reexec_self()
             else:
