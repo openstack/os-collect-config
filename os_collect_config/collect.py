@@ -25,14 +25,14 @@ import time
 from openstack.common import log
 from os_collect_config import cache
 from os_collect_config import cfn
-from os_collect_config import common
 from os_collect_config import ec2
 from os_collect_config import exc
+from os_collect_config import heat
 from os_collect_config import heat_local
 from os_collect_config import version
 from oslo.config import cfg
 
-DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn']
+DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn', 'heat']
 opts = [
     cfg.StrOpt('command', short='c',
                help='Command to run on metadata changes. If specified,'
@@ -79,6 +79,7 @@ logger = log.getLogger('os-collect-config')
 
 COLLECTORS = {ec2.name: ec2,
               cfn.name: cfn,
+              heat.name: heat,
               heat_local.name: heat_local}
 
 
@@ -92,17 +93,22 @@ def setup_conf():
     heat_local_group = cfg.OptGroup(name='heat_local',
                                     title='Heat Local Metadata options')
 
+    heat_group = cfg.OptGroup(name='heat',
+                              title='Heat Metadata options')
+
     CONF.register_group(ec2_group)
     CONF.register_group(cfn_group)
     CONF.register_group(heat_local_group)
+    CONF.register_group(heat_group)
     CONF.register_cli_opts(ec2.opts, group='ec2')
     CONF.register_cli_opts(cfn.opts, group='cfn')
     CONF.register_cli_opts(heat_local.opts, group='heat_local')
+    CONF.register_cli_opts(heat.opts, group='heat')
 
     CONF.register_cli_opts(opts)
 
 
-def collect_all(collectors, store=False, requests_impl_map=None):
+def collect_all(collectors, store=False, collector_kwargs_map=None):
     changed_keys = set()
     all_keys = list()
     if store:
@@ -112,14 +118,13 @@ def collect_all(collectors, store=False, requests_impl_map=None):
 
     for collector in collectors:
         module = COLLECTORS[collector]
-        if requests_impl_map and collector in requests_impl_map:
-            requests_impl = requests_impl_map[collector]
+        if collector_kwargs_map and collector in collector_kwargs_map:
+            collector_kwargs = collector_kwargs_map[collector]
         else:
-            requests_impl = common.requests
+            collector_kwargs = {}
 
         try:
-            content = module.Collector(
-                requests_impl=requests_impl).collect()
+            content = module.Collector(**collector_kwargs).collect()
         except exc.SourceNotAvailable:
             logger.warn('Source [%s] Unavailable.' % collector)
             continue
@@ -178,7 +183,7 @@ def getfilehash(files):
     return m.hexdigest()
 
 
-def __main__(args=sys.argv, requests_impl_map=None):
+def __main__(args=sys.argv, collector_kwargs_map=None):
     signal.signal(signal.SIGHUP, reexec_self)
     setup_conf()
     CONF(args=args[1:], prog="os-collect-config",
@@ -210,7 +215,7 @@ def __main__(args=sys.argv, requests_impl_map=None):
         (changed_keys, content) = collect_all(
             cfg.CONF.collectors,
             store=store_and_run,
-            requests_impl_map=requests_impl_map)
+            collector_kwargs_map=collector_kwargs_map)
         if store_and_run:
             if changed_keys or CONF.force:
                 # ignore HUP now since we will reexec after commit anyway

@@ -26,8 +26,16 @@ class CfnMetadataNotAvailable(SourceNotAvailable):
     """The cfn metadata service is not available."""
 
 
+class HeatMetadataNotAvailable(SourceNotAvailable):
+    """The heat metadata service is not available."""
+
+
 class CfnMetadataNotConfigured(SourceNotAvailable):
     """The cfn metadata service is not fully configured."""
+
+
+class HeatMetadataNotConfigured(SourceNotAvailable):
+    """The heat metadata service is not fully configured."""
 
 
 class HeatLocalMetadataNotAvailable(SourceNotAvailable):
