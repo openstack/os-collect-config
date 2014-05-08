@@ -149,7 +149,9 @@ class Collector(object):
                             'No name found for a deployment under %s.' %
                             (depkey,))
                         continue
-                    final_list.append((deployment['name'],
-                                       deployment['config']))
+                    if deployment.get('group', 'Heat::Ungrouped') in (
+                            'os-apply-config', 'Heat::Ungrouped'):
+                        final_list.append((deployment['name'],
+                                           deployment['config']))
         final_list.insert(0, ('cfn', final_content))
         return final_list

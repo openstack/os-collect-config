@@ -56,6 +56,45 @@ SOFTWARE_CONFIG_DATA = {
             u'config': {
                 u'config1': 'value1'
             }
+        },
+        {
+            u'inputs': [
+                {
+                    u'type': u'String',
+                    u'name': u'input1',
+                    u'value': u'value1'
+                }
+            ],
+            u'group': 'os-apply-config',
+            u'name': 'dep-name2',
+            u'outputs': None,
+            u'options': None,
+            u'config': {
+                u'config2': 'value2'
+            }
+        },
+        {
+            u'inputs': [
+                {
+                    u'type': u'String',
+                    u'name': u'input1',
+                    u'value': u'value1'
+                }
+            ],
+            u'name': 'dep-name3',
+            u'outputs': None,
+            u'options': None,
+            u'config': {
+                u'config3': 'value3'
+            }
+        },
+        {
+            u'inputs': [],
+            u'group': 'ignore_me',
+            u'name': 'ignore_me_name',
+            u'outputs': None,
+            u'options': None,
+            u'config': 'ignore_me_config'
         }
     ]
 }
@@ -240,14 +279,15 @@ class TestCfnSoftwareConfig(TestCfnBase):
                          set(cfn_config.keys()))
         self.assertIn('deployments', cfn_config)
         self.assertThat(cfn_config['deployments'], matchers.IsInstance(list))
-        self.assertEqual(1, len(cfn_config['deployments']))
+        self.assertEqual(4, len(cfn_config['deployments']))
         deployment = cfn_config['deployments'][0]
         self.assertIn('inputs', deployment)
         self.assertThat(deployment['inputs'], matchers.IsInstance(list))
         self.assertEqual(1, len(deployment['inputs']))
         self.assertEqual('dep-name1', cfn_md[1][0])
-        config = cfn_md[1][1]
-        self.assertEqual('value1', config['config1'])
+        self.assertEqual('value1', cfn_md[1][1]['config1'])
+        self.assertEqual('dep-name2', cfn_md[2][0])
+        self.assertEqual('value2', cfn_md[2][1]['config2'])
 
     def test_collect_cfn_deployments_not_list(self):
         cfn_md = cfn.Collector(
