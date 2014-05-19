@@ -368,7 +368,8 @@ class TestCollectAll(testtools.TestCase):
             }
         }
         expected_changed = set((
-            'heat_local', 'ec2', 'cfn', 'heat', 'dep-name1'))
+            'heat_local', 'ec2', 'cfn', 'heat',
+            'dep-name1', 'dep-name2', 'dep-name3'))
         self._test_collect_all_store(collector_kwargs_map=soft_config_map,
                                      expected_changed=expected_changed)
 
@@ -408,6 +409,8 @@ class TestCollectAll(testtools.TestCase):
             store=True, collector_kwargs_map=soft_config_map)
         expected_changed = set(cfg.CONF.collectors)
         expected_changed.add('dep-name1')
+        expected_changed.add('dep-name2')
+        expected_changed.add('dep-name3')
         self.assertEqual(expected_changed, changed_keys)
         # Commit
         for changed in changed_keys:
