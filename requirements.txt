@@ -10,3 +10,4 @@ iso8601>=0.1.9
 lxml>=2.3
 oslo.config>=1.2.1
 six>=1.7.0
+dogpile.cache>=0.5.3
