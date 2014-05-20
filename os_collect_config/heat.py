@@ -18,6 +18,7 @@ from oslo.config import cfg
 
 from openstack.common import log
 from os_collect_config import exc
+from os_collect_config import keystone
 
 CONF = cfg.CONF
 logger = log.getLogger(__name__)
@@ -67,11 +68,12 @@ class Collector(object):
             raise exc.HeatMetadataNotConfigured
 
         try:
-            ks = self.keystoneclient.Client(
+            ks = keystone.Keystone(
                 auth_url=CONF.heat.auth_url,
                 user_id=CONF.heat.user_id,
                 password=CONF.heat.password,
-                project_id=CONF.heat.project_id)
+                project_id=CONF.heat.project_id,
+                keystoneclient=self.keystoneclient).client
             endpoint = ks.service_catalog.url_for(
                 service_type='orchestration', endpoint_type='publicURL')
             logger.debug('Fetching metadata from %s' % endpoint)
