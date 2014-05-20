@@ -64,22 +64,28 @@ SOFTWARE_CONFIG_IMPOSTER_DATA = {
 
 class FakeKeystoneClient(object):
 
-    def __init__(self, testcase):
+    def __init__(self, testcase, configs=None):
         self._test = testcase
         self.service_catalog = self
         self.auth_token = 'atoken'
+        if configs is None:
+            configs = cfg.CONF.heat
+        self.configs = configs
 
     def Client(self, auth_url, user_id, password, project_id):
-        self._test.assertEqual(cfg.CONF.heat.auth_url, auth_url)
-        self._test.assertEqual(cfg.CONF.heat.user_id, user_id)
-        self._test.assertEqual(cfg.CONF.heat.password, password)
-        self._test.assertEqual(cfg.CONF.heat.project_id, project_id)
+        self._test.assertEqual(self.configs.auth_url, auth_url)
+        self._test.assertEqual(self.configs.user_id, user_id)
+        self._test.assertEqual(self.configs.password, password)
+        self._test.assertEqual(self.configs.project_id, project_id)
         return self
 
     def url_for(self, service_type, endpoint_type):
         self._test.assertEqual('orchestration', service_type)
         self._test.assertEqual('publicURL', endpoint_type)
         return 'http://127.0.0.1:8004/v1'
+
+    def get_auth_ref(self):
+        return 'this is an auth_ref'
 
 
 class FakeFailKeystoneClient(FakeKeystoneClient):

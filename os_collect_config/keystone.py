@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import hashlib
 import os
 
 from dogpile import cache
+from keystoneclient import exceptions as ks_exc
 from keystoneclient.v3 import client as ks_keystoneclient
 from oslo.config import cfg
 
@@ -65,12 +67,52 @@ class Keystone(object):
         else:
             self.cache = None
 
+    def _make_key(self, key):
+        m = hashlib.sha256()
+        m.update(self.auth_url)
+        m.update(self.user_id)
+        m.update(self.project_id)
+        m.update(key)
+        return m.hexdigest()
+
     @property
     def client(self):
         if not self._client:
-            self._client = self.keystoneclient.Client(
-                auth_url=self.auth_url,
-                user_id=self.user_id,
-                password=self.password,
-                project_id=self.project_id)
+            ref = self._get_auth_ref_from_cache()
+            if ref:
+                self._client = self.keystoneclient.Client(
+                    auth_ref=ref)
+            else:
+                self._client = self.keystoneclient.Client(
+                    auth_url=self.auth_url,
+                    user_id=self.user_id,
+                    password=self.password,
+                    project_id=self.project_id)
         return self._client
+
+    def _get_auth_ref_from_cache(self):
+        if self.cache:
+            key = self._make_key('auth_ref')
+            return self.cache.get(key)
+
+    @property
+    def auth_ref(self):
+        ref = self._get_auth_ref_from_cache()
+        if not ref:
+            ref = self.client.get_auth_ref()
+            if self.cache:
+                self.cache.set(self._make_key('auth_ref'), ref)
+        return ref
+
+    def invalidate_auth_ref(self):
+        if self.cache:
+            key = self._make_key('auth_ref')
+            return self.cache.delete(key)
+
+    @property
+    def service_catalog(self):
+        try:
+            return self.client.service_catalog
+        except ks_exc.AuthorizationFailure:
+            self.invalidate_auth_ref()
+            return self.client.service_catalog

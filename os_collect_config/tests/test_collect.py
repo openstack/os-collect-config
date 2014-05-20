@@ -48,6 +48,7 @@ class TestCollect(testtools.TestCase):
     def setUp(self):
         super(TestCollect, self).setUp()
         self.useFixture(fixtures.FakeLogger())
+        collect.setup_conf()
         self.addCleanup(cfg.CONF.reset)
 
     def _call_main(self, fake_args):
