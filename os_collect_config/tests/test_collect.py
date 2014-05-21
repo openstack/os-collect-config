@@ -114,7 +114,8 @@ class TestCollect(testtools.TestCase):
             '--heat-stack-id',
             'a/c482680f-7238-403d-8f76-36acf0c8e0aa',
             '--heat-resource-name',
-            'server'
+            'server',
+            'heat_local', 'ec2', 'cfn', 'heat',
         ]
         calls = self._fake_popen_call_main(occ_args)
         proc_args = calls[0]
@@ -203,6 +204,7 @@ class TestCollect(testtools.TestCase):
             '0123456789ABCDEF',
             '--cfn-secret-access-key',
             'FEDCBA9876543210',
+            'heat_local', 'ec2', 'cfn', 'heat',
         ]
         fake_metadata = _setup_local_metadata(self)
         fake_args.append('--heat_local-path')
@@ -254,6 +256,7 @@ class TestCollect(testtools.TestCase):
             '--cfn-secret-access-key',
             'FEDCBA9876543210',
             '--heat_local-path', fake_metadata,
+            'heat_local', 'ec2', 'cfn', 'heat',
         ]
 
         def fake_popen(args):
@@ -338,6 +341,8 @@ class TestCollectAll(testtools.TestCase):
             }
         if collectors is None:
             collectors = cfg.CONF.collectors
+            if 'cfn' not in collectors:
+                collectors.append('cfn')
         return collect.collect_all(
             collectors,
             store=store,
