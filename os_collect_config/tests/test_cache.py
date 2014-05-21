@@ -83,5 +83,19 @@ class TestCache(testtools.TestCase):
         self.assertThat(list_list, matchers.IsInstance(list))
         self.assertIn(path, list_list)
 
+    def test_cache_ignores_json_inequality(self):
+        content1 = u'{"a": "value-a", "b": "value-b"}'
+        content2 = u'{"b": "value-b", "a": "value-a"}'
+        value1 = json.loads(content1)
+        value2 = json.loads(content2)
+        self.assertEqual(value1, value2)
+        (changed, path) = cache.store('content', value1)
+        self.assertTrue(changed)
+        cache.commit('content')
+        (changed, path) = cache.store('content', value1)
+        self.assertFalse(changed)
+        (changed, path) = cache.store('content', value2)
+        self.assertFalse(changed)
+
     def test_commit_no_cache(self):
         self.assertEqual(None, cache.commit('neversaved'))

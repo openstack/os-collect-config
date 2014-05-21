@@ -57,16 +57,13 @@ def store(name, content):
         os.rename(new.name, dest_path)
 
     if not changed:
-        with open(dest_path) as now:
-            if os.path.exists(last_path):
-                with open(last_path) as then:
-                    for now_line in now:
-                        then_line = then.next()
-                        if then_line != now_line:
-                            changed = True
-                            break
-            else:
-                changed = True
+        if os.path.exists(last_path):
+            with open(last_path) as then:
+                then_value = json.load(then)
+                if then_value != content:
+                    changed = True
+        else:
+            changed = True
     return (changed, dest_path)
 
 
