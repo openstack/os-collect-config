@@ -3,10 +3,10 @@ pbr>=0.6,!=0.7,<1.0
 anyjson>=0.3.3
 argparse
 eventlet>=0.13.0
-python-keystoneclient>=0.8.0
-python-heatclient>=0.2.3
+python-keystoneclient>=0.9.0
+python-heatclient>=0.2.9
 requests>=1.1
 iso8601>=0.1.9
 lxml>=2.3
-oslo.config>=1.2.0
-six>=1.6.0
+oslo.config>=1.2.1
+six>=1.7.0
