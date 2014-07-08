@@ -33,8 +33,7 @@ from os_collect_config import keystone
 from os_collect_config import version
 from oslo.config import cfg
 
-ALL_COLLECTORS = ['heat_local', 'ec2', 'heat', 'cfn']
-DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'heat']
+DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn', 'heat']
 opts = [
     cfg.StrOpt('command', short='c',
                help='Command to run on metadata changes. If specified,'
@@ -206,11 +205,11 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
         print(CONF.cachedir)
         return
 
-    unknown_collectors = set(CONF.collectors) - set(ALL_COLLECTORS)
+    unknown_collectors = set(CONF.collectors) - set(DEFAULT_COLLECTORS)
     if unknown_collectors:
         raise exc.InvalidArguments(
             'Unknown collectors %s. Valid collectors are: %s' %
-            (list(unknown_collectors), ALL_COLLECTORS))
+            (list(unknown_collectors), DEFAULT_COLLECTORS))
 
     if CONF.force:
         CONF.set_override('one_time', True)
