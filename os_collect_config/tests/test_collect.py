@@ -300,7 +300,7 @@ class TestCollect(testtools.TestCase):
 class TestCollectAll(testtools.TestCase):
     def setUp(self):
         super(TestCollectAll, self).setUp()
-        self.useFixture(fixtures.FakeLogger())
+        self.log = self.useFixture(fixtures.FakeLogger())
         collect.setup_conf()
         self.cache_dir = self.useFixture(fixtures.TempDir())
         self.backup_cache_dir = self.useFixture(fixtures.TempDir())
@@ -439,6 +439,19 @@ class TestCollectAll(testtools.TestCase):
         self.assertEqual(set(), changed_keys)
         self.assertThat(content, matchers.IsInstance(dict))
         self.assertNotIn('ec2', content)
+
+    def test_collect_all_cfn_unconfigured(self):
+        collector_kwargs_map = {
+            'cfn': {'requests_impl': test_cfn.FakeRequests(self)}
+        }
+        cfg.CONF.cfn.metadata_url = None
+        (changed_keys, content) = self._call_collect_all(
+            store=False, collector_kwargs_map=collector_kwargs_map,
+            collectors=['heat_local', 'cfn'])
+        self.assertIn('No metadata_url configured', self.log.output)
+        self.assertNotIn('cfn', content)
+        self.assertIn('heat_local', content)
+        self.assertEqual(test_heat_local.META_DATA, content['heat_local'])
 
 
 class TestConf(testtools.TestCase):

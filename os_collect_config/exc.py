@@ -18,6 +18,10 @@ class SourceNotAvailable(RuntimeError):
     """The requested data source is unavailable."""
 
 
+class SourceNotConfigured(RuntimeError):
+    """The requested data source is not configured."""
+
+
 class Ec2MetadataNotAvailable(SourceNotAvailable):
     """The EC2 metadata service is not available."""
 
@@ -30,11 +34,11 @@ class HeatMetadataNotAvailable(SourceNotAvailable):
     """The heat metadata service is not available."""
 
 
-class CfnMetadataNotConfigured(SourceNotAvailable):
+class CfnMetadataNotConfigured(SourceNotConfigured):
     """The cfn metadata service is not fully configured."""
 
 
-class HeatMetadataNotConfigured(SourceNotAvailable):
+class HeatMetadataNotConfigured(SourceNotConfigured):
     """The heat metadata service is not fully configured."""
 
 

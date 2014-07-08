@@ -134,6 +134,9 @@ def collect_all(collectors, store=False, collector_kwargs_map=None):
         except exc.SourceNotAvailable:
             logger.warn('Source [%s] Unavailable.' % collector)
             continue
+        except exc.SourceNotConfigured:
+            logger.debug('Source [%s] Not configured.' % collector)
+            continue
 
         if store:
             for output_key, output_content in content:
