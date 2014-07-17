@@ -17,11 +17,13 @@ import copy
 import extras
 import fixtures
 import json
+import mock
 import os
 import signal
 import sys
 import tempfile
 
+from keystoneclient import discover as ks_discover
 from oslo.config import cfg
 import testtools
 from testtools import matchers
@@ -335,8 +337,12 @@ class TestCollectAll(testtools.TestCase):
         cfg.CONF.heat.stack_id = 'a/c482680f-7238-403d-8f76-36acf0c8e0aa'
         cfg.CONF.heat.resource_name = 'server'
 
-    def _call_collect_all(
-            self, store, collector_kwargs_map=None, collectors=None):
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
+    def _call_collect_all(self, mock_url_for, mock___init__, store,
+                          collector_kwargs_map=None, collectors=None):
+        mock___init__.return_value = None
+        mock_url_for.return_value = cfg.CONF.heat.auth_url
         if collector_kwargs_map is None:
             collector_kwargs_map = {
                 'ec2': {'requests_impl': test_ec2.FakeRequests},

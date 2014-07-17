@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import mock
 import tempfile
 
 import fixtures
+from keystoneclient import discover as ks_discover
 from keystoneclient import exceptions as ks_exc
 from oslo.config import cfg
 import testtools
@@ -50,19 +52,37 @@ class KeystoneTest(testtools.TestCase):
         self.cachedir = tempfile.mkdtemp()
         cfg.CONF.set_override('cache_dir', self.cachedir, group='keystone')
 
-    def test_cache_is_created(self):
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
+    def test_discover_fail(self, mock_url_for, mock___init__):
+        mock___init__.return_value = None
+        mock_url_for.side_effect = ks_exc.DiscoveryFailure()
+        ks = keystone.Keystone(
+            'http://server.test:5000/v2.0', 'auser', 'apassword', 'aproject',
+            test_heat.FakeKeystoneClient(self))
+        self.assertEqual(ks.auth_url, 'http://server.test:5000/v3')
+
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
+    def test_cache_is_created(self, mock_url_for, mock___init__):
+        mock___init__.return_value = None
+        mock_url_for.return_value = 'http://server.test:5000/'
         ks = keystone.Keystone(
             'http://server.test:5000/', 'auser', 'apassword', 'aproject',
             test_heat.FakeKeystoneClient(self))
         self.assertIsNotNone(ks.cache)
 
-    def _make_ks(self, client):
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
+    def _make_ks(self, client, mock_url_for, mock___init__):
         class Configs(object):
             auth_url = 'http://server.test:5000/'
             user_id = 'auser'
             password = 'apassword'
             project_id = 'aproject'
 
+        mock___init__.return_value = None
+        mock_url_for.return_value = Configs.auth_url
         return keystone.Keystone(
             'http://server.test:5000/', 'auser', 'apassword', 'aproject',
             client(self, Configs))
