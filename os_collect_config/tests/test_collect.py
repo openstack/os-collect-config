@@ -65,8 +65,8 @@ class TestCollect(testtools.TestCase):
                 'heatclient': test_heat.FakeHeatClient(self)
             }
         }
-        collect.__main__(args=fake_args,
-                         collector_kwargs_map=collector_kwargs_map)
+        return collect.__main__(args=fake_args,
+                                collector_kwargs_map=collector_kwargs_map)
 
     def _fake_popen_call_main(self, occ_args):
         calls = []
@@ -75,7 +75,7 @@ class TestCollect(testtools.TestCase):
             calls.append(proc_args)
             return dict(returncode=0)
         self.useFixture(fixtures.FakePopen(capture_popen))
-        self._call_main(occ_args)
+        self.assertEqual(0, self._call_main(occ_args))
         return calls
 
     def test_main(self):
@@ -196,7 +196,7 @@ class TestCollect(testtools.TestCase):
             calls.append(proc_args)
             return dict(returncode=1)
         self.useFixture(fixtures.FakePopen(capture_popen))
-        self._call_main(occ_args)
+        self.assertEqual(1, self._call_main(occ_args))
         for test_dir in (cache_dir, backup_cache_dir):
             cache_contents = os.listdir(test_dir.path)
             last_files = [n for n in cache_contents if n.endswith('last')]

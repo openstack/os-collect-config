@@ -224,6 +224,7 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
     if CONF.force:
         CONF.set_override('one_time', True)
 
+    exitval = 0
     config_files = CONF.config_file
     config_hash = getfilehash(config_files)
     while True:
@@ -239,6 +240,7 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
                 try:
                     call_command(content, CONF.command)
                 except subprocess.CalledProcessError as e:
+                    exitval = e.returncode
                     logger.error('Command failed, will not cache new data. %s'
                                  % e)
                     if not CONF.one_time:
@@ -270,7 +272,8 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
         else:
             print(json.dumps(content, indent=1))
             break
+    return exitval
 
 
 if __name__ == '__main__':
-    __main__()
+    sys.exit(__main__())
