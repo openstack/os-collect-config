@@ -30,6 +30,7 @@ from os_collect_config import exc
 from os_collect_config import heat
 from os_collect_config import heat_local
 from os_collect_config import keystone
+from os_collect_config import local
 from os_collect_config import version
 from oslo.config import cfg
 
@@ -81,7 +82,8 @@ logger = log.getLogger('os-collect-config')
 COLLECTORS = {ec2.name: ec2,
               cfn.name: cfn,
               heat.name: heat,
-              heat_local.name: heat_local}
+              heat_local.name: heat_local,
+              local.name: local}
 
 
 def setup_conf():
@@ -94,6 +96,9 @@ def setup_conf():
     heat_local_group = cfg.OptGroup(name='heat_local',
                                     title='Heat Local Metadata options')
 
+    local_group = cfg.OptGroup(name='local',
+                               title='Local Metadata options')
+
     heat_group = cfg.OptGroup(name='heat',
                               title='Heat Metadata options')
 
@@ -103,11 +108,13 @@ def setup_conf():
     CONF.register_group(ec2_group)
     CONF.register_group(cfn_group)
     CONF.register_group(heat_local_group)
+    CONF.register_group(local_group)
     CONF.register_group(heat_group)
     CONF.register_group(keystone_group)
     CONF.register_cli_opts(ec2.opts, group='ec2')
     CONF.register_cli_opts(cfn.opts, group='cfn')
     CONF.register_cli_opts(heat_local.opts, group='heat_local')
+    CONF.register_cli_opts(local.opts, group='local')
     CONF.register_cli_opts(heat.opts, group='heat')
     CONF.register_cli_opts(keystone.opts, group='keystone')
 

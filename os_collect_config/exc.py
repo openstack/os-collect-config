@@ -46,5 +46,9 @@ class HeatLocalMetadataNotAvailable(SourceNotAvailable):
     """The local Heat metadata is not available."""
 
 
+class LocalMetadataNotAvailable(SourceNotAvailable):
+    """The local metadata is not available."""
+
+
 class InvalidArguments(ValueError):
     """Invalid arguments."""
