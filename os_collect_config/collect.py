@@ -215,7 +215,7 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
         print(CONF.cachedir)
         return
 
-    unknown_collectors = set(CONF.collectors) - set(DEFAULT_COLLECTORS)
+    unknown_collectors = set(CONF.collectors) - set(COLLECTORS.keys())
     if unknown_collectors:
         raise exc.InvalidArguments(
             'Unknown collectors %s. Valid collectors are: %s' %

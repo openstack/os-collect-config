@@ -139,6 +139,16 @@ class TestCollect(testtools.TestCase):
             self.assertIn("int1", keys_found)
             self.assertIn("map_ab", keys_found)
 
+    def test_main_just_local(self):
+        fake_md = _setup_local_metadata(self)
+        occ_args = [
+            'os-collect-config',
+            '--print',
+            '--local-path', os.path.dirname(fake_md),
+            'local',
+        ]
+        self._call_main(occ_args)
+
     def test_main_force_command(self):
         cache_dir = self.useFixture(fixtures.TempDir())
         backup_cache_dir = self.useFixture(fixtures.TempDir())
