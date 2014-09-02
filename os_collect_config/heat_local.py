@@ -17,8 +17,8 @@ import json
 import os
 from oslo.config import cfg
 
-from openstack.common import log
 from os_collect_config import exc
+from os_collect_config.openstack.common import log
 
 HEAT_METADATA_PATH = ['/var/lib/heat-cfntools/cfn-init-data']
 CONF = cfg.CONF

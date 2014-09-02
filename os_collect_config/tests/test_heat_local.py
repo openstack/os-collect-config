@@ -54,7 +54,7 @@ class TestHeatLocal(testtools.TestCase):
 
     def test_collect_heat_local(self):
         with tempfile.NamedTemporaryFile() as md:
-            md.write(json.dumps(META_DATA))
+            md.write(json.dumps(META_DATA).encode('utf-8'))
             md.flush()
             local_md = self._call_collect(md.name)
 
