@@ -16,9 +16,9 @@ from heatclient import client as heatclient
 from keystoneclient.v3 import client as keystoneclient
 from oslo.config import cfg
 
-from openstack.common import log
 from os_collect_config import exc
 from os_collect_config import keystone
+from os_collect_config.openstack.common import log
 
 CONF = cfg.CONF
 logger = log.getLogger(__name__)

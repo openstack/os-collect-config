@@ -15,9 +15,9 @@
 
 from oslo.config import cfg
 
-from openstack.common import log
 from os_collect_config import common
 from os_collect_config import exc
+from os_collect_config.openstack.common import log
 
 EC2_METADATA_URL = 'http://169.254.169.254/latest/meta-data'
 CONF = cfg.CONF

@@ -22,7 +22,6 @@ import subprocess
 import sys
 import time
 
-from openstack.common import log
 from os_collect_config import cache
 from os_collect_config import cfn
 from os_collect_config import ec2
@@ -31,6 +30,7 @@ from os_collect_config import heat
 from os_collect_config import heat_local
 from os_collect_config import keystone
 from os_collect_config import local
+from os_collect_config.openstack.common import log
 from os_collect_config import version
 from oslo.config import cfg
 
@@ -193,7 +193,7 @@ def getfilehash(files):
         try:
             with open(filename) as fp:
                 data = fp.read()
-            m.update(data)
+            m.update(data.encode('utf-8'))
         except IOError:
             pass
     return m.hexdigest()

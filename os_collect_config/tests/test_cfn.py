@@ -15,12 +15,12 @@
 
 import json
 import tempfile
-import urlparse
 
 import fixtures
 from lxml import etree
 from oslo.config import cfg
 import requests
+import six.moves.urllib.parse as urlparse
 import testtools
 from testtools import content as test_content
 from testtools import matchers
@@ -196,7 +196,7 @@ class TestCfnBase(testtools.TestCase):
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         self.hint_file = tempfile.NamedTemporaryFile()
-        self.hint_file.write('http://127.0.0.1:8000')
+        self.hint_file.write(u'http://127.0.0.1:8000'.encode('utf-8'))
         self.hint_file.flush()
         self.addCleanup(self.hint_file.close)
         collect.setup_conf()

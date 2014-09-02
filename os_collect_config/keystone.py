@@ -69,10 +69,10 @@ class Keystone(object):
 
     def _make_key(self, key):
         m = hashlib.sha256()
-        m.update(self.auth_url)
-        m.update(self.user_id)
-        m.update(self.project_id)
-        m.update(key)
+        m.update(self.auth_url.encode('utf-8'))
+        m.update(self.user_id.encode('utf-8'))
+        m.update(self.project_id.encode('utf-8'))
+        m.update(key.encode('utf-8'))
         return m.hexdigest()
 
     @property

@@ -15,9 +15,9 @@
 
 import fixtures
 import requests
+import six.moves.urllib.parse as urlparse
 import testtools
 from testtools import matchers
-import urlparse
 import uuid
 
 from os_collect_config import collect

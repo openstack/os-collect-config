@@ -49,7 +49,7 @@ def store(name, content):
     with tempfile.NamedTemporaryFile(
             dir=cfg.CONF.cachedir,
             delete=False) as new:
-        new.write(json.dumps(content, indent=1))
+        new.write(json.dumps(content, indent=1).encode('utf-8'))
         new.flush()
         if not os.path.exists(orig_path):
             shutil.copy(new.name, orig_path)
@@ -80,6 +80,6 @@ def store_meta_list(name, data_keys):
     with tempfile.NamedTemporaryFile(prefix='tmp_meta_list.',
                                      dir=os.path.dirname(dest),
                                      delete=False) as out:
-        out.write(json.dumps(final_list))
+        out.write(json.dumps(final_list).encode('utf-8'))
     os.rename(out.name, dest)
     return dest

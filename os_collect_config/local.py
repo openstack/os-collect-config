@@ -19,8 +19,8 @@ import os
 from oslo.config import cfg
 import stat
 
-from openstack.common import log
 from os_collect_config import exc
+from os_collect_config.openstack.common import log
 
 LOCAL_DEFAULT_PATHS = ['/var/lib/os-collect-config/local-data']
 CONF = cfg.CONF
@@ -89,7 +89,7 @@ class Collector(object):
         # Now sort specifically by C locale
         def locale_aware_by_first_item(data):
             return locale.strxfrm(data[0])
-        save_locale = locale.getlocale(locale.LC_ALL)
+        save_locale = locale.getdefaultlocale()
         locale.setlocale(locale.LC_ALL, 'C')
         sorted_content = sorted(final_content, key=locale_aware_by_first_item)
         locale.setlocale(locale.LC_ALL, save_locale)

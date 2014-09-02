@@ -38,7 +38,7 @@ from os_collect_config.tests import test_heat_local
 def _setup_local_metadata(test_case):
     test_case.useFixture(fixtures.NestedTempfile())
     local_md = tempfile.NamedTemporaryFile(delete=False)
-    local_md.write(json.dumps(test_heat_local.META_DATA))
+    local_md.write(json.dumps(test_heat_local.META_DATA).encode('utf-8'))
     local_md.flush()
     return local_md.name
 
