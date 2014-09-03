@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import mock
+
 import fixtures
+from keystoneclient import discover as ks_discover
 from keystoneclient import exceptions as ks_exc
 from oslo.config import cfg
 import testtools
@@ -126,7 +129,11 @@ class TestHeatBase(testtools.TestCase):
 
 
 class TestHeat(TestHeatBase):
-    def test_collect_heat(self):
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
+    def test_collect_heat(self, mock_url_for, mock___init__):
+        mock___init__.return_value = None
+        mock_url_for.return_value = cfg.CONF.heat.auth_url
         heat_md = heat.Collector(keystoneclient=FakeKeystoneClient(self),
                                  heatclient=FakeHeatClient(self)).collect()
         self.assertThat(heat_md, matchers.IsInstance(list))
@@ -137,9 +144,17 @@ class TestHeat(TestHeatBase):
             self.assertIn(k, heat_md)
             self.assertEqual(heat_md[k], META_DATA[k])
 
-        self.assertEqual('', self.log.output)
+        # FIXME(yanyanhu): Temporary hack to deal with possible log
+        # level setting for urllib3.connectionpool.
+        self.assertTrue(
+            self.log.output == '' or
+            self.log.output == 'Starting new HTTP connection (1): 127.0.0.1\n')
 
-    def test_collect_heat_fail(self):
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
+    def test_collect_heat_fail(self, mock_url_for, mock___init__):
+        mock___init__.return_value = None
+        mock_url_for.return_value = cfg.CONF.heat.auth_url
         heat_collect = heat.Collector(
             keystoneclient=FakeFailKeystoneClient(self),
             heatclient=FakeHeatClient(self))

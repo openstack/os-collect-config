@@ -16,6 +16,7 @@ import hashlib
 import os
 
 from dogpile import cache
+from keystoneclient import discover as ks_discover
 from keystoneclient import exceptions as ks_exc
 from keystoneclient.v3 import client as ks_keystoneclient
 from oslo.config import cfg
@@ -50,11 +51,19 @@ class Keystone(object):
                                      Uses keystoneclient.v3 if unspecified.
         '''
         self.keystoneclient = keystoneclient or ks_keystoneclient
-        self.auth_url = auth_url
         self.user_id = user_id
         self.password = password
         self.project_id = project_id
         self._client = None
+        try:
+            discover = ks_discover.Discover(auth_url=auth_url)
+            v3_auth_url = discover.url_for('3.0')
+            if v3_auth_url:
+                self.auth_url = v3_auth_url
+            else:
+                self.auth_url = auth_url
+        except ks_exc.ClientException:
+            self.auth_url = auth_url.replace('/v2.0', '/v3')
         if CONF.keystone.cache_dir:
             if not os.path.isdir(CONF.keystone.cache_dir):
                 os.makedirs(CONF.keystone.cache_dir, mode=0o700)
