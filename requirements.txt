@@ -2,7 +2,7 @@ pbr>=0.6,!=0.7,<1.0
 
 anyjson>=0.3.3
 argparse
-eventlet>=0.13.0
+eventlet>=0.15.1
 python-keystoneclient>=0.10.0
 python-heatclient>=0.2.9
 requests>=1.2.1
