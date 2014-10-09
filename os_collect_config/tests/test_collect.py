@@ -119,8 +119,10 @@ class TestCollect(testtools.TestCase):
             'server'
         ]
         calls = self._fake_popen_call_main(occ_args)
-        proc_args = calls[0]
-        self.assertEqual(expected_cmd, proc_args['args'])
+        # The Python 3 platform module makes a popen call, filter this out
+        proc_calls = [call for call in calls if call['args'] == expected_cmd]
+        self.assertEqual(len(proc_calls), 1)
+        proc_args = proc_calls[0]
         for test_dir in (cache_dir, backup_cache_dir):
             list_path = os.path.join(test_dir.path, 'os_config_files.json')
             with open(list_path) as list_file:

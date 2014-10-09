@@ -114,7 +114,7 @@ class TestLocal(testtools.TestCase):
 
         def wrong_sort_listdir(path):
             ret = unpatched_listdir(path)
-            save_locale = locale.getlocale(locale.LC_ALL)
+            save_locale = locale.getdefaultlocale()
             locale.setlocale(locale.LC_ALL, 'C')
             bad_sort = sorted(ret, reverse=True)
             locale.setlocale(locale.LC_ALL, save_locale)
