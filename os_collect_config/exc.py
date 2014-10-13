@@ -50,5 +50,13 @@ class LocalMetadataNotAvailable(SourceNotAvailable):
     """The local metadata is not available."""
 
 
+class RequestMetadataNotAvailable(SourceNotAvailable):
+    """The request metadata is not available."""
+
+
+class RequestMetadataNotConfigured(SourceNotAvailable):
+    """The request metadata is not fully configured."""
+
+
 class InvalidArguments(ValueError):
     """Invalid arguments."""

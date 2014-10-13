@@ -31,10 +31,11 @@ from os_collect_config import heat_local
 from os_collect_config import keystone
 from os_collect_config import local
 from os_collect_config.openstack.common import log
+from os_collect_config import request
 from os_collect_config import version
 from oslo.config import cfg
 
-DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn', 'heat']
+DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn', 'heat', 'request']
 opts = [
     cfg.StrOpt('command', short='c',
                help='Command to run on metadata changes. If specified,'
@@ -83,7 +84,8 @@ COLLECTORS = {ec2.name: ec2,
               cfn.name: cfn,
               heat.name: heat,
               heat_local.name: heat_local,
-              local.name: local}
+              local.name: local,
+              request.name: request}
 
 
 def setup_conf():
@@ -102,6 +104,9 @@ def setup_conf():
     heat_group = cfg.OptGroup(name='heat',
                               title='Heat Metadata options')
 
+    request_group = cfg.OptGroup(name='request',
+                                 title='Request Metadata options')
+
     keystone_group = cfg.OptGroup(name='keystone',
                                   title='Keystone auth options')
 
@@ -110,12 +115,14 @@ def setup_conf():
     CONF.register_group(heat_local_group)
     CONF.register_group(local_group)
     CONF.register_group(heat_group)
+    CONF.register_group(request_group)
     CONF.register_group(keystone_group)
     CONF.register_cli_opts(ec2.opts, group='ec2')
     CONF.register_cli_opts(cfn.opts, group='cfn')
     CONF.register_cli_opts(heat_local.opts, group='heat_local')
     CONF.register_cli_opts(local.opts, group='local')
     CONF.register_cli_opts(heat.opts, group='heat')
+    CONF.register_cli_opts(request.opts, group='request')
     CONF.register_cli_opts(keystone.opts, group='keystone')
 
     CONF.register_cli_opts(opts)

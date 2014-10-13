@@ -35,6 +35,7 @@ from os_collect_config.tests import test_cfn
 from os_collect_config.tests import test_ec2
 from os_collect_config.tests import test_heat
 from os_collect_config.tests import test_heat_local
+from os_collect_config.tests import test_request
 
 
 def _setup_local_metadata(test_case):
@@ -63,7 +64,8 @@ class TestCollect(testtools.TestCase):
             'heat': {
                 'keystoneclient': test_heat.FakeKeystoneClient(self),
                 'heatclient': test_heat.FakeHeatClient(self)
-            }
+            },
+            'request': {'requests_impl': test_request.FakeRequests},
         }
         return collect.__main__(args=fake_args,
                                 collector_kwargs_map=collector_kwargs_map)
@@ -338,6 +340,7 @@ class TestCollectAll(testtools.TestCase):
         cfg.CONF.heat.project_id = '9f6b09df-4d7f-4a33-8ec3-9924d8f46f10'
         cfg.CONF.heat.stack_id = 'a/c482680f-7238-403d-8f76-36acf0c8e0aa'
         cfg.CONF.heat.resource_name = 'server'
+        cfg.CONF.request.metadata_url = 'http://127.0.0.1:8000/my_metadata/'
 
     @mock.patch.object(ks_discover.Discover, '__init__')
     @mock.patch.object(ks_discover.Discover, 'url_for')
@@ -352,7 +355,8 @@ class TestCollectAll(testtools.TestCase):
                 'heat': {
                     'keystoneclient': test_heat.FakeKeystoneClient(self),
                     'heatclient': test_heat.FakeHeatClient(self)
-                }
+                },
+                'request': {'requests_impl': test_request.FakeRequests},
             }
         if collectors is None:
             collectors = cfg.CONF.collectors
@@ -366,7 +370,8 @@ class TestCollectAll(testtools.TestCase):
         (changed_keys, paths) = self._call_collect_all(
             store=True, collector_kwargs_map=collector_kwargs_map)
         if expected_changed is None:
-            expected_changed = set(['heat_local', 'cfn', 'ec2', 'heat'])
+            expected_changed = set(
+                ['heat_local', 'cfn', 'ec2', 'heat', 'request'])
         self.assertEqual(expected_changed, changed_keys)
         self.assertThat(paths, matchers.IsInstance(list))
         for path in paths:
@@ -384,10 +389,11 @@ class TestCollectAll(testtools.TestCase):
             'heat': {
                 'keystoneclient': test_heat.FakeKeystoneClient(self),
                 'heatclient': test_heat.FakeHeatClient(self)
-            }
+            },
+            'request': {'requests_impl': test_request.FakeRequests},
         }
         expected_changed = set((
-            'heat_local', 'ec2', 'cfn', 'heat',
+            'heat_local', 'ec2', 'cfn', 'heat', 'request',
             'dep-name1', 'dep-name2', 'dep-name3'))
         self._test_collect_all_store(collector_kwargs_map=soft_config_map,
                                      expected_changed=expected_changed)
@@ -422,7 +428,8 @@ class TestCollectAll(testtools.TestCase):
             'heat': {
                 'keystoneclient': test_heat.FakeKeystoneClient(self),
                 'heatclient': test_heat.FakeHeatClient(self)
-            }
+            },
+            'request': {'requests_impl': test_request.FakeRequests},
         }
         (changed_keys, paths) = self._call_collect_all(
             store=True, collector_kwargs_map=soft_config_map)
