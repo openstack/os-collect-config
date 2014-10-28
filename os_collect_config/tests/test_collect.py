@@ -35,15 +35,25 @@ from os_collect_config.tests import test_cfn
 from os_collect_config.tests import test_ec2
 from os_collect_config.tests import test_heat
 from os_collect_config.tests import test_heat_local
+from os_collect_config.tests import test_local
 from os_collect_config.tests import test_request
 
 
-def _setup_local_metadata(test_case):
+def _setup_heat_local_metadata(test_case):
     test_case.useFixture(fixtures.NestedTempfile())
     local_md = tempfile.NamedTemporaryFile(delete=False)
     local_md.write(json.dumps(test_heat_local.META_DATA).encode('utf-8'))
     local_md.flush()
     return local_md.name
+
+
+def _setup_local_metadata(test_case):
+    tmpdir = fixtures.TempDir()
+    test_case.useFixture(tmpdir)
+    local_data_path = tmpdir.path + '/local'
+    with open(local_data_path, 'w') as local_data:
+        json.dump(test_local.META_DATA, local_data)
+    return tmpdir.path
 
 
 class TestCollect(testtools.TestCase):
@@ -84,7 +94,7 @@ class TestCollect(testtools.TestCase):
         expected_cmd = self.getUniqueString()
         cache_dir = self.useFixture(fixtures.TempDir())
         backup_cache_dir = self.useFixture(fixtures.TempDir())
-        fake_metadata = _setup_local_metadata(self)
+        fake_metadata = _setup_heat_local_metadata(self)
         occ_args = [
             'os-collect-config',
             '--command',
@@ -146,7 +156,7 @@ class TestCollect(testtools.TestCase):
             self.assertIn("map_ab", keys_found)
 
     def test_main_just_local(self):
-        fake_md = _setup_local_metadata(self)
+        fake_md = _setup_heat_local_metadata(self)
         occ_args = [
             'os-collect-config',
             '--print',
@@ -158,7 +168,7 @@ class TestCollect(testtools.TestCase):
     def test_main_force_command(self):
         cache_dir = self.useFixture(fixtures.TempDir())
         backup_cache_dir = self.useFixture(fixtures.TempDir())
-        fake_metadata = _setup_local_metadata(self)
+        fake_metadata = _setup_heat_local_metadata(self)
         occ_args = [
             'os-collect-config',
             '--command', 'foo',
@@ -178,7 +188,7 @@ class TestCollect(testtools.TestCase):
     def test_main_command_failed_no_caching(self):
         cache_dir = self.useFixture(fixtures.TempDir())
         backup_cache_dir = self.useFixture(fixtures.TempDir())
-        fake_metadata = _setup_local_metadata(self)
+        fake_metadata = _setup_heat_local_metadata(self)
         occ_args = [
             'os-collect-config',
             '--command',
@@ -220,7 +230,7 @@ class TestCollect(testtools.TestCase):
             '--cfn-secret-access-key',
             'FEDCBA9876543210',
         ]
-        fake_metadata = _setup_local_metadata(self)
+        fake_metadata = _setup_heat_local_metadata(self)
         fake_args.append('--heat_local-path')
         fake_args.append(fake_metadata)
         output = self.useFixture(fixtures.StringStream('stdout'))
@@ -251,7 +261,7 @@ class TestCollect(testtools.TestCase):
     def test_main_print_only(self):
         cache_dir = self.useFixture(fixtures.TempDir())
         backup_cache_dir = self.useFixture(fixtures.TempDir())
-        fake_metadata = _setup_local_metadata(self)
+        fake_metadata = _setup_heat_local_metadata(self)
         args = [
             'os-collect-config',
             '--command', 'bar',
@@ -333,13 +343,14 @@ class TestCollectAll(testtools.TestCase):
         cfg.CONF.cfn.path = ['foo.Metadata']
         cfg.CONF.cfn.access_key_id = '0123456789ABCDEF'
         cfg.CONF.cfn.secret_access_key = 'FEDCBA9876543210'
-        cfg.CONF.heat_local.path = [_setup_local_metadata(self)]
+        cfg.CONF.heat_local.path = [_setup_heat_local_metadata(self)]
         cfg.CONF.heat.auth_url = 'http://127.0.0.1:5000/v3'
         cfg.CONF.heat.user_id = '0123456789ABCDEF'
         cfg.CONF.heat.password = 'FEDCBA9876543210'
         cfg.CONF.heat.project_id = '9f6b09df-4d7f-4a33-8ec3-9924d8f46f10'
         cfg.CONF.heat.stack_id = 'a/c482680f-7238-403d-8f76-36acf0c8e0aa'
         cfg.CONF.heat.resource_name = 'server'
+        cfg.CONF.local.path = [_setup_local_metadata(self)]
         cfg.CONF.request.metadata_url = 'http://127.0.0.1:8000/my_metadata/'
 
     @mock.patch.object(ks_discover.Discover, '__init__')
@@ -370,8 +381,8 @@ class TestCollectAll(testtools.TestCase):
         (changed_keys, paths) = self._call_collect_all(
             store=True, collector_kwargs_map=collector_kwargs_map)
         if expected_changed is None:
-            expected_changed = set(
-                ['heat_local', 'cfn', 'ec2', 'heat', 'request'])
+            expected_changed = set(['heat_local', 'cfn', 'ec2',
+                                    'heat', 'local', 'request'])
         self.assertEqual(expected_changed, changed_keys)
         self.assertThat(paths, matchers.IsInstance(list))
         for path in paths:
@@ -393,7 +404,7 @@ class TestCollectAll(testtools.TestCase):
             'request': {'requests_impl': test_request.FakeRequests},
         }
         expected_changed = set((
-            'heat_local', 'ec2', 'cfn', 'heat', 'request',
+            'heat_local', 'ec2', 'cfn', 'heat', 'local', 'request',
             'dep-name1', 'dep-name2', 'dep-name3'))
         self._test_collect_all_store(collector_kwargs_map=soft_config_map,
                                      expected_changed=expected_changed)

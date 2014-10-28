@@ -62,7 +62,7 @@ class Collector(object):
             try:
                 os.stat(local_path)
             except OSError:
-                logger.warning("%s not found. Skipping", local_path)
+                logger.warn("%s not found. Skipping", local_path)
                 continue
             if _dest_looks_insecure(local_path):
                 raise exc.LocalMetadataNotAvailable

@@ -35,7 +35,7 @@ from os_collect_config import request
 from os_collect_config import version
 from oslo.config import cfg
 
-DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn', 'heat', 'request']
+DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn', 'heat', 'request', 'local']
 opts = [
     cfg.StrOpt('command', short='c',
                help='Command to run on metadata changes. If specified,'
