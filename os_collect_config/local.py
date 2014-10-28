@@ -59,6 +59,11 @@ class Collector(object):
             raise exc.LocalMetadataNotAvailable
         final_content = []
         for local_path in cfg.CONF.local.path:
+            try:
+                os.stat(local_path)
+            except OSError:
+                logger.warning("%s not found. Skipping", local_path)
+                continue
             if _dest_looks_insecure(local_path):
                 raise exc.LocalMetadataNotAvailable
             for data_file in os.listdir(local_path):
