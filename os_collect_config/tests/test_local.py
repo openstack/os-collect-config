@@ -140,3 +140,11 @@ class TestLocal(testtools.TestCase):
             badjson.write('{')
         self.assertRaises(exc.LocalMetadataNotAvailable, self._call_collect)
         self.assertIn('is not valid JSON', self.log.output)
+
+    def test_collect_local_path_nonexist(self):
+        cfg.CONF.set_override(name='path',
+                              override=['/this/doesnt/exist'],
+                              group='local')
+        local_md = self._call_collect()
+        self.assertThat(local_md, matchers.IsInstance(list))
+        self.assertEqual(0, len(local_md))
