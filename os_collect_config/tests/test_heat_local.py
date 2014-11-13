@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import fixtures
 import json
 import os.path
-from oslo.config import cfg
 import tempfile
+
+import fixtures
+from oslo.config import cfg
 import testtools
 from testtools import matchers
 

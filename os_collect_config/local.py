@@ -16,8 +16,9 @@
 import json
 import locale
 import os
-from oslo.config import cfg
 import stat
+
+from oslo.config import cfg
 
 from os_collect_config import exc
 from os_collect_config.openstack.common import log

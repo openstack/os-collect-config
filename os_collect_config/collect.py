@@ -22,6 +22,8 @@ import subprocess
 import sys
 import time
 
+from oslo.config import cfg
+
 from os_collect_config import cache
 from os_collect_config import cfn
 from os_collect_config import ec2
@@ -33,7 +35,6 @@ from os_collect_config import local
 from os_collect_config.openstack.common import log
 from os_collect_config import request
 from os_collect_config import version
-from oslo.config import cfg
 
 DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn', 'heat', 'request', 'local']
 opts = [

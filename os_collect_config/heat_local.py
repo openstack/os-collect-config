@@ -15,6 +15,7 @@
 
 import json
 import os
+
 from oslo.config import cfg
 
 from os_collect_config import exc

@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
-
 import fixtures
 from keystoneclient import discover as ks_discover
 from keystoneclient import exceptions as ks_exc
+import mock
 from oslo.config import cfg
 import testtools
 from testtools import matchers

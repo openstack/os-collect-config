@@ -14,16 +14,16 @@
 # limitations under the License.
 
 import copy
-import extras
-import fixtures
 import json
-import mock
 import os
 import signal
 import sys
 import tempfile
 
+import extras
+import fixtures
 from keystoneclient import discover as ks_discover
+import mock
 from oslo.config import cfg
 import testtools
 from testtools import matchers

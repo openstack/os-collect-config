@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import uuid
+
 import fixtures
 import requests
 import six.moves.urllib.parse as urlparse
 import testtools
 from testtools import matchers
-import uuid
 
 from os_collect_config import collect
 from os_collect_config import ec2
