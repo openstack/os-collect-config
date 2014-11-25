@@ -47,8 +47,8 @@ class TestHeatLocal(testtools.TestCase):
         cfg.CONF.reset()
         super(TestHeatLocal, self).tearDown()
 
-    def _call_collect(self, temp_name):
-        cfg.CONF.heat_local.path = [temp_name]
+    def _call_collect(self, *temp_name):
+        cfg.CONF.heat_local.path = list(temp_name)
         md = heat_local.Collector().collect()
         self.assertEqual('heat_local', md[0][0])
         return md[0][1]
@@ -66,6 +66,28 @@ class TestHeatLocal(testtools.TestCase):
             self.assertEqual(local_md[k], META_DATA[k])
 
         self.assertEqual('', self.log.output)
+
+    def test_collect_heat_local_twice(self):
+        with tempfile.NamedTemporaryFile() as md:
+            md.write(json.dumps(META_DATA).encode('utf-8'))
+            md.flush()
+            local_md = self._call_collect(md.name, md.name)
+
+        self.assertThat(local_md, matchers.IsInstance(dict))
+
+        for k in ('localstrA', 'localint9', 'localmap_xy'):
+            self.assertIn(k, local_md)
+            self.assertEqual(local_md[k], META_DATA[k])
+
+        self.assertEqual('', self.log.output)
+
+    def test_collect_heat_local_with_invalid_metadata(self):
+        with tempfile.NamedTemporaryFile() as md:
+            md.write("{'invalid' => 'INVALID'}".encode('utf-8'))
+            md.flush()
+            self.assertRaises(exc.HeatLocalMetadataNotAvailable,
+                              self._call_collect, md.name)
+            self.assertIn('Local metadata not found', self.log.output)
 
     def test_collect_ec2_nofile(self):
         tdir = self.useFixture(fixtures.TempDir())
