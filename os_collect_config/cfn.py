@@ -35,6 +35,7 @@ opts = [
                default='/var/lib/heat-cfntools/cfn-metadata-server',
                help='Local file to read for metadata url if not explicitly '
                     ' specified'),
+    cfg.StrOpt('ca_certificate', help='CA Certificate path'),
     cfg.StrOpt('stack-name',
                help='Stack name to describe'),
     cfg.MultiStrOpt('path',
@@ -105,7 +106,8 @@ class Collector(object):
             params['Signature'] = signer.generate(credentials)
             try:
                 content = self._session.get(
-                    url, params=params, headers=headers)
+                    url, params=params, headers=headers,
+                    verify=CONF.cfn.ca_certificate)
                 content.raise_for_status()
             except self._requests_impl.exceptions.RequestException as e:
                 logger.warn(e)

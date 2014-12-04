@@ -123,8 +123,9 @@ class FakeReqSession(object):
     def __init__(self, testcase, expected_netloc):
         self._test = testcase
         self._expected_netloc = expected_netloc
+        self.verify = False
 
-    def get(self, url, params, headers):
+    def get(self, url, params, headers, verify=None):
         self._test.addDetail('url', test_content.text_content(url))
         url = urlparse.urlparse(url)
         self._test.assertEqual(self._expected_netloc, url.netloc)
@@ -144,6 +145,8 @@ class FakeReqSession(object):
         detail = etree.SubElement(result, 'StackResourceDetail')
         metadata = etree.SubElement(detail, 'Metadata')
         metadata.text = json.dumps(self.SESSION_META_DATA)
+        if verify is not None:
+            self.verify = True
         return FakeResponse(etree.tostring(root))
 
 
@@ -186,7 +189,7 @@ class FakeFailRequests(object):
     exceptions = requests.exceptions
 
     class Session(object):
-        def get(self, url, params, headers):
+        def get(self, url, params, headers, verify=None):
             raise requests.exceptions.HTTPError(403, 'Forbidden')
 
 
@@ -219,6 +222,12 @@ class TestCfn(TestCfnBase):
             self.assertEqual(cfn_md[k], META_DATA[k])
 
         self.assertEqual('', self.log.output)
+
+    def test_collect_with_ca_cert(self):
+        cfn.CONF.cfn.ca_certificate = "foo"
+        collector = cfn.Collector(requests_impl=FakeRequests(self))
+        collector.collect()
+        self.assertTrue(collector._session.verify)
 
     def test_collect_cfn_fail(self):
         cfn_collect = cfn.Collector(requests_impl=FakeFailRequests)
