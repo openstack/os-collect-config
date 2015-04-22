@@ -8,6 +8,7 @@ argparse
 eventlet>=0.17.3
 python-keystoneclient>=1.6.0
 python-heatclient>=0.3.0
+python-zaqarclient>=0.1.1
 requests>=2.5.2
 iso8601>=0.1.9
 lxml>=2.3

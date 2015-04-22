@@ -58,5 +58,13 @@ class RequestMetadataNotConfigured(SourceNotAvailable):
     """The request metadata is not fully configured."""
 
 
+class ZaqarMetadataNotConfigured(SourceNotConfigured):
+    """The zaqar metadata service is not fully configured."""
+
+
+class ZaqarMetadataNotAvailable(SourceNotAvailable):
+    """The Zaqar metadata is not available."""
+
+
 class InvalidArguments(ValueError):
     """Invalid arguments."""

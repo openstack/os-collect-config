@@ -35,8 +35,11 @@ from os_collect_config import local
 from os_collect_config.openstack.common import log
 from os_collect_config import request
 from os_collect_config import version
+from os_collect_config import zaqar
 
-DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn', 'heat', 'request', 'local']
+DEFAULT_COLLECTORS = ['heat_local', 'ec2', 'cfn', 'heat', 'request', 'local',
+                      'zaqar']
+
 opts = [
     cfg.StrOpt('command', short='c',
                help='Command to run on metadata changes. If specified,'
@@ -92,7 +95,8 @@ COLLECTORS = {ec2.name: ec2,
               heat.name: heat,
               heat_local.name: heat_local,
               local.name: local,
-              request.name: request}
+              request.name: request,
+              zaqar.name: zaqar}
 
 
 def setup_conf():
@@ -111,6 +115,9 @@ def setup_conf():
     heat_group = cfg.OptGroup(name='heat',
                               title='Heat Metadata options')
 
+    zaqar_group = cfg.OptGroup(name='zaqar',
+                               title='Zaqar queue options')
+
     request_group = cfg.OptGroup(name='request',
                                  title='Request Metadata options')
 
@@ -124,6 +131,7 @@ def setup_conf():
     CONF.register_group(heat_group)
     CONF.register_group(request_group)
     CONF.register_group(keystone_group)
+    CONF.register_group(zaqar_group)
     CONF.register_cli_opts(ec2.opts, group='ec2')
     CONF.register_cli_opts(cfn.opts, group='cfn')
     CONF.register_cli_opts(heat_local.opts, group='heat_local')
@@ -131,6 +139,7 @@ def setup_conf():
     CONF.register_cli_opts(heat.opts, group='heat')
     CONF.register_cli_opts(request.opts, group='request')
     CONF.register_cli_opts(keystone.opts, group='keystone')
+    CONF.register_cli_opts(zaqar.opts, group='zaqar')
 
     CONF.register_cli_opts(opts)
 

@@ -37,6 +37,7 @@ from os_collect_config.tests import test_heat
 from os_collect_config.tests import test_heat_local
 from os_collect_config.tests import test_local
 from os_collect_config.tests import test_request
+from os_collect_config.tests import test_zaqar
 
 
 def _setup_heat_local_metadata(test_case):
@@ -76,6 +77,10 @@ class TestCollect(testtools.TestCase):
                 'heatclient': test_heat.FakeHeatClient(self)
             },
             'request': {'requests_impl': test_request.FakeRequests},
+            'zaqar': {
+                'keystoneclient': test_zaqar.FakeKeystoneClient(self),
+                'zaqarclient': test_zaqar.FakeZaqarClient(self)
+            },
         }
         return collect.__main__(args=fake_args,
                                 collector_kwargs_map=collector_kwargs_map)
@@ -352,6 +357,11 @@ class TestCollectAll(testtools.TestCase):
         cfg.CONF.heat.resource_name = 'server'
         cfg.CONF.local.path = [_setup_local_metadata(self)]
         cfg.CONF.request.metadata_url = 'http://127.0.0.1:8000/my_metadata/'
+        cfg.CONF.zaqar.auth_url = 'http://127.0.0.1:5000/v3'
+        cfg.CONF.zaqar.user_id = '0123456789ABCDEF'
+        cfg.CONF.zaqar.password = 'FEDCBA9876543210'
+        cfg.CONF.zaqar.project_id = '9f6b09df-4d7f-4a33-8ec3-9924d8f46f10'
+        cfg.CONF.zaqar.queue_id = '4f3f46d3-09f1-42a7-8c13-f91a5457192c'
 
     @mock.patch.object(ks_discover.Discover, '__init__')
     @mock.patch.object(ks_discover.Discover, 'url_for')
@@ -368,6 +378,10 @@ class TestCollectAll(testtools.TestCase):
                     'heatclient': test_heat.FakeHeatClient(self)
                 },
                 'request': {'requests_impl': test_request.FakeRequests},
+                'zaqar': {
+                    'keystoneclient': test_zaqar.FakeKeystoneClient(self),
+                    'zaqarclient': test_zaqar.FakeZaqarClient(self)
+                },
             }
         if collectors is None:
             collectors = cfg.CONF.collectors
@@ -382,7 +396,7 @@ class TestCollectAll(testtools.TestCase):
             store=True, collector_kwargs_map=collector_kwargs_map)
         if expected_changed is None:
             expected_changed = set(['heat_local', 'cfn', 'ec2',
-                                    'heat', 'local', 'request'])
+                                    'heat', 'local', 'request', 'zaqar'])
         self.assertEqual(expected_changed, changed_keys)
         self.assertThat(paths, matchers.IsInstance(list))
         for path in paths:
@@ -402,10 +416,14 @@ class TestCollectAll(testtools.TestCase):
                 'heatclient': test_heat.FakeHeatClient(self)
             },
             'request': {'requests_impl': test_request.FakeRequests},
+            'zaqar': {
+                'keystoneclient': test_zaqar.FakeKeystoneClient(self),
+                'zaqarclient': test_zaqar.FakeZaqarClient(self)
+            },
         }
         expected_changed = set((
             'heat_local', 'ec2', 'cfn', 'heat', 'local', 'request',
-            'dep-name1', 'dep-name2', 'dep-name3'))
+            'dep-name1', 'dep-name2', 'dep-name3', 'zaqar'))
         self._test_collect_all_store(collector_kwargs_map=soft_config_map,
                                      expected_changed=expected_changed)
 
@@ -441,6 +459,10 @@ class TestCollectAll(testtools.TestCase):
                 'heatclient': test_heat.FakeHeatClient(self)
             },
             'request': {'requests_impl': test_request.FakeRequests},
+            'zaqar': {
+                'keystoneclient': test_zaqar.FakeKeystoneClient(self),
+                'zaqarclient': test_zaqar.FakeZaqarClient(self)
+            },
         }
         (changed_keys, paths) = self._call_collect_all(
             store=True, collector_kwargs_map=soft_config_map)
