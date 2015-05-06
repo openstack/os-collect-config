@@ -64,6 +64,17 @@ class KeystoneTest(testtools.TestCase):
 
     @mock.patch.object(ks_discover.Discover, '__init__')
     @mock.patch.object(ks_discover.Discover, 'url_for')
+    def test_discover_v3_unsupported(self, mock_url_for, mock___init__):
+        mock___init__.return_value = None
+        mock_url_for.return_value = None
+        ks = keystone.Keystone(
+            'http://server.test:5000/v2.0', 'auser', 'apassword', 'aproject',
+            test_heat.FakeKeystoneClient(self))
+        self.assertEqual(ks.auth_url, 'http://server.test:5000/v2.0')
+        mock___init__.assert_called_with(auth_url='http://server.test:5000/')
+
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
     def test_cache_is_created(self, mock_url_for, mock___init__):
         mock___init__.return_value = None
         mock_url_for.return_value = 'http://server.test:5000/'

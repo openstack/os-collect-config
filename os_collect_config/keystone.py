@@ -56,7 +56,8 @@ class Keystone(object):
         self.project_id = project_id
         self._client = None
         try:
-            discover = ks_discover.Discover(auth_url=auth_url)
+            auth_url_noneversion = auth_url.replace('/v2.0', '/')
+            discover = ks_discover.Discover(auth_url=auth_url_noneversion)
             v3_auth_url = discover.url_for('3.0')
             if v3_auth_url:
                 self.auth_url = v3_auth_url
