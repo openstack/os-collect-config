@@ -22,7 +22,7 @@ import subprocess
 import sys
 import time
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from os_collect_config import cache
 from os_collect_config import cfn

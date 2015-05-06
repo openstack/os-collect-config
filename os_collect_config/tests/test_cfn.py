@@ -18,7 +18,7 @@ import tempfile
 
 import fixtures
 from lxml import etree
-from oslo.config import cfg
+from oslo_config import cfg
 import requests
 import six.moves.urllib.parse as urlparse
 import testtools

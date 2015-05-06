@@ -14,7 +14,7 @@
 
 from heatclient import client as heatclient
 from keystoneclient.v3 import client as keystoneclient
-from oslo.config import cfg
+from oslo_config import cfg
 
 from os_collect_config import exc
 from os_collect_config import keystone

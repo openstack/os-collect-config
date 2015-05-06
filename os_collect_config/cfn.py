@@ -18,7 +18,7 @@ import os
 
 from keystoneclient.contrib.ec2 import utils as ec2_utils
 from lxml import etree
-from oslo.config import cfg
+from oslo_config import cfg
 import six.moves.urllib.parse as urlparse
 
 from os_collect_config import common

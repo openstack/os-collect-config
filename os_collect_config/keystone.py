@@ -19,7 +19,7 @@ from dogpile import cache
 from keystoneclient import discover as ks_discover
 from keystoneclient import exceptions as ks_exc
 from keystoneclient.v3 import client as ks_keystoneclient
-from oslo.config import cfg
+from oslo_config import cfg
 
 CONF = cfg.CONF
 

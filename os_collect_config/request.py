@@ -17,7 +17,7 @@ import calendar
 import json
 import time
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from os_collect_config import common
 from os_collect_config import exc

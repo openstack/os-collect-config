@@ -18,7 +18,7 @@ import fixtures
 from keystoneclient import discover as ks_discover
 from keystoneclient import exceptions as ks_exc
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 import testtools
 
 from os_collect_config import collect

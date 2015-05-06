@@ -24,7 +24,7 @@ import extras
 import fixtures
 from keystoneclient import discover as ks_discover
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 import testtools
 from testtools import matchers
 
