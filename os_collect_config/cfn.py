@@ -47,10 +47,8 @@ opts = [
                help='Access Key ID'),
     cfg.MultiStrOpt('deployment-key',
                     default=['deployments'],
-                    help='Key(s) to explode into multiple collected outputs. '
-                    'Parsed according to the expected Metadata created by '
-                    'OS::Heat::StructuredDeployment. Only Exploded if seen at '
-                    'the root of the Metadata.')
+                    help='DEPRECATED, use global configuration option '
+                         '"deployment-key"')
 ]
 name = 'cfn'
 

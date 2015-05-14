@@ -18,6 +18,7 @@ from oslo_config import cfg
 
 from os_collect_config import exc
 from os_collect_config import keystone
+from os_collect_config import merger
 from os_collect_config.openstack.common import log
 
 CONF = cfg.CONF
@@ -82,7 +83,10 @@ class Collector(object):
             r = heat.resources.metadata(CONF.heat.stack_id,
                                         CONF.heat.resource_name)
 
-            return [('heat', r)]
+            final_list = merger.merged_list_from_content(
+                r, cfg.CONF.deployment_key, name)
+            return final_list
+
         except Exception as e:
             logger.warn(str(e))
             raise exc.HeatMetadataNotAvailable

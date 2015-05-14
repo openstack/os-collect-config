@@ -36,6 +36,68 @@ META_DATA = {u'int1': 1,
              }}
 
 
+SOFTWARE_CONFIG_DATA = {
+    u'old-style': u'value',
+    u'deployments': [
+        {
+            u'inputs': [
+                {
+                    u'type': u'String',
+                    u'name': u'input1',
+                    u'value': u'value1'
+                }
+            ],
+            u'group': 'Heat::Ungrouped',
+            u'name': 'dep-name1',
+            u'outputs': None,
+            u'options': None,
+            u'config': {
+                u'config1': 'value1'
+            }
+        },
+        {
+            u'inputs': [
+                {
+                    u'type': u'String',
+                    u'name': u'input1',
+                    u'value': u'value1'
+                }
+            ],
+            u'group': 'os-apply-config',
+            u'name': 'dep-name2',
+            u'outputs': None,
+            u'options': None,
+            u'config': {
+                u'config2': 'value2'
+            }
+        },
+        {
+            u'inputs': [
+                {
+                    u'type': u'String',
+                    u'name': u'input1',
+                    u'value': u'value1'
+                }
+            ],
+            u'name': 'dep-name3',
+            u'outputs': None,
+            u'options': None,
+            u'config': {
+                u'config3': 'value3'
+            }
+        },
+        {
+            u'inputs': [],
+            u'group': 'ignore_me',
+            u'name': 'ignore_me_name',
+            u'outputs': None,
+            u'options': None,
+            u'config': 'ignore_me_config'
+        }
+    ]
+}
+
+
 class FakeResponse(dict):
     def __init__(self, text, headers=None):
         self.text = text
@@ -67,6 +129,18 @@ class FakeFailRequests(object):
 
         def head(self, url):
             raise requests.exceptions.HTTPError(403, 'Forbidden')
+
+
+class FakeRequestsSoftwareConfig(object):
+
+    class Session(object):
+        def get(self, url):
+            return FakeResponse(json.dumps(SOFTWARE_CONFIG_DATA))
+
+        def head(self, url):
+            return FakeResponse('', headers={
+                'last-modified': time.strftime(
+                    "%a, %d %b %Y %H:%M:%S %Z", time.gmtime())})
 
 
 class TestRequestBase(testtools.TestCase):
@@ -146,3 +220,20 @@ class TestRequest(TestRequestBase):
 
         # run no last-modified header, collects
         self.assertIsNone(req_collect.check_fetch_content({}))
+
+
+class TestRequestSoftwareConfig(TestRequestBase):
+
+    def test_collect_request(self):
+        req_collect = request.Collector(
+            requests_impl=FakeRequestsSoftwareConfig)
+        req_md = req_collect.collect()
+        self.assertEqual(4, len(req_md))
+        self.assertEqual(
+            SOFTWARE_CONFIG_DATA['deployments'], req_md[0][1]['deployments'])
+        self.assertEqual(
+            ('dep-name1', {'config1': 'value1'}), req_md[1])
+        self.assertEqual(
+            ('dep-name2', {'config2': 'value2'}), req_md[2])
+        self.assertEqual(
+            ('dep-name3', {'config3': 'value3'}), req_md[3])
