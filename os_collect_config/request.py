@@ -66,7 +66,7 @@ class Collector(object):
 
     def collect(self):
         if CONF.request.metadata_url is None:
-            logger.warn('No metadata_url configured.')
+            logger.info('No metadata_url configured.')
             raise exc.RequestMetadataNotConfigured
         url = CONF.request.metadata_url
         final_content = {}

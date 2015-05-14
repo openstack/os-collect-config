@@ -66,20 +66,20 @@ class Collector(object):
                 with open(CONF.cfn.heat_metadata_hint) as hint:
                     CONF.cfn.metadata_url = '%s/v1/' % hint.read().strip()
             else:
-                logger.warn('No metadata_url configured.')
+                logger.info('No metadata_url configured.')
                 raise exc.CfnMetadataNotConfigured
         if CONF.cfn.access_key_id is None:
-            logger.warn('No Access Key ID configured.')
+            logger.info('No Access Key ID configured.')
             raise exc.CfnMetadataNotConfigured
         if CONF.cfn.secret_access_key is None:
-            logger.warn('No Secret Access Key configured.')
+            logger.info('No Secret Access Key configured.')
             raise exc.CfnMetadataNotConfigured
         url = CONF.cfn.metadata_url
         stack_name = CONF.cfn.stack_name
         headers = {'Content-Type': 'application/json'}
         final_content = {}
         if CONF.cfn.path is None:
-            logger.warn('No path configured')
+            logger.info('No path configured')
             raise exc.CfnMetadataNotConfigured
 
         signer = ec2_utils.Ec2Signer(secret_key=CONF.cfn.secret_access_key)
