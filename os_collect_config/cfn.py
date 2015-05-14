@@ -23,6 +23,7 @@ import six.moves.urllib.parse as urlparse
 
 from os_collect_config import common
 from os_collect_config import exc
+from os_collect_config import merger
 from os_collect_config.openstack.common import log
 
 CONF = cfg.CONF
@@ -55,6 +56,7 @@ name = 'cfn'
 
 
 class Collector(object):
+
     def __init__(self, requests_impl=common.requests):
         self._requests_impl = requests_impl
         self._session = requests_impl.Session()
@@ -134,26 +136,6 @@ class Collector(object):
                             'Sub-key %s does not exist. (%s)' % (subkey, path))
                         raise exc.CfnMetadataNotAvailable
             final_content.update(value)
-        final_list = []
-        for depkey in cfg.CONF.cfn.deployment_key:
-            if depkey in final_content:
-                deployments = final_content[depkey]
-                if not isinstance(deployments, list):
-                    logger.warn(
-                        'Deployment-key %s was found but does not contain a '
-                        'list.' % (depkey,))
-                    continue
-                logger.debug(
-                    'Deployment found for %s' % (depkey,))
-                for deployment in deployments:
-                    if 'name' not in deployment:
-                        logger.warn(
-                            'No name found for a deployment under %s.' %
-                            (depkey,))
-                        continue
-                    if deployment.get('group', 'Heat::Ungrouped') in (
-                            'os-apply-config', 'Heat::Ungrouped'):
-                        final_list.append((deployment['name'],
-                                           deployment['config']))
-        final_list.insert(0, ('cfn', final_content))
+        final_list = merger.merged_list_from_content(
+            final_content, cfg.CONF.cfn.deployment_key, name)
         return final_list
