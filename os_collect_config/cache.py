@@ -30,7 +30,7 @@ import os
 import shutil
 import tempfile
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 
 def get_path(name):
