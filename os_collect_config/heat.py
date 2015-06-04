@@ -49,22 +49,22 @@ class Collector(object):
 
     def collect(self):
         if CONF.heat.auth_url is None:
-            logger.warn('No auth_url configured.')
+            logger.info('No auth_url configured.')
             raise exc.HeatMetadataNotConfigured
         if CONF.heat.password is None:
-            logger.warn('No password configured.')
+            logger.info('No password configured.')
             raise exc.HeatMetadataNotConfigured
         if CONF.heat.project_id is None:
-            logger.warn('No project_id configured.')
+            logger.info('No project_id configured.')
             raise exc.HeatMetadataNotConfigured
         if CONF.heat.user_id is None:
-            logger.warn('No user_id configured.')
+            logger.info('No user_id configured.')
             raise exc.HeatMetadataNotConfigured
         if CONF.heat.stack_id is None:
-            logger.warn('No stack_id configured.')
+            logger.info('No stack_id configured.')
             raise exc.HeatMetadataNotConfigured
         if CONF.heat.resource_name is None:
-            logger.warn('No resource_name configured.')
+            logger.info('No resource_name configured.')
             raise exc.HeatMetadataNotConfigured
 
         try:
