@@ -65,8 +65,10 @@ opts = [
                 ' one execution of command. This behavior is implied if no'
                 ' command is specified.'),
     cfg.FloatOpt('polling-interval', short='i', default=30,
-                 help='When running continuously, pause this many seconds'
-                      ' between collecting data.'),
+                 help='When running continuously, pause a maximum of this'
+                      ' many seconds between collecting data. If changes'
+                      ' are detected shorter sleeps intervals are gradually'
+                      ' increased to this maximum polling interval.'),
     cfg.BoolOpt('print-cachedir',
                 default=False,
                 help='Print out the value of cachedir and exit immediately.'),
@@ -250,6 +252,7 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
     exitval = 0
     config_files = CONF.config_file
     config_hash = getfilehash(config_files)
+    sleep_time = 1
     while True:
         store_and_run = bool(CONF.command and not CONF.print_only)
         (changed_keys, content) = collect_all(
@@ -258,6 +261,9 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
             collector_kwargs_map=collector_kwargs_map)
         if store_and_run:
             if changed_keys or CONF.force:
+                # shorter sleeps while changes are detected allows for faster
+                # software deployment dependency processing
+                sleep_time = 1
                 # ignore HUP now since we will reexec after commit anyway
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
                 try:
@@ -271,9 +277,9 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
                         if config_hash == new_config_hash:
                             logger.warn(
                                 'Sleeping %.2f seconds before re-exec.' %
-                                CONF.polling_interval
+                                sleep_time
                             )
-                            time.sleep(CONF.polling_interval)
+                            time.sleep(sleep_time)
                         else:
                             # The command failed but the config file has
                             # changed re-exec now as the config file change
@@ -290,8 +296,12 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
             if CONF.one_time:
                 break
             else:
-                logger.info("Sleeping %.2f seconds.", CONF.polling_interval)
-                time.sleep(CONF.polling_interval)
+                logger.info("Sleeping %.2f seconds.", sleep_time)
+                time.sleep(sleep_time)
+
+            sleep_time *= 2
+            if sleep_time > CONF.polling_interval:
+                sleep_time = CONF.polling_interval
         else:
             print(json.dumps(content, indent=1))
             break

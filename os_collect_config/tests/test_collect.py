@@ -309,8 +309,8 @@ class TestCollect(testtools.TestCase):
             pass
 
         def fake_sleep(sleep_time):
-            self.assertEqual(10, sleep_time)
-            raise ExpectedException
+            if sleep_time == 10:
+                raise ExpectedException
 
         self.useFixture(fixtures.MonkeyPatch('time.sleep', fake_sleep))
         try:
