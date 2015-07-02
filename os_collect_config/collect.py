@@ -76,6 +76,12 @@ opts = [
                 help='Query normally, print the resulting configs as a json'
                 ' map, and exit immediately without running command if it is'
                 ' configured.'),
+    cfg.MultiStrOpt('deployment-key',
+                    default=['deployments'],
+                    help='Key(s) to explode into multiple collected outputs. '
+                    'Parsed according to the expected Metadata created by '
+                    'OS::Heat::StructuredDeployment. Only Exploded if seen at '
+                    'the root of the Metadata.')
 ]
 
 CONF = cfg.CONF

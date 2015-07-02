@@ -21,6 +21,7 @@ from oslo_config import cfg
 
 from os_collect_config import common
 from os_collect_config import exc
+from os_collect_config import merger
 from os_collect_config.openstack.common import log
 
 CONF = cfg.CONF
@@ -90,4 +91,6 @@ class Collector(object):
             raise exc.RequestMetadataNotAvailable
         final_content.update(value)
 
-        return [('request', final_content)]
+        final_list = merger.merged_list_from_content(
+            final_content, cfg.CONF.deployment_key, name)
+        return final_list

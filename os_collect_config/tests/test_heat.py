@@ -113,6 +113,12 @@ class FakeHeatClient(object):
         return META_DATA
 
 
+class FakeHeatClientSoftwareConfig(FakeHeatClient):
+
+    def metadata(self, stack_id, resource_name):
+        return SOFTWARE_CONFIG_DATA
+
+
 class TestHeatBase(testtools.TestCase):
     def setUp(self):
         super(TestHeatBase, self).setUp()
@@ -195,3 +201,21 @@ class TestHeat(TestHeatBase):
         heat_collect = heat.Collector()
         self.assertRaises(exc.HeatMetadataNotConfigured, heat_collect.collect)
         self.assertIn('No resource_name configured', self.log.output)
+
+
+class TestHeatSoftwareConfig(TestHeatBase):
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
+    def test_collect_heat(self, mock_url_for, mock___init__):
+        mock___init__.return_value = None
+        mock_url_for.return_value = cfg.CONF.heat.auth_url
+        heat_md = heat.Collector(
+            keystoneclient=FakeKeystoneClient(self),
+            heatclient=FakeHeatClientSoftwareConfig(self)).collect()
+        self.assertThat(heat_md, matchers.IsInstance(list))
+        self.assertEqual(2, len(heat_md))
+        self.assertEqual('heat', heat_md[0][0])
+        self.assertEqual(
+            SOFTWARE_CONFIG_DATA['deployments'], heat_md[0][1]['deployments'])
+        self.assertEqual(
+            ('dep-name1', {'config1': 'value1'}), heat_md[1])
