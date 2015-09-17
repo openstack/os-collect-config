@@ -1,17 +1,17 @@
 # The order of packages is significant, because pip processes them in the order
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
-pbr>=0.11,<2.0
+pbr>=1.6
 
 anyjson>=0.3.3
 argparse
-eventlet>=0.17.3
+eventlet>=0.17.4
 python-keystoneclient>=1.6.0
 python-heatclient>=0.3.0
 python-zaqarclient>=0.1.1
 requests>=2.5.2
 iso8601>=0.1.9
 lxml>=2.3
-oslo.config>=1.11.0  # Apache-2.0
+oslo.config>=2.3.0 # Apache-2.0
 six>=1.9.0
-dogpile.cache>=0.5.3
+dogpile.cache>=0.5.4
