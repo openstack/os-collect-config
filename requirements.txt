@@ -4,7 +4,6 @@
 pbr>=1.6
 
 anyjson>=0.3.3
-argparse
 eventlet>=0.17.4
 python-keystoneclient!=1.8.0,>=1.6.0
 python-heatclient>=0.6.0
