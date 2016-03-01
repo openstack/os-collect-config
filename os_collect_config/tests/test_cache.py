@@ -99,4 +99,4 @@ class TestCache(testtools.TestCase):
         self.assertFalse(changed)
 
     def test_commit_no_cache(self):
-        self.assertEqual(None, cache.commit('neversaved'))
+        self.assertIsNone(cache.commit('neversaved'))
