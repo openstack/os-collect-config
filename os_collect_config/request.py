@@ -18,11 +18,11 @@ import json
 import time
 
 from oslo_config import cfg
-from oslo_log import log
 
 from os_collect_config import common
 from os_collect_config import exc
 from os_collect_config import merger
+from os_collect_config.openstack.common import log
 
 CONF = cfg.CONF
 logger = log.getLogger(__name__)

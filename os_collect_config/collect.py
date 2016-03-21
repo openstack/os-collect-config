@@ -23,7 +23,6 @@ import sys
 import time
 
 from oslo_config import cfg
-from oslo_log import log
 
 from os_collect_config import cache
 from os_collect_config import cfn
@@ -33,6 +32,7 @@ from os_collect_config import heat
 from os_collect_config import heat_local
 from os_collect_config import keystone
 from os_collect_config import local
+from os_collect_config.openstack.common import log
 from os_collect_config import request
 from os_collect_config import version
 from os_collect_config import zaqar

@@ -19,12 +19,12 @@ import os
 from keystoneclient.contrib.ec2 import utils as ec2_utils
 from lxml import etree
 from oslo_config import cfg
-from oslo_log import log
 import six.moves.urllib.parse as urlparse
 
 from os_collect_config import common
 from os_collect_config import exc
 from os_collect_config import merger
+from os_collect_config.openstack.common import log
 
 CONF = cfg.CONF
 logger = log.getLogger(__name__)
