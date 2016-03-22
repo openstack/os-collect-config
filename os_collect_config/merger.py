@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from os_collect_config.openstack.common import log
+from oslo_log import log
 
 
 logger = log.getLogger(__name__)

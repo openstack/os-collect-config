@@ -23,6 +23,7 @@ import sys
 import time
 
 from oslo_config import cfg
+from oslo_log import log
 
 from os_collect_config import cache
 from os_collect_config import cfn
@@ -32,7 +33,6 @@ from os_collect_config import heat
 from os_collect_config import heat_local
 from os_collect_config import keystone
 from os_collect_config import local
-from os_collect_config.openstack.common import log
 from os_collect_config import request
 from os_collect_config import version
 from os_collect_config import zaqar
@@ -144,6 +144,7 @@ def setup_conf():
     CONF.register_cli_opts(zaqar.opts, group='zaqar')
 
     CONF.register_cli_opts(opts)
+    log.register_options(CONF)
 
 
 def collect_all(collectors, store=False, collector_kwargs_map=None):
@@ -234,7 +235,7 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
     # output in tests cleanly, so should only be called if there isn't already
     # handlers defined i.e. not in unit tests
     if not log.getLogger(None).logger.handlers:
-        log.setup("os-collect-config")
+        log.setup(CONF, "os-collect-config")
 
     if CONF.print_cachedir:
         print(CONF.cachedir)

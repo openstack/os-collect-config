@@ -19,9 +19,9 @@ import os
 import stat
 
 from oslo_config import cfg
+from oslo_log import log
 
 from os_collect_config import exc
-from os_collect_config.openstack.common import log
 
 LOCAL_DEFAULT_PATHS = ['/var/lib/os-collect-config/local-data']
 CONF = cfg.CONF
