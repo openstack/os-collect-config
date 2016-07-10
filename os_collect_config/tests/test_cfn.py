@@ -125,7 +125,7 @@ class FakeReqSession(object):
         self._expected_netloc = expected_netloc
         self.verify = False
 
-    def get(self, url, params, headers, verify=None):
+    def get(self, url, params, headers, verify=None, timeout=None):
         self._test.addDetail('url', test_content.text_content(url))
         url = urlparse.urlparse(url)
         self._test.assertEqual(self._expected_netloc, url.netloc)
@@ -140,6 +140,7 @@ class FakeReqSession(object):
                                params['Action'])
         self._test.assertIn('LogicalResourceId', params)
         self._test.assertEqual('foo', params['LogicalResourceId'])
+        self._test.assertEqual(10, timeout)
         root = etree.Element('DescribeStackResourceResponse')
         result = etree.SubElement(root, 'DescribeStackResourceResult')
         detail = etree.SubElement(result, 'StackResourceDetail')
@@ -189,7 +190,7 @@ class FakeFailRequests(object):
     exceptions = requests.exceptions
 
     class Session(object):
-        def get(self, url, params, headers, verify=None):
+        def get(self, url, params, headers, verify=None, timeout=None):
             raise requests.exceptions.HTTPError(403, 'Forbidden')
 
 

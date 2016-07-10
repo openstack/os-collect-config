@@ -111,10 +111,10 @@ class FakeRequests(object):
     exceptions = requests.exceptions
 
     class Session(object):
-        def get(self, url):
+        def get(self, url, timeout=None):
             return FakeResponse(json.dumps(META_DATA))
 
-        def head(self, url):
+        def head(self, url, timeout=None):
             return FakeResponse('', headers={
                 'last-modified': time.strftime(
                     "%a, %d %b %Y %H:%M:%S %Z", time.gmtime())})
@@ -124,20 +124,20 @@ class FakeFailRequests(object):
     exceptions = requests.exceptions
 
     class Session(object):
-        def get(self, url):
+        def get(self, url, timeout=None):
             raise requests.exceptions.HTTPError(403, 'Forbidden')
 
-        def head(self, url):
+        def head(self, url, timeout=None):
             raise requests.exceptions.HTTPError(403, 'Forbidden')
 
 
 class FakeRequestsSoftwareConfig(object):
 
     class Session(object):
-        def get(self, url):
+        def get(self, url, timeout=None):
             return FakeResponse(json.dumps(SOFTWARE_CONFIG_DATA))
 
-        def head(self, url):
+        def head(self, url, timeout=None):
             return FakeResponse('', headers={
                 'last-modified': time.strftime(
                     "%a, %d %b %Y %H:%M:%S %Z", time.gmtime())})

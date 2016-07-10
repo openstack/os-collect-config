@@ -25,7 +25,10 @@ CONF = cfg.CONF
 opts = [
     cfg.StrOpt('metadata-url',
                default=EC2_METADATA_URL,
-               help='URL to query for EC2 Metadata')
+               help='URL to query for EC2 Metadata'),
+    cfg.FloatOpt('timeout', default=10,
+                 help='Seconds to wait for the connection and read request'
+                      ' timeout.')
 ]
 name = 'ec2'
 
@@ -35,9 +38,9 @@ class Collector(object):
         self._requests_impl = requests_impl
         self.session = requests_impl.Session()
 
-    def _fetch_metadata(self, fetch_url):
+    def _fetch_metadata(self, fetch_url, timeout):
         try:
-            r = self.session.get(fetch_url)
+            r = self.session.get(fetch_url, timeout=timeout)
             r.raise_for_status()
         except self._requests_impl.exceptions.RequestException as e:
             log.getLogger(__name__).warn(e)
@@ -51,10 +54,11 @@ class Collector(object):
                 sub_fetch_url = fetch_url + subkey
                 if subkey[-1] == '/':
                     subkey = subkey[:-1]
-                new_content[subkey] = self._fetch_metadata(sub_fetch_url)
+                new_content[subkey] = self._fetch_metadata(
+                    sub_fetch_url, timeout)
             content = new_content
         return content
 
     def collect(self):
         root_url = '%s/' % (CONF.ec2.metadata_url)
-        return [('ec2', self._fetch_metadata(root_url))]
+        return [('ec2', self._fetch_metadata(root_url, CONF.ec2.timeout))]
