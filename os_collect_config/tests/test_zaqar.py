@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+
 import fixtures
 from keystoneclient import discover as ks_discover
 import mock
 from oslo_config import cfg
+from oslo_config import fixture as config_fixture
 import testtools
 from testtools import matchers
 from zaqarclient.queues.v1 import message
+from zaqarclient import transport
+from zaqarclient.transport import response
 
 from os_collect_config import collect
 from os_collect_config import exc
@@ -32,6 +37,14 @@ class FakeKeystoneClient(test_heat.FakeKeystoneClient):
         self._test.assertEqual('messaging', service_type)
         self._test.assertEqual('publicURL', endpoint_type)
         return 'http://192.0.2.1:8888/'
+
+
+class FakeKeystoneClientWebsocket(test_heat.FakeKeystoneClient):
+
+    def url_for(self, service_type, endpoint_type):
+        self._test.assertEqual('messaging-websocket', service_type)
+        self._test.assertEqual('publicURL', endpoint_type)
+        return 'ws://127.0.0.1:9000/'
 
 
 class FakeZaqarClient(object):
@@ -48,6 +61,31 @@ class FakeZaqarClient(object):
         self._test.assertEqual(
             '4f3f46d3-09f1-42a7-8c13-f91a5457192c', queue_id)
         return FakeQueue()
+
+
+class FakeZaqarWebsocketClient(object):
+
+    def __init__(self, options, messages=None, testcase=None):
+        self._messages = messages
+        self._test = testcase
+
+    def send(self, request):
+        self._test.assertEqual('ws://127.0.0.1:9000/', request.endpoint)
+        if request.operation == 'message_list':
+            body = json.loads(request.content)
+            self._test.assertEqual(
+                '4f3f46d3-09f1-42a7-8c13-f91a5457192c', body['queue_name'])
+        return response.Response(request, content=json.dumps(self._messages),
+                                 status_code=200)
+
+    def recv(self):
+        return {'body': test_heat.META_DATA}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        pass
 
 
 class FakeQueue(object):
@@ -87,11 +125,17 @@ class TestZaqar(testtools.TestCase):
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         collect.setup_conf()
-        cfg.CONF.zaqar.auth_url = 'http://192.0.2.1:5000/v3'
-        cfg.CONF.zaqar.user_id = '0123456789ABCDEF'
-        cfg.CONF.zaqar.password = 'FEDCBA9876543210'
-        cfg.CONF.zaqar.project_id = '9f6b09df-4d7f-4a33-8ec3-9924d8f46f10'
-        cfg.CONF.zaqar.queue_id = '4f3f46d3-09f1-42a7-8c13-f91a5457192c'
+
+        conf = config_fixture.Config()
+        self.useFixture(conf)
+        conf.config(group='zaqar', use_websockets=False)
+        conf.config(group='zaqar', auth_url='http://192.0.2.1:5000/v3')
+        conf.config(group='zaqar', user_id='0123456789ABCDEF')
+        conf.config(group='zaqar', password='FEDCBA9876543210')
+        conf.config(group='zaqar',
+                    project_id='9f6b09df-4d7f-4a33-8ec3-9924d8f46f10')
+        conf.config(group='zaqar',
+                    queue_id='4f3f46d3-09f1-42a7-8c13-f91a5457192c')
 
     @mock.patch.object(ks_discover.Discover, '__init__')
     @mock.patch.object(ks_discover.Discover, 'url_for')
@@ -176,3 +220,51 @@ class TestZaqar(testtools.TestCase):
         self.assertRaises(
             exc.ZaqarMetadataNotConfigured, zaqar_collect.collect)
         self.assertIn('No queue_id configured', self.log.output)
+
+    @mock.patch.object(transport, 'get_transport_for')
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
+    def test_collect_zaqar_websocket(self, mock_url_for, mock___init__,
+                                     mock_transport):
+
+        mock___init__.return_value = None
+        mock_url_for.return_value = cfg.CONF.zaqar.auth_url
+        conf = config_fixture.Config()
+        self.useFixture(conf)
+        conf.config(group='zaqar', use_websockets=True)
+        messages = {'messages': [{'body': test_heat.META_DATA, 'id': 1}]}
+        ws = FakeZaqarWebsocketClient({}, messages=messages, testcase=self)
+        mock_transport.return_value = ws
+        zaqar_md = zaqar.Collector(
+            keystoneclient=FakeKeystoneClientWebsocket(self, cfg.CONF.zaqar)
+        ).collect()
+        self.assertThat(zaqar_md, matchers.IsInstance(list))
+        self.assertEqual('zaqar', zaqar_md[0][0])
+        zaqar_md = zaqar_md[0][1]
+
+        for k in ('int1', 'strfoo', 'map_ab'):
+            self.assertIn(k, zaqar_md)
+            self.assertEqual(zaqar_md[k], test_heat.META_DATA[k])
+
+    @mock.patch.object(transport, 'get_transport_for')
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
+    def test_collect_zaqar_websocket_recv(self, mock_url_for, mock___init__,
+                                          mock_transport):
+        mock___init__.return_value = None
+        mock_url_for.return_value = cfg.CONF.zaqar.auth_url
+        ws = FakeZaqarWebsocketClient({}, messages={}, testcase=self)
+        mock_transport.return_value = ws
+        conf = config_fixture.Config()
+        self.useFixture(conf)
+        conf.config(group='zaqar', use_websockets=True)
+        zaqar_md = zaqar.Collector(
+            keystoneclient=FakeKeystoneClientWebsocket(self, cfg.CONF.zaqar),
+        ).collect()
+        self.assertThat(zaqar_md, matchers.IsInstance(list))
+        self.assertEqual('zaqar', zaqar_md[0][0])
+        zaqar_md = zaqar_md[0][1]
+
+        for k in ('int1', 'strfoo', 'map_ab'):
+            self.assertIn(k, zaqar_md)
+            self.assertEqual(zaqar_md[k], test_heat.META_DATA[k])

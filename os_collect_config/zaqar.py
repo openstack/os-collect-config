@@ -12,11 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+
 from keystoneclient.v3 import client as keystoneclient
 from oslo_config import cfg
 from oslo_log import log
 import six
 from zaqarclient.queues.v1 import client as zaqarclient
+from zaqarclient import transport
+from zaqarclient.transport import request
 
 from os_collect_config import exc
 from os_collect_config import keystone
@@ -36,6 +40,9 @@ opts = [
                help='URL for API authentication'),
     cfg.StrOpt('queue-id',
                help='ID of the queue to be checked'),
+    cfg.BoolOpt('use-websockets',
+                default=False,
+                help='Use the websocket transport to connect to Zaqar.'),
 ]
 name = 'zaqar'
 
@@ -44,10 +51,75 @@ class Collector(object):
     def __init__(self,
                  keystoneclient=keystoneclient,
                  zaqarclient=zaqarclient,
-                 discover_class=None):
+                 discover_class=None,
+                 transport=transport):
         self.keystoneclient = keystoneclient
         self.zaqarclient = zaqarclient
         self.discover_class = discover_class
+        self.transport = transport
+
+    def get_data_wsgi(self, ks, conf):
+
+            endpoint = ks.service_catalog.url_for(
+                service_type='messaging', endpoint_type='publicURL')
+            logger.debug('Fetching metadata from %s' % endpoint)
+            zaqar = self.zaqarclient.Client(endpoint, conf=conf, version=1.1)
+
+            queue = zaqar.queue(CONF.zaqar.queue_id)
+            r = six.next(queue.pop())
+            return r.body
+
+    def _create_req(self, endpoint, action, body):
+        return request.Request(endpoint, action, content=json.dumps(body))
+
+    def get_data_websocket(self, ks, conf):
+
+        endpoint = ks.service_catalog.url_for(
+            service_type='messaging-websocket', endpoint_type='publicURL')
+
+        logger.debug('Fetching metadata from %s' % endpoint)
+
+        with self.transport.get_transport_for(endpoint, options=conf) as ws:
+            # create queue
+            req = self._create_req(endpoint, 'queue_create',
+                                   {'queue_name': CONF.zaqar.queue_id})
+            ws.send(req)
+            # subscribe to queue messages
+            req = self._create_req(endpoint, 'subscription_create',
+                                   {'queue_name': CONF.zaqar.queue_id,
+                                    'ttl': 10000})
+            ws.send(req)
+
+            # TODO(dprince) would be nice to use message_delete_many but
+            # websockets doesn't support parameters so we can't send 'pop'.
+            # This would allow us to avoid the 'message_delete' below. Example:
+            # req = self._create_req(endpoint, 'message_delete_many',
+            #     {'queue_name': CONF.zaqar.queue_id, 'pop': 1})
+            req = self._create_req(endpoint, 'message_list',
+                                   {'queue_name': CONF.zaqar.queue_id,
+                                    'echo': True})
+            resp = ws.send(req)
+            messages = json.loads(resp.content).get('messages', [])
+
+            if len(messages) > 0:
+                # NOTE(dprince) In this case we are checking for queue
+                # messages that arrived before we subscribed.
+                logger.debug('Websocket message_list found...')
+                msg_0 = messages[0]
+                data = msg_0['body']
+                req = self._create_req(endpoint, 'message_delete',
+                                       {'queue_name': CONF.zaqar.queue_id,
+                                        'message_id': msg_0['id']})
+                ws.send(req)
+
+            else:
+                # NOTE(dprince) This will block until there is data available
+                # or the socket times out. Because we subscribe to the queue
+                # it will allow us to process data immediately.
+                logger.debug('websocket recv()')
+                data = ws.recv()['body']
+
+        return data
 
     def collect(self):
         if CONF.zaqar.auth_url is None:
@@ -74,9 +146,7 @@ class Collector(object):
                 project_id=CONF.zaqar.project_id,
                 keystoneclient=self.keystoneclient,
                 discover_class=self.discover_class).client
-            endpoint = ks.service_catalog.url_for(
-                service_type='messaging', endpoint_type='publicURL')
-            logger.debug('Fetching metadata from %s' % endpoint)
+
             conf = {
                 'auth_opts': {
                     'backend': 'keystone',
@@ -87,13 +157,13 @@ class Collector(object):
                 }
             }
 
-            zaqar = self.zaqarclient.Client(endpoint, conf=conf, version=1.1)
-
-            queue = zaqar.queue(CONF.zaqar.queue_id)
-            r = six.next(queue.pop())
+            if CONF.zaqar.use_websockets:
+                data = self.get_data_websocket(ks, conf)
+            else:
+                data = self.get_data_wsgi(ks, conf)
 
             final_list = merger.merged_list_from_content(
-                r.body, cfg.CONF.deployment_key, name)
+                data, cfg.CONF.deployment_key, name)
             return final_list
 
         except Exception as e:
