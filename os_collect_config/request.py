@@ -30,6 +30,9 @@ logger = log.getLogger(__name__)
 opts = [
     cfg.StrOpt('metadata-url',
                help='URL to query for metadata'),
+    cfg.FloatOpt('timeout', default=10,
+                 help='Seconds to wait for the connection and read request'
+                      ' timeout.')
 ]
 name = 'request'
 
@@ -70,13 +73,14 @@ class Collector(object):
             logger.info('No metadata_url configured.')
             raise exc.RequestMetadataNotConfigured
         url = CONF.request.metadata_url
+        timeout = CONF.request.timeout
         final_content = {}
 
         try:
-            head = self._session.head(url)
+            head = self._session.head(url, timeout=timeout)
             last_modified = self.check_fetch_content(head.headers)
 
-            content = self._session.get(url)
+            content = self._session.get(url, timeout=timeout)
             content.raise_for_status()
             self.last_modified = last_modified
 

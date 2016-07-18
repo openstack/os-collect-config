@@ -48,7 +48,10 @@ opts = [
     cfg.MultiStrOpt('deployment-key',
                     default=['deployments'],
                     help='DEPRECATED, use global configuration option '
-                         '"deployment-key"')
+                         '"deployment-key"'),
+    cfg.FloatOpt('timeout', default=10,
+                 help='Seconds to wait for the connection and read request'
+                      ' timeout.')
 ]
 name = 'cfn'
 
@@ -107,7 +110,8 @@ class Collector(object):
             try:
                 content = self._session.get(
                     url, params=params, headers=headers,
-                    verify=CONF.cfn.ca_certificate)
+                    verify=CONF.cfn.ca_certificate,
+                    timeout=CONF.cfn.timeout)
                 content.raise_for_status()
             except self._requests_impl.exceptions.RequestException as e:
                 logger.warn(e)

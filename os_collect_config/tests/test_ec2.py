@@ -63,7 +63,7 @@ class FakeRequests(object):
     exceptions = requests.exceptions
 
     class Session(object):
-        def get(self, url):
+        def get(self, url, timeout=None):
             url = urlparse.urlparse(url)
 
             if url.path == '/latest/meta-data/':
@@ -81,7 +81,7 @@ class FakeFailRequests(object):
     exceptions = requests.exceptions
 
     class Session(object):
-        def get(self, url):
+        def get(self, url, timeout=None):
             raise requests.exceptions.HTTPError(403, 'Forbidden')
 
 
