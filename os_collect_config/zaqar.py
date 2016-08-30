@@ -20,6 +20,7 @@ from zaqarclient.queues.v1 import client as zaqarclient
 
 from os_collect_config import exc
 from os_collect_config import keystone
+from os_collect_config import merger
 
 CONF = cfg.CONF
 logger = log.getLogger(__name__)
@@ -88,7 +89,10 @@ class Collector(object):
             queue = zaqar.queue(CONF.zaqar.queue_id)
             r = six.next(queue.pop())
 
-            return [('zaqar', r.body)]
+            final_list = merger.merged_list_from_content(
+                r.body, cfg.CONF.deployment_key, name)
+            return final_list
+
         except Exception as e:
             logger.warn(str(e))
             raise exc.ZaqarMetadataNotAvailable()

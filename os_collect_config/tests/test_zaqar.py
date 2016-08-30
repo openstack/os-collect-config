@@ -57,6 +57,30 @@ class FakeQueue(object):
             queue=self, ttl=10, age=10, body=test_heat.META_DATA, href='')])
 
 
+class FakeZaqarClientSoftwareConfig(object):
+
+    def __init__(self, testcase):
+        self._test = testcase
+
+    def Client(self, endpoint, conf, version):
+        self._test.assertEqual(1.1, version)
+        self._test.assertEqual('http://127.0.0.1:8888/', endpoint)
+        return self
+
+    def queue(self, queue_id):
+        self._test.assertEqual(
+            '4f3f46d3-09f1-42a7-8c13-f91a5457192c', queue_id)
+        return FakeQueueSoftwareConfig()
+
+
+class FakeQueueSoftwareConfig(object):
+
+    def pop(self):
+        return iter([message.Message(
+            queue=self, ttl=10, age=10, body=test_heat.SOFTWARE_CONFIG_DATA,
+            href='')])
+
+
 class TestZaqar(testtools.TestCase):
     def setUp(self):
         super(TestZaqar, self).setUp()
@@ -84,6 +108,24 @@ class TestZaqar(testtools.TestCase):
         for k in ('int1', 'strfoo', 'map_ab'):
             self.assertIn(k, zaqar_md)
             self.assertEqual(zaqar_md[k], test_heat.META_DATA[k])
+
+    @mock.patch.object(ks_discover.Discover, '__init__')
+    @mock.patch.object(ks_discover.Discover, 'url_for')
+    def test_collect_zaqar_deployments(self, mock_url_for, mock___init__):
+        mock___init__.return_value = None
+        mock_url_for.return_value = cfg.CONF.zaqar.auth_url
+        zaqar_md = zaqar.Collector(
+            keystoneclient=FakeKeystoneClient(self, cfg.CONF.zaqar),
+            zaqarclient=FakeZaqarClientSoftwareConfig(self)).collect()
+        self.assertThat(zaqar_md, matchers.IsInstance(list))
+        self.assertEqual('zaqar', zaqar_md[0][0])
+        self.assertEqual(2, len(zaqar_md))
+        self.assertEqual('zaqar', zaqar_md[0][0])
+        self.assertEqual(
+            test_heat.SOFTWARE_CONFIG_DATA['deployments'],
+            zaqar_md[0][1]['deployments'])
+        self.assertEqual(
+            ('dep-name1', {'config1': 'value1'}), zaqar_md[1])
 
     @mock.patch.object(ks_discover.Discover, '__init__')
     @mock.patch.object(ks_discover.Discover, 'url_for')
