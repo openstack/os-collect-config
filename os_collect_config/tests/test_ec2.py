@@ -13,9 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+import os
 import uuid
 
 import fixtures
+from oslo_config import cfg
 import requests
 import six.moves.urllib.parse as urlparse
 import testtools
@@ -114,3 +117,15 @@ class TestEc2(testtools.TestCase):
         collect_ec2 = ec2.Collector(requests_impl=FakeFailRequests)
         self.assertRaises(exc.Ec2MetadataNotAvailable, collect_ec2.collect)
         self.assertIn('Forbidden', self.log.output)
+
+    def test_collect_ec2_collected(self):
+        collect.setup_conf()
+        cache_dir = self.useFixture(fixtures.TempDir())
+        self.addCleanup(cfg.CONF.reset)
+        cfg.CONF.set_override('cachedir', cache_dir.path)
+        ec2_path = os.path.join(cache_dir.path, 'ec2.json')
+        with open(ec2_path, 'w') as f:
+            json.dump(META_DATA, f)
+
+        collect_ec2 = ec2.Collector(requests_impl=FakeFailRequests)
+        self.assertRaises(exc.Ec2MetadataAlreadyCollected, collect_ec2.collect)

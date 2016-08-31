@@ -22,8 +22,16 @@ class SourceNotConfigured(RuntimeError):
     """The requested data source is not configured."""
 
 
+class SourceAlreadyCollected(RuntimeError):
+    """The requested data source is immutable and already cached."""
+
+
 class Ec2MetadataNotAvailable(SourceNotAvailable):
     """The EC2 metadata service is not available."""
+
+
+class Ec2MetadataAlreadyCollected(SourceAlreadyCollected):
+    """The EC2 metadata has already been fetched and cached."""
 
 
 class CfnMetadataNotAvailable(SourceNotAvailable):
