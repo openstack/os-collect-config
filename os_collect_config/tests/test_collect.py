@@ -22,12 +22,14 @@ import tempfile
 
 import extras
 import fixtures
+import mock
 from oslo_config import cfg
 import testtools
 from testtools import matchers
 
 from os_collect_config import cache
 from os_collect_config import collect
+from os_collect_config import config_drive
 from os_collect_config import exc
 from os_collect_config.tests import test_cfn
 from os_collect_config.tests import test_ec2
@@ -82,8 +84,10 @@ class TestCollect(testtools.TestCase):
                 'discover_class': test_heat.FakeKeystoneDiscover
             },
         }
-        return collect.__main__(args=fake_args,
-                                collector_kwargs_map=collector_kwargs_map)
+        with mock.patch.object(config_drive, 'get_metadata') as gm:
+            gm.return_value = {}
+            return collect.__main__(args=fake_args,
+                                    collector_kwargs_map=collector_kwargs_map)
 
     def _fake_popen_call_main(self, occ_args):
         calls = []
@@ -329,6 +333,7 @@ class TestCollect(testtools.TestCase):
 
 
 class TestCollectAll(testtools.TestCase):
+
     def setUp(self):
         super(TestCollectAll, self).setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
@@ -383,10 +388,12 @@ class TestCollectAll(testtools.TestCase):
             }
         if collectors is None:
             collectors = cfg.CONF.collectors
-        return collect.collect_all(
-            collectors,
-            store=store,
-            collector_kwargs_map=collector_kwargs_map)
+        with mock.patch.object(config_drive, 'get_metadata') as gm:
+            gm.return_value = {}
+            return collect.collect_all(
+                collectors,
+                store=store,
+                collector_kwargs_map=collector_kwargs_map)
 
     def _test_collect_all_store(self, collector_kwargs_map=None,
                                 expected_changed=None):

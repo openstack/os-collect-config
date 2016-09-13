@@ -21,6 +21,7 @@ from oslo_log import log
 
 from os_collect_config import cache
 from os_collect_config import common
+from os_collect_config import config_drive
 from os_collect_config import exc
 
 EC2_METADATA_URL = 'http://169.254.169.254/latest/meta-data'
@@ -70,5 +71,10 @@ class Collector(object):
                 metadata = json.load(f)
                 if metadata:
                     return [('ec2', metadata)]
+
+        md = config_drive.get_metadata()
+        if md:
+            return [('ec2', md)]
+
         root_url = '%s/' % (CONF.ec2.metadata_url)
         return [('ec2', self._fetch_metadata(root_url, CONF.ec2.timeout))]
