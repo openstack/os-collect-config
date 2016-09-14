@@ -170,10 +170,6 @@ def collect_all(collectors, store=False, collector_kwargs_map=None):
         except exc.SourceNotConfigured:
             logger.debug('Source [%s] Not configured.' % collector)
             continue
-        except exc.SourceAlreadyCollected:
-            logger.debug('Source [%s] Already collected and cached.'
-                         % collector)
-            continue
 
         if store:
             for output_key, output_content in content:

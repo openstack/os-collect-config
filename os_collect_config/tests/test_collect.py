@@ -447,10 +447,6 @@ class TestCollectAll(testtools.TestCase):
             cache.commit(changed)
         (changed_keys, paths2) = self._call_collect_all(store=True)
         self.assertEqual(set(), changed_keys)
-
-        # check the second collect skips ec2, it has already been cached.
-        ec2_path = os.path.join(self.cache_dir.path, 'ec2.json')
-        paths.remove(ec2_path)
         self.assertEqual(paths, paths2)
 
     def test_collect_all_no_change_softwareconfig(self):
@@ -481,10 +477,6 @@ class TestCollectAll(testtools.TestCase):
         (changed_keys, paths2) = self._call_collect_all(
             store=True, collector_kwargs_map=soft_config_map)
         self.assertEqual(set(), changed_keys)
-
-        # check the second collect skips ec2, it has already been cached.
-        ec2_path = os.path.join(self.cache_dir.path, 'ec2.json')
-        paths.remove(ec2_path)
         self.assertEqual(paths, paths2)
 
     def test_collect_all_nostore(self):
