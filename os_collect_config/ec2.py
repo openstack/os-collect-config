@@ -13,9 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+import os
+
 from oslo_config import cfg
 from oslo_log import log
 
+from os_collect_config import cache
 from os_collect_config import common
 from os_collect_config import exc
 
@@ -60,5 +64,11 @@ class Collector(object):
         return content
 
     def collect(self):
+        cache_path = cache.get_path('ec2')
+        if os.path.exists(cache_path):
+            with open(cache_path) as f:
+                metadata = json.load(f)
+                if metadata:
+                    return [('ec2', metadata)]
         root_url = '%s/' % (CONF.ec2.metadata_url)
         return [('ec2', self._fetch_metadata(root_url, CONF.ec2.timeout))]

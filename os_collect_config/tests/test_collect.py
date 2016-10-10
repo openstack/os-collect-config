@@ -476,9 +476,16 @@ class TestCollectAll(testtools.TestCase):
         # Commit
         for changed in changed_keys:
             cache.commit(changed)
+
+        # Replace the ec2 requests with a failing one to simulate a transient
+        # network failure
+        soft_config_map['ec2'] = {'requests_impl': test_ec2.FakeFailRequests}
         (changed_keys, paths2) = self._call_collect_all(
             store=True, collector_kwargs_map=soft_config_map)
         self.assertEqual(set(), changed_keys)
+
+        # check the second collect includes cached ec2 data despite network
+        # failure
         self.assertEqual(paths, paths2)
 
     def test_collect_all_nostore(self):
