@@ -15,9 +15,7 @@
 import tempfile
 
 import fixtures
-from keystoneclient import discover as ks_discover
 from keystoneclient import exceptions as ks_exc
-import mock
 from oslo_config import cfg
 import testtools
 
@@ -26,21 +24,22 @@ from os_collect_config import keystone
 from os_collect_config.tests import test_heat
 
 
-class FakeKeystoneClient(object):
-    def __init__(self, *args, **kwargs):
-        pass
+class FakeKeystoneDiscoverNone(test_heat.FakeKeystoneDiscover):
 
-    def Client(self, *args, **kwargs):
-        return self
-
-    @property
-    def service_catalog(self):
-        return {}
+    def url_for(self, version):
+        return None
 
 
-class FakeFailGetAuthRef(FakeKeystoneClient):
-    def get_auth_ref(self):
-        raise ks_exc.AuthorizationFailed('Should not be called')
+class FakeKeystoneDiscoverError(test_heat.FakeKeystoneDiscover):
+
+    def url_for(self, version):
+        raise ks_exc.DiscoveryFailure()
+
+
+class FakeKeystoneDiscoverBase(test_heat.FakeKeystoneDiscover):
+
+    def url_for(self, version):
+        return 'http://192.0.2.1:5000/'
 
 
 class KeystoneTest(testtools.TestCase):
@@ -52,51 +51,38 @@ class KeystoneTest(testtools.TestCase):
         self.cachedir = tempfile.mkdtemp()
         cfg.CONF.set_override('cache_dir', self.cachedir, group='keystone')
 
-    @mock.patch.object(ks_discover.Discover, '__init__')
-    @mock.patch.object(ks_discover.Discover, 'url_for')
-    def test_discover_fail(self, mock_url_for, mock___init__):
-        mock___init__.return_value = None
-        mock_url_for.side_effect = ks_exc.DiscoveryFailure()
+    def test_discover_fail(self):
         ks = keystone.Keystone(
-            'http://server.test:5000/v2.0', 'auser', 'apassword', 'aproject',
-            test_heat.FakeKeystoneClient(self))
-        self.assertEqual(ks.auth_url, 'http://server.test:5000/v3')
+            'http://192.0.2.1:5000/v2.0', 'auser', 'apassword', 'aproject',
+            test_heat.FakeKeystoneClient(self),
+            FakeKeystoneDiscoverError)
+        self.assertEqual(ks.auth_url, 'http://192.0.2.1:5000/v3')
 
-    @mock.patch.object(ks_discover.Discover, '__init__')
-    @mock.patch.object(ks_discover.Discover, 'url_for')
-    def test_discover_v3_unsupported(self, mock_url_for, mock___init__):
-        mock___init__.return_value = None
-        mock_url_for.return_value = None
+    def test_discover_v3_unsupported(self):
         ks = keystone.Keystone(
-            'http://server.test:5000/v2.0', 'auser', 'apassword', 'aproject',
-            test_heat.FakeKeystoneClient(self))
-        self.assertEqual(ks.auth_url, 'http://server.test:5000/v2.0')
-        mock___init__.assert_called_with(auth_url='http://server.test:5000/')
+            'http://192.0.2.1:5000/v2.0', 'auser', 'apassword', 'aproject',
+            test_heat.FakeKeystoneClient(self),
+            FakeKeystoneDiscoverNone)
+        self.assertEqual(ks.auth_url, 'http://192.0.2.1:5000/v2.0')
 
-    @mock.patch.object(ks_discover.Discover, '__init__')
-    @mock.patch.object(ks_discover.Discover, 'url_for')
-    def test_cache_is_created(self, mock_url_for, mock___init__):
-        mock___init__.return_value = None
-        mock_url_for.return_value = 'http://server.test:5000/'
+    def test_cache_is_created(self):
         ks = keystone.Keystone(
-            'http://server.test:5000/', 'auser', 'apassword', 'aproject',
-            test_heat.FakeKeystoneClient(self))
+            'http://192.0.2.1:5000/', 'auser', 'apassword', 'aproject',
+            test_heat.FakeKeystoneClient(self),
+            test_heat.FakeKeystoneDiscover)
         self.assertIsNotNone(ks.cache)
 
-    @mock.patch.object(ks_discover.Discover, '__init__')
-    @mock.patch.object(ks_discover.Discover, 'url_for')
-    def _make_ks(self, client, mock_url_for, mock___init__):
+    def _make_ks(self, client):
         class Configs(object):
-            auth_url = 'http://server.test:5000/'
+            auth_url = 'http://192.0.2.1:5000/'
             user_id = 'auser'
             password = 'apassword'
             project_id = 'aproject'
 
-        mock___init__.return_value = None
-        mock_url_for.return_value = Configs.auth_url
         return keystone.Keystone(
-            'http://server.test:5000/', 'auser', 'apassword', 'aproject',
-            client(self, Configs))
+            'http://192.0.2.1:5000/', 'auser', 'apassword', 'aproject',
+            client(self, Configs),
+            FakeKeystoneDiscoverBase)
 
     def test_cache_auth_ref(self):
         ks = self._make_ks(test_heat.FakeKeystoneClient)
@@ -113,13 +99,3 @@ class KeystoneTest(testtools.TestCase):
             self.assertTrue(False, 'auth_ref should have failed.')
         except ks_exc.AuthorizationFailure:
             pass
-
-    def test_service_catalog(self):
-        ks = self._make_ks(FakeKeystoneClient)
-        service_catalog = ks.service_catalog
-        ks2 = self._make_ks(FakeKeystoneClient)
-        service_catalog2 = ks2.service_catalog
-        self.assertEqual(service_catalog, service_catalog2)
-        ks2.invalidate_auth_ref()
-        service_catalog3 = ks.service_catalog
-        self.assertEqual(service_catalog, service_catalog3)

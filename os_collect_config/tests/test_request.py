@@ -148,7 +148,7 @@ class TestRequestBase(testtools.TestCase):
         super(TestRequestBase, self).setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
         collect.setup_conf()
-        cfg.CONF.request.metadata_url = 'http://127.0.0.1:8000/my_metadata'
+        cfg.CONF.request.metadata_url = 'http://192.0.2.1:8000/my_metadata'
 
 
 class TestRequest(TestRequestBase):
