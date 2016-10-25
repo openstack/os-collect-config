@@ -22,8 +22,6 @@ import tempfile
 
 import extras
 import fixtures
-from keystoneclient import discover as ks_discover
-import mock
 from oslo_config import cfg
 import testtools
 from testtools import matchers
@@ -74,12 +72,14 @@ class TestCollect(testtools.TestCase):
             'cfn': {'requests_impl': test_cfn.FakeRequests(self)},
             'heat': {
                 'keystoneclient': test_heat.FakeKeystoneClient(self),
-                'heatclient': test_heat.FakeHeatClient(self)
+                'heatclient': test_heat.FakeHeatClient(self),
+                'discover_class': test_heat.FakeKeystoneDiscover
             },
             'request': {'requests_impl': test_request.FakeRequests},
             'zaqar': {
                 'keystoneclient': test_zaqar.FakeKeystoneClient(self),
-                'zaqarclient': test_zaqar.FakeZaqarClient(self)
+                'zaqarclient': test_zaqar.FakeZaqarClient(self),
+                'discover_class': test_heat.FakeKeystoneDiscover
             },
         }
         return collect.__main__(args=fake_args,
@@ -111,7 +111,7 @@ class TestCollect(testtools.TestCase):
             '--config-file',
             '/dev/null',
             '--cfn-metadata-url',
-            'http://127.0.0.1:8000/v1/',
+            'http://192.0.2.1:8000/v1/',
             '--cfn-stack-name',
             'foo',
             '--cfn-path',
@@ -129,7 +129,7 @@ class TestCollect(testtools.TestCase):
             '--heat-project-id',
             '9f6b09df-4d7f-4a33-8ec3-9924d8f46f10',
             '--heat-auth-url',
-            'http://127.0.0.1:5000/v3',
+            'http://192.0.2.1:5000/v3',
             '--heat-stack-id',
             'a/c482680f-7238-403d-8f76-36acf0c8e0aa',
             '--heat-resource-name',
@@ -225,7 +225,7 @@ class TestCollect(testtools.TestCase):
             '--config-file',
             '/dev/null',
             '--cfn-metadata-url',
-            'http://127.0.0.1:8000/v1/',
+            'http://192.0.2.1:8000/v1/',
             '--cfn-stack-name',
             'foo',
             '--cfn-path',
@@ -275,7 +275,7 @@ class TestCollect(testtools.TestCase):
             '--config-file', '/dev/null',
             '--print',
             '--cfn-metadata-url',
-            'http://127.0.0.1:8000/v1/',
+            'http://192.0.2.1:8000/v1/',
             '--cfn-stack-name',
             'foo',
             '--cfn-path',
@@ -343,44 +343,42 @@ class TestCollectAll(testtools.TestCase):
 
         cfg.CONF.cachedir = self.cache_dir.path
         cfg.CONF.backup_cachedir = self.backup_cache_dir.path
-        cfg.CONF.cfn.metadata_url = 'http://127.0.0.1:8000/v1/'
+        cfg.CONF.cfn.metadata_url = 'http://192.0.2.1:8000/v1/'
         cfg.CONF.cfn.stack_name = 'foo'
         cfg.CONF.cfn.path = ['foo.Metadata']
         cfg.CONF.cfn.access_key_id = '0123456789ABCDEF'
         cfg.CONF.cfn.secret_access_key = 'FEDCBA9876543210'
         cfg.CONF.heat_local.path = [_setup_heat_local_metadata(self)]
-        cfg.CONF.heat.auth_url = 'http://127.0.0.1:5000/v3'
+        cfg.CONF.heat.auth_url = 'http://192.0.2.1:5000/v3'
         cfg.CONF.heat.user_id = '0123456789ABCDEF'
         cfg.CONF.heat.password = 'FEDCBA9876543210'
         cfg.CONF.heat.project_id = '9f6b09df-4d7f-4a33-8ec3-9924d8f46f10'
         cfg.CONF.heat.stack_id = 'a/c482680f-7238-403d-8f76-36acf0c8e0aa'
         cfg.CONF.heat.resource_name = 'server'
         cfg.CONF.local.path = [_setup_local_metadata(self)]
-        cfg.CONF.request.metadata_url = 'http://127.0.0.1:8000/my_metadata/'
-        cfg.CONF.zaqar.auth_url = 'http://127.0.0.1:5000/v3'
+        cfg.CONF.request.metadata_url = 'http://192.0.2.1:8000/my_metadata/'
+        cfg.CONF.zaqar.auth_url = 'http://192.0.2.1:5000/v3'
         cfg.CONF.zaqar.user_id = '0123456789ABCDEF'
         cfg.CONF.zaqar.password = 'FEDCBA9876543210'
         cfg.CONF.zaqar.project_id = '9f6b09df-4d7f-4a33-8ec3-9924d8f46f10'
         cfg.CONF.zaqar.queue_id = '4f3f46d3-09f1-42a7-8c13-f91a5457192c'
 
-    @mock.patch.object(ks_discover.Discover, '__init__')
-    @mock.patch.object(ks_discover.Discover, 'url_for')
-    def _call_collect_all(self, mock_url_for, mock___init__, store,
-                          collector_kwargs_map=None, collectors=None):
-        mock___init__.return_value = None
-        mock_url_for.return_value = cfg.CONF.heat.auth_url
+    def _call_collect_all(self, store, collector_kwargs_map=None,
+                          collectors=None):
         if collector_kwargs_map is None:
             collector_kwargs_map = {
                 'ec2': {'requests_impl': test_ec2.FakeRequests},
                 'cfn': {'requests_impl': test_cfn.FakeRequests(self)},
                 'heat': {
                     'keystoneclient': test_heat.FakeKeystoneClient(self),
-                    'heatclient': test_heat.FakeHeatClient(self)
+                    'heatclient': test_heat.FakeHeatClient(self),
+                    'discover_class': test_heat.FakeKeystoneDiscover
                 },
                 'request': {'requests_impl': test_request.FakeRequests},
                 'zaqar': {
                     'keystoneclient': test_zaqar.FakeKeystoneClient(self),
-                    'zaqarclient': test_zaqar.FakeZaqarClient(self)
+                    'zaqarclient': test_zaqar.FakeZaqarClient(self),
+                    'discover_class': test_heat.FakeKeystoneDiscover
                 },
             }
         if collectors is None:
@@ -413,12 +411,14 @@ class TestCollectAll(testtools.TestCase):
                 'requests_impl': test_cfn.FakeRequestsSoftwareConfig(self)},
             'heat': {
                 'keystoneclient': test_heat.FakeKeystoneClient(self),
-                'heatclient': test_heat.FakeHeatClient(self)
+                'heatclient': test_heat.FakeHeatClient(self),
+                'discover_class': test_heat.FakeKeystoneDiscover
             },
             'request': {'requests_impl': test_request.FakeRequests},
             'zaqar': {
                 'keystoneclient': test_zaqar.FakeKeystoneClient(self),
-                'zaqarclient': test_zaqar.FakeZaqarClient(self)
+                'zaqarclient': test_zaqar.FakeZaqarClient(self),
+                'discover_class': test_heat.FakeKeystoneDiscover
             },
         }
         expected_changed = set((
@@ -456,12 +456,14 @@ class TestCollectAll(testtools.TestCase):
                 'requests_impl': test_cfn.FakeRequestsSoftwareConfig(self)},
             'heat': {
                 'keystoneclient': test_heat.FakeKeystoneClient(self),
-                'heatclient': test_heat.FakeHeatClient(self)
+                'heatclient': test_heat.FakeHeatClient(self),
+                'discover_class': test_heat.FakeKeystoneDiscover
             },
             'request': {'requests_impl': test_request.FakeRequests},
             'zaqar': {
                 'keystoneclient': test_zaqar.FakeKeystoneClient(self),
-                'zaqarclient': test_zaqar.FakeZaqarClient(self)
+                'zaqarclient': test_zaqar.FakeZaqarClient(self),
+                'discover_class': test_heat.FakeKeystoneDiscover
             },
         }
         (changed_keys, paths) = self._call_collect_all(
@@ -493,7 +495,8 @@ class TestCollectAll(testtools.TestCase):
             'cfn': {'requests_impl': test_cfn.FakeRequests(self)}
         }
         (changed_keys, content) = self._call_collect_all(
-            store=False, collector_kwargs_map=collector_kwargs_map)
+            store=False, collector_kwargs_map=collector_kwargs_map,
+            collectors=['ec2', 'cfn'])
         self.assertEqual(set(), changed_keys)
         self.assertThat(content, matchers.IsInstance(dict))
         self.assertNotIn('ec2', content)

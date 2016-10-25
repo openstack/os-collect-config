@@ -13,9 +13,7 @@
 # limitations under the License.
 
 import fixtures
-from keystoneclient import discover as ks_discover
 from keystoneclient import exceptions as ks_exc
-import mock
 from oslo_config import cfg
 import testtools
 from testtools import matchers
@@ -64,6 +62,15 @@ SOFTWARE_CONFIG_IMPOSTER_DATA = {
 }
 
 
+class FakeKeystoneDiscover(object):
+
+    def __init__(self, auth_url):
+        pass
+
+    def url_for(self, version):
+        return 'http://192.0.2.1:5000/v3'
+
+
 class FakeKeystoneClient(object):
 
     def __init__(self, testcase, configs=None):
@@ -84,7 +91,7 @@ class FakeKeystoneClient(object):
     def url_for(self, service_type, endpoint_type):
         self._test.assertEqual('orchestration', service_type)
         self._test.assertEqual('publicURL', endpoint_type)
-        return 'http://127.0.0.1:8004/v1'
+        return 'http://192.0.2.1:8004/v1'
 
     def get_auth_ref(self):
         return 'this is an auth_ref'
@@ -103,7 +110,7 @@ class FakeHeatClient(object):
 
     def Client(self, version, endpoint, token):
         self._test.assertEqual('1', version)
-        self._test.assertEqual('http://127.0.0.1:8004/v1', endpoint)
+        self._test.assertEqual('http://192.0.2.1:8004/v1', endpoint)
         self._test.assertEqual('atoken', token)
         return self
 
@@ -125,7 +132,7 @@ class TestHeatBase(testtools.TestCase):
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         collect.setup_conf()
-        cfg.CONF.heat.auth_url = 'http://127.0.0.1:5000/v3'
+        cfg.CONF.heat.auth_url = 'http://192.0.2.1:5000/v3'
         cfg.CONF.heat.user_id = '0123456789ABCDEF'
         cfg.CONF.heat.password = 'FEDCBA9876543210'
         cfg.CONF.heat.project_id = '9f6b09df-4d7f-4a33-8ec3-9924d8f46f10'
@@ -134,13 +141,10 @@ class TestHeatBase(testtools.TestCase):
 
 
 class TestHeat(TestHeatBase):
-    @mock.patch.object(ks_discover.Discover, '__init__')
-    @mock.patch.object(ks_discover.Discover, 'url_for')
-    def test_collect_heat(self, mock_url_for, mock___init__):
-        mock___init__.return_value = None
-        mock_url_for.return_value = cfg.CONF.heat.auth_url
+    def test_collect_heat(self):
         heat_md = heat.Collector(keystoneclient=FakeKeystoneClient(self),
-                                 heatclient=FakeHeatClient(self)).collect()
+                                 heatclient=FakeHeatClient(self),
+                                 discover_class=FakeKeystoneDiscover).collect()
         self.assertThat(heat_md, matchers.IsInstance(list))
         self.assertEqual('heat', heat_md[0][0])
         heat_md = heat_md[0][1]
@@ -153,16 +157,13 @@ class TestHeat(TestHeatBase):
         # level setting for urllib3.connectionpool.
         self.assertTrue(
             self.log.output == '' or
-            self.log.output == 'Starting new HTTP connection (1): 127.0.0.1\n')
+            self.log.output == 'Starting new HTTP connection (1): 192.0.2.1\n')
 
-    @mock.patch.object(ks_discover.Discover, '__init__')
-    @mock.patch.object(ks_discover.Discover, 'url_for')
-    def test_collect_heat_fail(self, mock_url_for, mock___init__):
-        mock___init__.return_value = None
-        mock_url_for.return_value = cfg.CONF.heat.auth_url
+    def test_collect_heat_fail(self):
         heat_collect = heat.Collector(
             keystoneclient=FakeFailKeystoneClient(self),
-            heatclient=FakeHeatClient(self))
+            heatclient=FakeHeatClient(self),
+            discover_class=FakeKeystoneDiscover)
         self.assertRaises(exc.HeatMetadataNotAvailable, heat_collect.collect)
         self.assertIn('Forbidden', self.log.output)
 
@@ -204,14 +205,11 @@ class TestHeat(TestHeatBase):
 
 
 class TestHeatSoftwareConfig(TestHeatBase):
-    @mock.patch.object(ks_discover.Discover, '__init__')
-    @mock.patch.object(ks_discover.Discover, 'url_for')
-    def test_collect_heat(self, mock_url_for, mock___init__):
-        mock___init__.return_value = None
-        mock_url_for.return_value = cfg.CONF.heat.auth_url
+    def test_collect_heat(self):
         heat_md = heat.Collector(
             keystoneclient=FakeKeystoneClient(self),
-            heatclient=FakeHeatClientSoftwareConfig(self)).collect()
+            heatclient=FakeHeatClientSoftwareConfig(self),
+            discover_class=FakeKeystoneDiscover).collect()
         self.assertThat(heat_md, matchers.IsInstance(list))
         self.assertEqual(2, len(heat_md))
         self.assertEqual('heat', heat_md[0][0])

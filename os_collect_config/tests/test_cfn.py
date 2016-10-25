@@ -154,7 +154,7 @@ class FakeReqSession(object):
 class FakeRequests(object):
     exceptions = requests.exceptions
 
-    def __init__(self, testcase, expected_netloc='127.0.0.1:8000'):
+    def __init__(self, testcase, expected_netloc='192.0.2.1:8000'):
         self._test = testcase
         self._expected_netloc = expected_netloc
 
@@ -200,7 +200,7 @@ class TestCfnBase(testtools.TestCase):
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         self.hint_file = tempfile.NamedTemporaryFile()
-        self.hint_file.write(u'http://127.0.0.1:8000'.encode('utf-8'))
+        self.hint_file.write(u'http://192.0.2.1:8000'.encode('utf-8'))
         self.hint_file.flush()
         self.addCleanup(self.hint_file.close)
         collect.setup_conf()

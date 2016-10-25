@@ -41,7 +41,7 @@ class Keystone(object):
     in subsequent invocations of os-collect-config.
     '''
     def __init__(self, auth_url, user_id, password, project_id,
-                 keystoneclient=None):
+                 keystoneclient=None, discover_class=None):
         '''Initialize Keystone wrapper.
 
         @param string auth_url   auth_url for keystoneclient
@@ -49,15 +49,18 @@ class Keystone(object):
         @param string project_id project_id for keystoneclient
         @param object keystoneclient optional keystoneclient implementation.
                                      Uses keystoneclient.v3 if unspecified.
+        @param object discover_class optional keystoneclient.discover.Discover
+                                     class.
         '''
         self.keystoneclient = keystoneclient or ks_keystoneclient
+        self.discover_class = discover_class or ks_discover.Discover
         self.user_id = user_id
         self.password = password
         self.project_id = project_id
         self._client = None
         try:
             auth_url_noneversion = auth_url.replace('/v2.0', '/')
-            discover = ks_discover.Discover(auth_url=auth_url_noneversion)
+            discover = self.discover_class(auth_url=auth_url_noneversion)
             v3_auth_url = discover.url_for('3.0')
             if v3_auth_url:
                 self.auth_url = v3_auth_url

@@ -31,7 +31,7 @@ class FakeKeystoneClient(test_heat.FakeKeystoneClient):
     def url_for(self, service_type, endpoint_type):
         self._test.assertEqual('messaging', service_type)
         self._test.assertEqual('publicURL', endpoint_type)
-        return 'http://127.0.0.1:8888/'
+        return 'http://192.0.2.1:8888/'
 
 
 class FakeZaqarClient(object):
@@ -41,7 +41,7 @@ class FakeZaqarClient(object):
 
     def Client(self, endpoint, conf, version):
         self._test.assertEqual(1.1, version)
-        self._test.assertEqual('http://127.0.0.1:8888/', endpoint)
+        self._test.assertEqual('http://192.0.2.1:8888/', endpoint)
         return self
 
     def queue(self, queue_id):
@@ -64,7 +64,7 @@ class FakeZaqarClientSoftwareConfig(object):
 
     def Client(self, endpoint, conf, version):
         self._test.assertEqual(1.1, version)
-        self._test.assertEqual('http://127.0.0.1:8888/', endpoint)
+        self._test.assertEqual('http://192.0.2.1:8888/', endpoint)
         return self
 
     def queue(self, queue_id):
@@ -87,7 +87,7 @@ class TestZaqar(testtools.TestCase):
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         collect.setup_conf()
-        cfg.CONF.zaqar.auth_url = 'http://127.0.0.1:5000/v3'
+        cfg.CONF.zaqar.auth_url = 'http://192.0.2.1:5000/v3'
         cfg.CONF.zaqar.user_id = '0123456789ABCDEF'
         cfg.CONF.zaqar.password = 'FEDCBA9876543210'
         cfg.CONF.zaqar.project_id = '9f6b09df-4d7f-4a33-8ec3-9924d8f46f10'
@@ -100,7 +100,8 @@ class TestZaqar(testtools.TestCase):
         mock_url_for.return_value = cfg.CONF.zaqar.auth_url
         zaqar_md = zaqar.Collector(
             keystoneclient=FakeKeystoneClient(self, cfg.CONF.zaqar),
-            zaqarclient=FakeZaqarClient(self)).collect()
+            zaqarclient=FakeZaqarClient(self),
+            discover_class=test_heat.FakeKeystoneDiscover).collect()
         self.assertThat(zaqar_md, matchers.IsInstance(list))
         self.assertEqual('zaqar', zaqar_md[0][0])
         zaqar_md = zaqar_md[0][1]
@@ -116,7 +117,8 @@ class TestZaqar(testtools.TestCase):
         mock_url_for.return_value = cfg.CONF.zaqar.auth_url
         zaqar_md = zaqar.Collector(
             keystoneclient=FakeKeystoneClient(self, cfg.CONF.zaqar),
-            zaqarclient=FakeZaqarClientSoftwareConfig(self)).collect()
+            zaqarclient=FakeZaqarClientSoftwareConfig(self),
+            discover_class=test_heat.FakeKeystoneDiscover).collect()
         self.assertThat(zaqar_md, matchers.IsInstance(list))
         self.assertEqual('zaqar', zaqar_md[0][0])
         self.assertEqual(2, len(zaqar_md))
@@ -135,7 +137,8 @@ class TestZaqar(testtools.TestCase):
         zaqar_collect = zaqar.Collector(
             keystoneclient=test_heat.FakeFailKeystoneClient(
                 self, cfg.CONF.zaqar),
-            zaqarclient=FakeZaqarClient(self))
+            zaqarclient=FakeZaqarClient(self),
+            discover_class=test_heat.FakeKeystoneDiscover)
         self.assertRaises(exc.ZaqarMetadataNotAvailable, zaqar_collect.collect)
         self.assertIn('Forbidden', self.log.output)
 

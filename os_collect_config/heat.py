@@ -44,9 +44,11 @@ name = 'heat'
 class Collector(object):
     def __init__(self,
                  keystoneclient=keystoneclient,
-                 heatclient=heatclient):
+                 heatclient=heatclient,
+                 discover_class=None):
         self.keystoneclient = keystoneclient
         self.heatclient = heatclient
+        self.discover_class = discover_class
 
     def collect(self):
         if CONF.heat.auth_url is None:
@@ -74,7 +76,8 @@ class Collector(object):
                 user_id=CONF.heat.user_id,
                 password=CONF.heat.password,
                 project_id=CONF.heat.project_id,
-                keystoneclient=self.keystoneclient).client
+                keystoneclient=self.keystoneclient,
+                discover_class=self.discover_class).client
             endpoint = ks.service_catalog.url_for(
                 service_type='orchestration', endpoint_type='publicURL')
             logger.debug('Fetching metadata from %s' % endpoint)

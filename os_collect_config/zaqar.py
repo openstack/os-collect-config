@@ -43,9 +43,11 @@ name = 'zaqar'
 class Collector(object):
     def __init__(self,
                  keystoneclient=keystoneclient,
-                 zaqarclient=zaqarclient):
+                 zaqarclient=zaqarclient,
+                 discover_class=None):
         self.keystoneclient = keystoneclient
         self.zaqarclient = zaqarclient
+        self.discover_class = discover_class
 
     def collect(self):
         if CONF.zaqar.auth_url is None:
@@ -70,7 +72,8 @@ class Collector(object):
                 user_id=CONF.zaqar.user_id,
                 password=CONF.zaqar.password,
                 project_id=CONF.zaqar.project_id,
-                keystoneclient=self.keystoneclient).client
+                keystoneclient=self.keystoneclient,
+                discover_class=self.discover_class).client
             endpoint = ks.service_catalog.url_for(
                 service_type='messaging', endpoint_type='publicURL')
             logger.debug('Fetching metadata from %s' % endpoint)
