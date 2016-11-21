@@ -18,40 +18,64 @@ import os
 import uuid
 
 import fixtures
+import mock
 from oslo_config import cfg
 import requests
 import six.moves.urllib.parse as urlparse
 import testtools
-from testtools import matchers
 
 from os_collect_config import collect
+from os_collect_config import config_drive
 from os_collect_config import ec2
 from os_collect_config import exc
 
 
-META_DATA = {'local-ipv4': '192.0.2.1',
-             'reservation-id': str(uuid.uuid1()),
-             'local-hostname': 'foo',
-             'ami-launch-index': '0',
-             'public-hostname': 'foo',
-             'hostname': 'foo',
-             'ami-id': str(uuid.uuid1()),
-             'instance-action': 'none',
-             'public-ipv4': '192.0.2.1',
-             'instance-type': 'flavor.small',
-             'placement/': 'availability-zone',
-             'placement/availability-zone': 'foo-az',
-             'mpi/': 'foo-keypair',
-             'mpi/foo-keypair': '192.0.2.1 slots=1',
-             'block-device-mapping/': "ami\nroot\nephemeral0",
-             'block-device-mapping/ami': 'vda',
-             'block-device-mapping/root': '/dev/vda',
-             'block-device-mapping/ephemeral0': '/dev/vdb',
-             'public-keys/': '0=foo-keypair',
-             'public-keys/0': 'openssh-key',
-             'public-keys/0/': 'openssh-key',
-             'public-keys/0/openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC',
-             'instance-id': str(uuid.uuid1())}
+META_DATA = {
+    'local-ipv4': '192.0.2.1',
+    'reservation-id': str(uuid.uuid1()),
+    'local-hostname': 'foo',
+    'ami-launch-index': '0',
+    'public-hostname': 'foo',
+    'hostname': 'foo',
+    'ami-id': str(uuid.uuid1()),
+    'instance-action': 'none',
+    'public-ipv4': '192.0.2.1',
+    'instance-type': 'flavor.small',
+    'placement/': 'availability-zone',
+    'placement/availability-zone': 'foo-az',
+    'mpi/': 'foo-keypair',
+    'mpi/foo-keypair': '192.0.2.1 slots=1',
+    'block-device-mapping/': "ami\nroot\nephemeral0",
+    'block-device-mapping/ami': 'vda',
+    'block-device-mapping/root': '/dev/vda',
+    'block-device-mapping/ephemeral0': '/dev/vdb',
+    'public-keys/': '0=foo-keypair',
+    'public-keys/0': 'openssh-key',
+    'public-keys/0/': 'openssh-key',
+    'public-keys/0/openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC',
+    'instance-id': str(uuid.uuid1())
+}
+
+
+META_DATA_RESOLVED = {
+    'local-ipv4': '192.0.2.1',
+    'reservation-id': META_DATA['reservation-id'],
+    'local-hostname': 'foo',
+    'ami-launch-index': '0',
+    'public-hostname': 'foo',
+    'hostname': 'foo',
+    'ami-id': META_DATA['ami-id'],
+    'instance-action': 'none',
+    'public-ipv4': '192.0.2.1',
+    'instance-type': 'flavor.small',
+    'placement': {'availability-zone': 'foo-az'},
+    'mpi': {'foo-keypair': '192.0.2.1 slots=1'},
+    'public-keys': {'0': {'openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC'}},
+    'block-device-mapping': {'ami': 'vda',
+                             'ephemeral0': '/dev/vdb',
+                             'root': '/dev/vda'},
+    'instance-id': META_DATA['instance-id']
+}
 
 
 class FakeResponse(dict):
@@ -93,32 +117,25 @@ class TestEc2(testtools.TestCase):
         super(TestEc2, self).setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
 
-    def test_collect_ec2(self):
+    @mock.patch.object(config_drive, 'config_drive')
+    def test_collect_ec2(self, cd):
+        cd.return_value = None
         collect.setup_conf()
         ec2_md = ec2.Collector(requests_impl=FakeRequests).collect()
-        self.assertThat(ec2_md, matchers.IsInstance(list))
-        self.assertEqual('ec2', ec2_md[0][0])
-        ec2_md = ec2_md[0][1]
-
-        for k in ('public-ipv4', 'instance-id', 'hostname'):
-            self.assertIn(k, ec2_md)
-            self.assertEqual(ec2_md[k], META_DATA[k])
-
-        self.assertEqual(ec2_md['block-device-mapping']['ami'], 'vda')
-
-        # SSH keys are special cases
-        self.assertEqual(
-            {'0': {'openssh-key': 'ssh-rsa AAAAAAAAABBBBBBBBCCCCCCCC'}},
-            ec2_md['public-keys'])
+        self.assertEqual([('ec2', META_DATA_RESOLVED)], ec2_md)
         self.assertEqual('', self.log.output)
 
-    def test_collect_ec2_fail(self):
+    @mock.patch.object(config_drive, 'config_drive')
+    def test_collect_ec2_fail(self, cd):
+        cd.return_value = None
         collect.setup_conf()
         collect_ec2 = ec2.Collector(requests_impl=FakeFailRequests)
         self.assertRaises(exc.Ec2MetadataNotAvailable, collect_ec2.collect)
         self.assertIn('Forbidden', self.log.output)
 
-    def test_collect_ec2_collected(self):
+    @mock.patch.object(config_drive, 'config_drive')
+    def test_collect_ec2_collected(self, cd):
+        cd.return_value = None
         collect.setup_conf()
         cache_dir = self.useFixture(fixtures.TempDir())
         self.addCleanup(cfg.CONF.reset)
@@ -129,3 +146,11 @@ class TestEc2(testtools.TestCase):
 
         collect_ec2 = ec2.Collector(requests_impl=FakeFailRequests)
         self.assertEqual([('ec2', META_DATA)], collect_ec2.collect())
+
+    @mock.patch.object(config_drive, 'config_drive')
+    def test_collect_config_drive(self, cd):
+        cd.return_value.get_metadata.return_value = META_DATA_RESOLVED
+        collect.setup_conf()
+        ec2_md = ec2.Collector(requests_impl=FakeFailRequests).collect()
+        self.assertEqual([('ec2', META_DATA_RESOLVED)], ec2_md)
+        self.assertEqual('', self.log.output)
