@@ -90,27 +90,19 @@ class Collector(object):
                                     'ttl': 10000})
             ws.send(req)
 
-            # TODO(dprince) would be nice to use message_delete_many but
-            # websockets doesn't support parameters so we can't send 'pop'.
-            # This would allow us to avoid the 'message_delete' below. Example:
-            # req = self._create_req(endpoint, 'message_delete_many',
-            #     {'queue_name': CONF.zaqar.queue_id, 'pop': 1})
-            req = self._create_req(endpoint, 'message_list',
+            # check for pre-existing messages
+            req = self._create_req(endpoint, 'message_delete_many',
                                    {'queue_name': CONF.zaqar.queue_id,
-                                    'echo': True})
+                                    'pop': 1})
             resp = ws.send(req)
             messages = json.loads(resp.content).get('messages', [])
 
             if len(messages) > 0:
                 # NOTE(dprince) In this case we are checking for queue
                 # messages that arrived before we subscribed.
-                logger.debug('Websocket message_list found...')
+                logger.debug('Websocket message found...')
                 msg_0 = messages[0]
                 data = msg_0['body']
-                req = self._create_req(endpoint, 'message_delete',
-                                       {'queue_name': CONF.zaqar.queue_id,
-                                        'message_id': msg_0['id']})
-                ws.send(req)
 
             else:
                 # NOTE(dprince) This will block until there is data available
