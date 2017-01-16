@@ -64,6 +64,9 @@ opts = [
                 help='Pass this option to make os-collect-config exit after'
                 ' one execution of command. This behavior is implied if no'
                 ' command is specified.'),
+    cfg.FloatOpt('min-polling-interval', default=1,
+                 help='When running continuously, pause a minimum of this'
+                      ' many seconds between collecting data.'),
     cfg.FloatOpt('polling-interval', short='i', default=30,
                  help='When running continuously, pause a maximum of this'
                       ' many seconds between collecting data. If changes'
@@ -85,7 +88,7 @@ opts = [
                     default=['deployments'],
                     help='Key(s) to explode into multiple collected outputs. '
                     'Parsed according to the expected Metadata created by '
-                    'OS::Heat::StructuredDeployment. Only Exploded if seen at '
+                    'OS::Heat::StructuredDeployment. Only exploded if seen at '
                     'the root of the Metadata.')
 ]
 
@@ -253,8 +256,10 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
     exitval = 0
     config_files = CONF.config_file
     config_hash = getfilehash(config_files)
-    sleep_time = 1
+    exponential_sleep_time = CONF.min_polling_interval
     while True:
+        # shorter sleeps while changes are detected allows for faster
+        # software deployment dependency processing
         store_and_run = bool(CONF.command and not CONF.print_only)
         (changed_keys, content) = collect_all(
             cfg.CONF.collectors,
@@ -262,9 +267,6 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
             collector_kwargs_map=collector_kwargs_map)
         if store_and_run:
             if changed_keys or CONF.force:
-                # shorter sleeps while changes are detected allows for faster
-                # software deployment dependency processing
-                sleep_time = 1
                 # ignore HUP now since we will reexec after commit anyway
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
                 try:
@@ -285,12 +287,12 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
             if CONF.one_time:
                 break
             else:
-                logger.info("Sleeping %.2f seconds.", sleep_time)
-                time.sleep(sleep_time)
+                logger.info("Sleeping %.2f seconds.", exponential_sleep_time)
+                time.sleep(exponential_sleep_time)
 
-            sleep_time *= 2
-            if sleep_time > CONF.polling_interval:
-                sleep_time = CONF.polling_interval
+            exponential_sleep_time *= 2
+            if exponential_sleep_time > CONF.polling_interval:
+                exponential_sleep_time = CONF.polling_interval
         else:
             print(json.dumps(content, indent=1))
             break

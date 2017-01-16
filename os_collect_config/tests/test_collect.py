@@ -331,6 +331,19 @@ class TestCollect(testtools.TestCase):
         collect.__main__(['os-collect-config', 'heat_local', '--config-file',
                           '/dev/null', '-i', '10'])
 
+    def test_main_min_polling_interval(self):
+        class ExpectedException(Exception):
+            pass
+
+        def fake_sleep(sleep_time):
+            if sleep_time == 20:
+                raise ExpectedException
+
+        self.useFixture(fixtures.MonkeyPatch('time.sleep', fake_sleep))
+        self.assertRaises(ExpectedException, collect.__main__,
+                          ['os-collect-config', 'heat_local', '-i', '10',
+                           '--min-polling-interval', '20', '-c', 'true'])
+
 
 class TestCollectAll(testtools.TestCase):
 
