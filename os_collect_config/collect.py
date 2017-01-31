@@ -273,25 +273,13 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
                     exitval = e.returncode
                     logger.error('Command failed, will not cache new data. %s'
                                  % e)
-                    if not CONF.one_time:
-                        new_config_hash = getfilehash(config_files)
-                        if config_hash == new_config_hash:
-                            logger.warn(
-                                'Sleeping %.2f seconds before re-exec.' %
-                                sleep_time
-                            )
-                            time.sleep(sleep_time)
-                        else:
-                            # The command failed but the config file has
-                            # changed re-exec now as the config file change
-                            # may have fixed things.
-                            logger.warn('Config changed, re-execing now')
-                            config_hash = new_config_hash
                 else:
                     for changed in changed_keys:
                         cache.commit(changed)
                 if not CONF.one_time:
-                    reexec_self()
+                    new_config_hash = getfilehash(config_files)
+                    if config_hash != new_config_hash:
+                        reexec_self()
             else:
                 logger.debug("No changes detected.")
             if CONF.one_time:
