@@ -68,7 +68,11 @@ class Collector(object):
         cache_path = cache.get_path('ec2')
         if os.path.exists(cache_path):
             with open(cache_path) as f:
-                metadata = json.load(f)
+                try:
+                    metadata = json.load(f)
+                except ValueError as e:
+                    log.getLogger(__name__).warn(e)
+                    metadata = None
                 if metadata:
                     return [('ec2', metadata)]
 

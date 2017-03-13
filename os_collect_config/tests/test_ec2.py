@@ -134,6 +134,20 @@ class TestEc2(testtools.TestCase):
         self.assertIn('Forbidden', self.log.output)
 
     @mock.patch.object(config_drive, 'config_drive')
+    def test_collect_ec2_invalid_cache(self, cd):
+        cd.return_value = None
+        collect.setup_conf()
+        cache_dir = self.useFixture(fixtures.TempDir())
+        self.addCleanup(cfg.CONF.reset)
+        cfg.CONF.set_override('cachedir', cache_dir.path)
+        ec2_path = os.path.join(cache_dir.path, 'ec2.json')
+        with open(ec2_path, 'w') as f:
+            f.write('')
+
+        ec2_md = ec2.Collector(requests_impl=FakeRequests).collect()
+        self.assertEqual([('ec2', META_DATA_RESOLVED)], ec2_md)
+
+    @mock.patch.object(config_drive, 'config_drive')
     def test_collect_ec2_collected(self, cd):
         cd.return_value = None
         collect.setup_conf()
