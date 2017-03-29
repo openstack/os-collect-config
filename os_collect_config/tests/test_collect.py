@@ -344,6 +344,16 @@ class TestCollect(testtools.TestCase):
                           ['os-collect-config', 'heat_local', '-i', '10',
                            '--min-polling-interval', '20', '-c', 'true'])
 
+    @mock.patch('time.sleep')
+    @mock.patch('random.randrange')
+    def test_main_with_splay(self, randrange_mock, sleep_mock):
+        randrange_mock.return_value = 4
+        collect.__main__(args=['os-collect-config', 'heat_local', '-i', '10',
+                               '--min-polling-interval', '20', '-c', 'true',
+                               '--print', '--splay', '29'])
+        randrange_mock.assert_called_with(0, 29)
+        sleep_mock.assert_called_with(4)
+
 
 class TestCollectAll(testtools.TestCase):
 

@@ -16,6 +16,7 @@
 import hashlib
 import json
 import os
+import random
 import shutil
 import signal
 import subprocess
@@ -89,7 +90,17 @@ opts = [
                     help='Key(s) to explode into multiple collected outputs. '
                     'Parsed according to the expected Metadata created by '
                     'OS::Heat::StructuredDeployment. Only exploded if seen at '
-                    'the root of the Metadata.')
+                    'the root of the Metadata.'),
+    cfg.FloatOpt('splay',
+                 default=0,
+                 help='Use this option to sleep for a random amount of time '
+                      'prior to starting the collect process. Takes a maximum '
+                      'number of seconds to wait before beginning collection '
+                      'as an argument. Disabled when set to 0. This option '
+                      'can help ensure that multiple collect processes '
+                      '(on different hosts) do not attempt to poll at the '
+                      'exact same time if they were all started at the same '
+                      'time. Ignored if --one-time or --force is used.'),
 ]
 
 CONF = cfg.CONF
@@ -252,6 +263,11 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
 
     if CONF.force:
         CONF.set_override('one_time', True)
+
+    if CONF.splay > 0 and not CONF.one_time:
+        # sleep splay seconds in the beginning to prevent multiple collect
+        # processes from all running at the same time
+        time.sleep(random.randrange(0, CONF.splay))
 
     exitval = 0
     config_files = CONF.config_file
