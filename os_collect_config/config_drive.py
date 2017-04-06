@@ -147,7 +147,7 @@ def all_block_devices():
     '''Run blkid and yield a BlockDevice for all devices.'''
     try:
         cmd = ['blkid', '-o', 'export']
-        out = subprocess.check_output(cmd)
+        out = subprocess.check_output(cmd, universal_newlines=True)
     except Exception as e:
         logger.error('Problem running "%s": %s', ' '.join(cmd), e)
     else:
