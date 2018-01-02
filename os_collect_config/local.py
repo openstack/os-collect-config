@@ -89,7 +89,7 @@ class Collector(object):
                     basename = os.path.basename(data_file)
                     final_content.append((basename, value))
         if not final_content:
-            logger.warn('No local metadata found (%s)' %
+            logger.info('No local metadata found (%s)' %
                         cfg.CONF.local.path)
 
         # Now sort specifically by C locale
