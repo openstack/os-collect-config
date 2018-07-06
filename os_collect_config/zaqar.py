@@ -43,6 +43,8 @@ opts = [
     cfg.BoolOpt('use-websockets',
                 default=False,
                 help='Use the websocket transport to connect to Zaqar.'),
+    cfg.StrOpt('region-name',
+               help='Region Name for extracting Zaqar endpoint'),
 ]
 name = 'zaqar'
 
@@ -59,23 +61,26 @@ class Collector(object):
         self.transport = transport
 
     def get_data_wsgi(self, ks, conf):
+        kwargs = {'service_type': 'messaging', 'endpoint_type': 'publicURL'}
+        if CONF.zaqar.region_name:
+            kwargs['region_name'] = CONF.zaqar.region_name
+        endpoint = ks.service_catalog.url_for(**kwargs)
+        logger.debug('Fetching metadata from %s' % endpoint)
+        zaqar = self.zaqarclient.Client(endpoint, conf=conf, version=1.1)
 
-            endpoint = ks.service_catalog.url_for(
-                service_type='messaging', endpoint_type='publicURL')
-            logger.debug('Fetching metadata from %s' % endpoint)
-            zaqar = self.zaqarclient.Client(endpoint, conf=conf, version=1.1)
-
-            queue = zaqar.queue(CONF.zaqar.queue_id)
-            r = six.next(queue.pop())
-            return r.body
+        queue = zaqar.queue(CONF.zaqar.queue_id)
+        r = six.next(queue.pop())
+        return r.body
 
     def _create_req(self, endpoint, action, body):
         return request.Request(endpoint, action, content=json.dumps(body))
 
     def get_data_websocket(self, ks, conf):
-
-        endpoint = ks.service_catalog.url_for(
-            service_type='messaging-websocket', endpoint_type='publicURL')
+        kwargs = {'service_type': 'messaging-websocket',
+                  'endpoint_type': 'publicURL'}
+        if CONF.zaqar.region_name:
+            kwargs['region_name'] = CONF.zaqar.region_name
+        endpoint = ks.service_catalog.url_for(**kwargs)
 
         logger.debug('Fetching metadata from %s' % endpoint)
 
@@ -129,6 +134,8 @@ class Collector(object):
         if CONF.zaqar.queue_id is None:
             logger.warn('No queue_id configured.')
             raise exc.ZaqarMetadataNotConfigured()
+        # NOTE(flwang): To be compatible with old versions, we won't throw
+        # error here if there is no region name.
 
         try:
             ks = keystone.Keystone(
