@@ -37,6 +37,8 @@ opts = [
                help='ID of the stack this deployment belongs to'),
     cfg.StrOpt('resource-name',
                help='Name of resource in the stack to be polled'),
+    cfg.StrOpt('region-name',
+               help='Region Name for extracting Heat endpoint'),
 ]
 name = 'heat'
 
@@ -69,6 +71,8 @@ class Collector(object):
         if CONF.heat.resource_name is None:
             logger.info('No resource_name configured.')
             raise exc.HeatMetadataNotConfigured
+        # NOTE(flwang): To be compatible with old versions, we won't throw
+        # error here if there is no region name.
 
         try:
             ks = keystone.Keystone(
@@ -78,8 +82,11 @@ class Collector(object):
                 project_id=CONF.heat.project_id,
                 keystoneclient=self.keystoneclient,
                 discover_class=self.discover_class).client
-            endpoint = ks.service_catalog.url_for(
-                service_type='orchestration', endpoint_type='publicURL')
+            kwargs = {'service_type': 'orchestration',
+                      'endpoint_type': 'publicURL'}
+            if CONF.heat.region_name:
+                kwargs['region_name'] = CONF.heat.region_name
+            endpoint = ks.service_catalog.url_for(**kwargs)
             logger.debug('Fetching metadata from %s' % endpoint)
             heat = self.heatclient.Client(
                 '1', endpoint, token=ks.auth_token)
