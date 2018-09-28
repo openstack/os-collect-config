@@ -241,6 +241,9 @@ def getfilehash(files):
 
 def __main__(args=sys.argv, collector_kwargs_map=None):
     signal.signal(signal.SIGHUP, reexec_self)
+    # NOTE(bnemec): We need to exit on SIGPIPEs so systemd can restart us.
+    #               See lp 1795030
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     setup_conf()
     CONF(args=args[1:], prog="os-collect-config",
          version=version.version_info.version_string())
