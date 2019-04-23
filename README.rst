@@ -63,7 +63,7 @@ Quick Start
 
 Install::
 
-  sudo pip install -U git+https://git.openstack.org/openstack/os-collect-config.git
+  sudo pip install -U git+https://opendev.org/openstack/os-collect-config.git
 
 Run it on an OpenStack instance with access to ec2 metadata::
 
