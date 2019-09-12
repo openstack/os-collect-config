@@ -33,7 +33,7 @@ You must define what sources to collect configuration data from in
 
 The format of this file is::
 
-  [default]
+  [DEFAULT]
   command=os-refresh-config
 
   [cfn]
