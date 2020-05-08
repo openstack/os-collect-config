@@ -45,6 +45,11 @@ opts = [
                 help='Use the websocket transport to connect to Zaqar.'),
     cfg.StrOpt('region-name',
                help='Region Name for extracting Zaqar endpoint'),
+    cfg.BoolOpt('ssl-certificate-validation',
+                help='ssl certificat validation flag for connect to Zaqar',
+                default=False),
+    cfg.StrOpt('ca-file',
+               help='CA Cert file for connect to Zaqar'),
 ]
 name = 'zaqar'
 
@@ -134,6 +139,11 @@ class Collector(object):
         if CONF.zaqar.queue_id is None:
             logger.warn('No queue_id configured.')
             raise exc.ZaqarMetadataNotConfigured()
+        if CONF.zaqar.ssl_certificate_validation is True and (
+                CONF.zaqar.ca_file is None):
+            logger.warn('No CA file configured when flag ssl certificate '
+                        'validation is on.')
+            raise exc.ZaqarMetadataNotConfigured()
         # NOTE(flwang): To be compatible with old versions, we won't throw
         # error here if there is no region name.
 
@@ -151,7 +161,9 @@ class Collector(object):
                     'backend': 'keystone',
                     'options': {
                         'os_auth_token': ks.auth_token,
-                        'os_project_id': CONF.zaqar.project_id
+                        'os_project_id': CONF.zaqar.project_id,
+                        'insecure': not CONF.zaqar.ssl_certificate_validation,
+                        'cacert': CONF.zaqar.ca_file
                     }
                 }
             }

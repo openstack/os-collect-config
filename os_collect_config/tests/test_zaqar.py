@@ -136,6 +136,8 @@ class TestZaqar(testtools.TestCase):
                     project_id='9f6b09df-4d7f-4a33-8ec3-9924d8f46f10')
         conf.config(group='zaqar',
                     queue_id='4f3f46d3-09f1-42a7-8c13-f91a5457192c')
+        conf.config(group='zaqar', ssl_certificate_validation=True)
+        conf.config(group='zaqar', ca_file='/foo/bar')
 
     @mock.patch.object(ks_discover.Discover, '__init__')
     @mock.patch.object(ks_discover.Discover, 'url_for')
@@ -220,6 +222,16 @@ class TestZaqar(testtools.TestCase):
         self.assertRaises(
             exc.ZaqarMetadataNotConfigured, zaqar_collect.collect)
         self.assertIn('No queue_id configured', self.log.output)
+
+    def test_collect_zaqar_no_ca_file(self):
+        cfg.CONF.zaqar.ssl_certificate_validation = True
+        cfg.CONF.zaqar.ca_file = None
+        zaqar_collect = zaqar.Collector()
+        self.assertRaises(
+            exc.ZaqarMetadataNotConfigured, zaqar_collect.collect)
+        expected = ('No CA file configured when flag ssl certificate '
+                    'validation is on.')
+        self.assertIn(expected, self.log.output)
 
     @mock.patch.object(transport, 'get_transport_for')
     @mock.patch.object(ks_discover.Discover, '__init__')
