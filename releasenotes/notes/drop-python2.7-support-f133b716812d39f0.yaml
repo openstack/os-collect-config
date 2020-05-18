@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    Python 2.7 support has been dropped. Last release os-collect-config support
+    py2.7 is OpenStack Train. The minimum version of Python now
+    supported by os-collect-config is Python 3.6.
