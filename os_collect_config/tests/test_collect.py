@@ -19,10 +19,10 @@ import os
 import signal
 import sys
 import tempfile
+from unittest import mock
 
 import extras
 import fixtures
-import mock
 from oslo_config import cfg
 import testtools
 from testtools import matchers

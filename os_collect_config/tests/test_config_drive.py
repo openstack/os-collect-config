@@ -14,9 +14,9 @@
 import json
 import os
 import subprocess
+from unittest import mock
 
 import fixtures
-import mock
 import testtools
 
 from os_collect_config import config_drive

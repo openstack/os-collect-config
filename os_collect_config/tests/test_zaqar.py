@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import json
+from unittest import mock
 
 import fixtures
 from keystoneclient import discover as ks_discover
-import mock
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 import testtools

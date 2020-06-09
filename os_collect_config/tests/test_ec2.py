@@ -15,10 +15,10 @@
 
 import json
 import os
+from unittest import mock
 import uuid
 
 import fixtures
-import mock
 from oslo_config import cfg
 import requests
 import six.moves.urllib.parse as urlparse
