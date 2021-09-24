@@ -17,7 +17,6 @@ import json
 from keystoneclient.v3 import client as keystoneclient
 from oslo_config import cfg
 from oslo_log import log
-import six
 from zaqarclient.queues.v1 import client as zaqarclient
 from zaqarclient import transport
 from zaqarclient.transport import request
@@ -74,7 +73,7 @@ class Collector(object):
         zaqar = self.zaqarclient.Client(endpoint, conf=conf, version=1.1)
 
         queue = zaqar.queue(CONF.zaqar.queue_id)
-        r = six.next(queue.pop())
+        r = next(queue.pop())
         return r.body
 
     def _create_req(self, endpoint, action, body):

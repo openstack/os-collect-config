@@ -20,10 +20,10 @@ import fixtures
 from lxml import etree
 from oslo_config import cfg
 import requests
-import six.moves.urllib.parse as urlparse
 import testtools
 from testtools import content as test_content
 from testtools import matchers
+import urllib.parse as urlparse
 
 from os_collect_config import cfn
 from os_collect_config import collect

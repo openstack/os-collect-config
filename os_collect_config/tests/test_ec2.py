@@ -21,8 +21,8 @@ import uuid
 import fixtures
 from oslo_config import cfg
 import requests
-import six.moves.urllib.parse as urlparse
 import testtools
+import urllib.parse as urlparse
 
 from os_collect_config import collect
 from os_collect_config import config_drive
