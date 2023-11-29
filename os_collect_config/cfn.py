@@ -42,6 +42,7 @@ opts = [
     cfg.MultiStrOpt('path',
                     help='Path to Metadata'),
     cfg.StrOpt('secret-access-key',
+               secret=True,
                help='Secret Access Key'),
     cfg.StrOpt('access-key-id',
                help='Access Key ID'),
