@@ -86,8 +86,8 @@ class TestCollect(testtools.TestCase):
         }
         with mock.patch.object(config_drive, 'get_metadata') as gm:
             gm.return_value = {}
-            return collect.__main__(args=fake_args,
-                                    collector_kwargs_map=collector_kwargs_map)
+            return collect.main(args=fake_args,
+                                collector_kwargs_map=collector_kwargs_map)
 
     def _fake_popen_call_main(self, occ_args):
         calls = []
@@ -318,8 +318,8 @@ class TestCollect(testtools.TestCase):
 
         self.useFixture(fixtures.MonkeyPatch('time.sleep', fake_sleep))
         try:
-            collect.__main__(['os-collect-config', 'heat_local', '-i', '10',
-                              '-c', 'true'])
+            collect.main(['os-collect-config', 'heat_local', '-i', '10',
+                          '-c', 'true'])
         except ExpectedException:
             pass
 
@@ -328,8 +328,8 @@ class TestCollect(testtools.TestCase):
             raise Exception(cfg.CONF.command)
 
         self.useFixture(fixtures.MonkeyPatch('time.sleep', fake_sleep))
-        collect.__main__(['os-collect-config', 'heat_local', '--config-file',
-                          '/dev/null', '-i', '10'])
+        collect.main(['os-collect-config', 'heat_local', '--config-file',
+                      '/dev/null', '-i', '10'])
 
     def test_main_min_polling_interval(self):
         class ExpectedException(Exception):
@@ -340,7 +340,7 @@ class TestCollect(testtools.TestCase):
                 raise ExpectedException
 
         self.useFixture(fixtures.MonkeyPatch('time.sleep', fake_sleep))
-        self.assertRaises(ExpectedException, collect.__main__,
+        self.assertRaises(ExpectedException, collect.main,
                           ['os-collect-config', 'heat_local', '-i', '10',
                            '--min-polling-interval', '20', '-c', 'true'])
 
@@ -348,9 +348,9 @@ class TestCollect(testtools.TestCase):
     @mock.patch('random.randrange')
     def test_main_with_splay(self, randrange_mock, sleep_mock):
         randrange_mock.return_value = 4
-        collect.__main__(args=['os-collect-config', 'heat_local', '-i', '10',
-                               '--min-polling-interval', '20', '-c', 'true',
-                               '--print', '--splay', '29'])
+        collect.main(args=['os-collect-config', 'heat_local', '-i', '10',
+                           '--min-polling-interval', '20', '-c', 'true',
+                           '--print', '--splay', '29'])
         randrange_mock.assert_called_with(0, 29)
         sleep_mock.assert_called_with(4)
 

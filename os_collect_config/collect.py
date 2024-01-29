@@ -239,7 +239,7 @@ def getfilehash(files):
     return m.hexdigest()
 
 
-def __main__(args=sys.argv, collector_kwargs_map=None):
+def main(args=sys.argv, collector_kwargs_map=None):
     signal.signal(signal.SIGHUP, reexec_self)
     # NOTE(bnemec): We need to exit on SIGPIPEs so systemd can restart us.
     #               See lp 1795030
@@ -316,7 +316,3 @@ def __main__(args=sys.argv, collector_kwargs_map=None):
             print(json.dumps(content, indent=1))
             break
     return exitval
-
-
-if __name__ == '__main__':
-    sys.exit(__main__())
