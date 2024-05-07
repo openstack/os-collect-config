@@ -21,7 +21,6 @@ import sys
 import tempfile
 from unittest import mock
 
-import extras
 import fixtures
 from oslo_config import cfg
 import testtools
@@ -557,8 +556,8 @@ class TestConf(testtools.TestCase):
     def test_setup_conf(self):
         collect.setup_conf()
         self.assertEqual('/var/lib/os-collect-config', cfg.CONF.cachedir)
-        self.assertTrue(extras.safe_hasattr(cfg.CONF, 'ec2'))
-        self.assertTrue(extras.safe_hasattr(cfg.CONF, 'cfn'))
+        self.assertTrue(hasattr(cfg.CONF, 'ec2'))
+        self.assertTrue(hasattr(cfg.CONF, 'cfn'))
 
 
 class TestHup(testtools.TestCase):
