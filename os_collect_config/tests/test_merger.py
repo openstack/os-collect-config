@@ -18,74 +18,74 @@ import testtools
 from os_collect_config import merger
 
 
-META_DATA = {u'int1': 1,
-             u'strfoo': u'foo',
-             u'map_ab': {
-                 u'a': 'apple',
-                 u'b': 'banana',
+META_DATA = {'int1': 1,
+             'strfoo': 'foo',
+             'map_ab': {
+                 'a': 'apple',
+                 'b': 'banana',
              }}
 
 
 SOFTWARE_CONFIG_DATA = {
-    u'old-style': u'value',
-    u'deployments': [
+    'old-style': 'value',
+    'deployments': [
         {
-            u'inputs': [
+            'inputs': [
                 {
-                    u'type': u'String',
-                    u'name': u'input1',
-                    u'value': u'value1'
+                    'type': 'String',
+                    'name': 'input1',
+                    'value': 'value1'
                 }
             ],
-            u'group': 'Heat::Ungrouped',
-            u'name': 'dep-name1',
-            u'outputs': None,
-            u'options': None,
-            u'config': {
-                u'config1': 'value1'
+            'group': 'Heat::Ungrouped',
+            'name': 'dep-name1',
+            'outputs': None,
+            'options': None,
+            'config': {
+                'config1': 'value1'
             }
         },
         {
-            u'inputs': [
+            'inputs': [
                 {
-                    u'type': u'String',
-                    u'name': u'input1',
-                    u'value': u'value1'
+                    'type': 'String',
+                    'name': 'input1',
+                    'value': 'value1'
                 }
             ],
-            u'group': 'os-apply-config',
-            u'name': 'dep-name2',
-            u'outputs': None,
-            u'options': None,
-            u'config': {
-                u'config2': 'value2'
+            'group': 'os-apply-config',
+            'name': 'dep-name2',
+            'outputs': None,
+            'options': None,
+            'config': {
+                'config2': 'value2'
             }
         },
         {
-            u'inputs': [
+            'inputs': [
                 {
-                    u'type': u'String',
-                    u'name': u'input1',
-                    u'value': u'value1'
+                    'type': 'String',
+                    'name': 'input1',
+                    'value': 'value1'
                 }
             ],
-            u'name': 'dep-name3',
-            u'outputs': None,
-            u'options': None,
-            u'config': {
-                u'config3': 'value3'
+            'name': 'dep-name3',
+            'outputs': None,
+            'options': None,
+            'config': {
+                'config3': 'value3'
             }
         },
         {
-            u'inputs': [],
-            u'group': 'ignore_me',
-            u'name': 'ignore_me_name',
-            u'outputs': None,
-            u'options': None,
-            u'config': 'ignore_me_config'
+            'inputs': [],
+            'group': 'ignore_me',
+            'name': 'ignore_me_name',
+            'outputs': None,
+            'options': None,
+            'config': 'ignore_me_config'
         },
         {
-            u'inputs': [],  # to test missing name
+            'inputs': [],  # to test missing name
         }
     ]
 }

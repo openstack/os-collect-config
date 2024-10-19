@@ -32,7 +32,7 @@ opts = [
 ]
 
 
-class Keystone(object):
+class Keystone:
     '''A keystone wrapper class.
 
     This wrapper is used to encapsulate any keystone related operations

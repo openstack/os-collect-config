@@ -43,7 +43,7 @@ opts = [
 name = 'heat'
 
 
-class Collector(object):
+class Collector:
     def __init__(self,
                  keystoneclient=keystoneclient,
                  heatclient=heatclient,

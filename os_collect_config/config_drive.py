@@ -26,7 +26,7 @@ logger = log.getLogger('os-collect-config')
 PROC_MOUNTS_PATH = '/proc/mounts'
 
 
-class BlockDevice(object):
+class BlockDevice:
 
     devname = None
 
@@ -75,7 +75,7 @@ class BlockDevice(object):
         '''Finds an existing mountpoint or mounts to a temp directory.'''
         self.unmount = False
         # check if already mounted, if so use that
-        with open(PROC_MOUNTS_PATH, 'r') as f:
+        with open(PROC_MOUNTS_PATH) as f:
             for line in f.read().splitlines():
                 values = line.split()
                 if values[0] == self.devname:
@@ -87,7 +87,8 @@ class BlockDevice(object):
         # otherwise mount readonly to a temp directory
         self.mountpoint = tempfile.mkdtemp(prefix='config-2-')
         cmd = ['mount', self.devname, self.mountpoint, '-o', 'ro']
-        logger.debug('Mounting %s at : %s' % (self.devname, self.mountpoint))
+        logger.debug('Mounting {} at : {}'.format(
+            self.devname, self.mountpoint))
         try:
             subprocess.check_output(cmd)
         except subprocess.CalledProcessError as e:
@@ -129,7 +130,7 @@ class BlockDevice(object):
             if not os.path.isfile(md_path):
                 logger.warn('No expected file at path: %s' % md_path)
                 return {}
-            with open(md_path, 'r') as f:
+            with open(md_path) as f:
                 return json.load(f)
         except Exception as e:
             logger.error('Problem getting metadata: %s', e)
@@ -138,9 +139,9 @@ class BlockDevice(object):
             self.cleanup()
 
     def __repr__(self):
-        return '%s: TYPE="%s" LABEL="%s"' % (self.devname,
-                                             self.type,
-                                             self.label)
+        return '{}: TYPE="{}" LABEL="{}"'.format(self.devname,
+                                                 self.type,
+                                                 self.label)
 
 
 def all_block_devices():

@@ -86,10 +86,10 @@ class FakeResponse(dict):
         pass
 
 
-class FakeRequests(object):
+class FakeRequests:
     exceptions = requests.exceptions
 
-    class Session(object):
+    class Session:
         def get(self, url, timeout=None):
             url = urlparse.urlparse(url)
 
@@ -104,17 +104,17 @@ class FakeRequests(object):
             return FakeResponse(META_DATA[path])
 
 
-class FakeFailRequests(object):
+class FakeFailRequests:
     exceptions = requests.exceptions
 
-    class Session(object):
+    class Session:
         def get(self, url, timeout=None):
             raise requests.exceptions.HTTPError(403, 'Forbidden')
 
 
 class TestEc2(testtools.TestCase):
     def setUp(self):
-        super(TestEc2, self).setUp()
+        super().setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
 
     @mock.patch.object(config_drive, 'config_drive')

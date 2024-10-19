@@ -57,7 +57,7 @@ opts = [
 name = 'cfn'
 
 
-class Collector(object):
+class Collector:
 
     def __init__(self, requests_impl=common.requests):
         self._requests_impl = requests_impl
@@ -128,15 +128,15 @@ class Collector(object):
                 value = json.loads(sub_element.text)
             except ValueError as e:
                 logger.warn(
-                    'Path %s failed to parse as json. (%s)' % (path, e))
+                    'Path {} failed to parse as json. ({})'.format(path, e))
                 raise exc.CfnMetadataNotAvailable
             if sub_path:
                 for subkey in sub_path.split('.'):
                     try:
                         value = value[subkey]
                     except KeyError:
-                        logger.warn(
-                            'Sub-key %s does not exist. (%s)' % (subkey, path))
+                        logger.warn('Sub-key {} does not exist. ({})'.format(
+                            subkey, path))
                         raise exc.CfnMetadataNotAvailable
             final_content.update(value)
         final_list = merger.merged_list_from_content(

@@ -30,80 +30,80 @@ from os_collect_config import collect
 from os_collect_config import exc
 
 
-META_DATA = {u'int1': 1,
-             u'strfoo': u'foo',
-             u'map_ab': {
-                 u'a': 'apple',
-                 u'b': 'banana',
+META_DATA = {'int1': 1,
+             'strfoo': 'foo',
+             'map_ab': {
+                 'a': 'apple',
+                 'b': 'banana',
              }}
 
 
 SOFTWARE_CONFIG_DATA = {
-    u'old-style': u'value',
-    u'deployments': [
+    'old-style': 'value',
+    'deployments': [
         {
-            u'inputs': [
+            'inputs': [
                 {
-                    u'type': u'String',
-                    u'name': u'input1',
-                    u'value': u'value1'
+                    'type': 'String',
+                    'name': 'input1',
+                    'value': 'value1'
                 }
             ],
-            u'group': 'Heat::Ungrouped',
-            u'name': 'dep-name1',
-            u'outputs': None,
-            u'options': None,
-            u'config': {
-                u'config1': 'value1'
+            'group': 'Heat::Ungrouped',
+            'name': 'dep-name1',
+            'outputs': None,
+            'options': None,
+            'config': {
+                'config1': 'value1'
             }
         },
         {
-            u'inputs': [
+            'inputs': [
                 {
-                    u'type': u'String',
-                    u'name': u'input1',
-                    u'value': u'value1'
+                    'type': 'String',
+                    'name': 'input1',
+                    'value': 'value1'
                 }
             ],
-            u'group': 'os-apply-config',
-            u'name': 'dep-name2',
-            u'outputs': None,
-            u'options': None,
-            u'config': {
-                u'config2': 'value2'
+            'group': 'os-apply-config',
+            'name': 'dep-name2',
+            'outputs': None,
+            'options': None,
+            'config': {
+                'config2': 'value2'
             }
         },
         {
-            u'inputs': [
+            'inputs': [
                 {
-                    u'type': u'String',
-                    u'name': u'input1',
-                    u'value': u'value1'
+                    'type': 'String',
+                    'name': 'input1',
+                    'value': 'value1'
                 }
             ],
-            u'name': 'dep-name3',
-            u'outputs': None,
-            u'options': None,
-            u'config': {
-                u'config3': 'value3'
+            'name': 'dep-name3',
+            'outputs': None,
+            'options': None,
+            'config': {
+                'config3': 'value3'
             }
         },
         {
-            u'inputs': [],
-            u'group': 'ignore_me',
-            u'name': 'ignore_me_name',
-            u'outputs': None,
-            u'options': None,
-            u'config': 'ignore_me_config'
+            'inputs': [],
+            'group': 'ignore_me',
+            'name': 'ignore_me_name',
+            'outputs': None,
+            'options': None,
+            'config': 'ignore_me_config'
         }
     ]
 }
 
 
 SOFTWARE_CONFIG_IMPOSTER_DATA = {
-    u'old-style': u'value',
-    u'deployments': {
-        u"not": u"a list"
+    'old-style': 'value',
+    'deployments': {
+        "not": "a list"
     }
 }
 
@@ -116,7 +116,7 @@ class FakeResponse(dict):
         pass
 
 
-class FakeReqSession(object):
+class FakeReqSession:
 
     SESSION_META_DATA = META_DATA
 
@@ -151,7 +151,7 @@ class FakeReqSession(object):
         return FakeResponse(etree.tostring(root))
 
 
-class FakeRequests(object):
+class FakeRequests:
     exceptions = requests.exceptions
 
     def __init__(self, testcase, expected_netloc='192.0.2.1:8000'):
@@ -186,21 +186,21 @@ class FakeRequestsConfigImposter(FakeRequestsSoftwareConfig):
     FAKE_SESSION = FakeReqSessionConfigImposter
 
 
-class FakeFailRequests(object):
+class FakeFailRequests:
     exceptions = requests.exceptions
 
-    class Session(object):
+    class Session:
         def get(self, url, params, headers, verify=None, timeout=None):
             raise requests.exceptions.HTTPError(403, 'Forbidden')
 
 
 class TestCfnBase(testtools.TestCase):
     def setUp(self):
-        super(TestCfnBase, self).setUp()
+        super().setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         self.hint_file = tempfile.NamedTemporaryFile()
-        self.hint_file.write(u'http://192.0.2.1:8000'.encode('utf-8'))
+        self.hint_file.write(b'http://192.0.2.1:8000')
         self.hint_file.flush()
         self.addCleanup(self.hint_file.close)
         collect.setup_conf()
@@ -266,8 +266,8 @@ class TestCfn(TestCfnBase):
         self.assertThat(content, matchers.IsInstance(list))
         self.assertEqual('cfn', content[0][0])
         content = content[0][1]
-        self.assertIn(u'b', content)
-        self.assertEqual(u'banana', content[u'b'])
+        self.assertIn('b', content)
+        self.assertEqual('banana', content['b'])
 
     def test_collect_cfn_metadata_url_overrides_hint(self):
         cfg.CONF.cfn.metadata_url = 'http://127.0.1.1:8000/v1/'
@@ -285,7 +285,7 @@ class TestCfnSoftwareConfig(TestCfnBase):
         self.assertEqual('cfn', cfn_md[0][0])
         cfn_config = cfn_md[0][1]
         self.assertThat(cfn_config, matchers.IsInstance(dict))
-        self.assertEqual(set(['old-style', 'deployments']),
+        self.assertEqual({'old-style', 'deployments'},
                          set(cfn_config.keys()))
         self.assertIn('deployments', cfn_config)
         self.assertThat(cfn_config['deployments'], matchers.IsInstance(list))

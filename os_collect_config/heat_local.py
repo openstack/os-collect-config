@@ -33,7 +33,7 @@ name = 'heat_local'
 logger = log.getLogger(__name__)
 
 
-class Collector(object):
+class Collector:
     def __init__(self, requests_impl=None):
         pass
 
@@ -45,7 +45,8 @@ class Collector(object):
                     try:
                         value = json.loads(metadata.read())
                     except ValueError as e:
-                        logger.info('%s is not valid JSON (%s)' % (path, e))
+                        logger.info(
+                            '{} is not valid JSON ({})'.format(path, e))
                         continue
                     if final_content:
                         final_content.update(value)

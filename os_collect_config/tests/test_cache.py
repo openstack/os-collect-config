@@ -23,9 +23,9 @@ from testtools import matchers
 from os_collect_config import cache
 
 
-class DummyConf(object):
+class DummyConf:
     def __init__(self, cachedir):
-        class CONFobj(object):
+        class CONFobj:
             def __init__(self, cachedir):
                 self.cachedir = cachedir
         self.CONF = CONFobj(cachedir)
@@ -33,14 +33,14 @@ class DummyConf(object):
 
 class TestCache(testtools.TestCase):
     def setUp(self):
-        super(TestCache, self).setUp()
+        super().setUp()
         cache_root = self.useFixture(fixtures.TempDir())
         self.cache_dir = os.path.join(cache_root.path, 'cache')
         self.useFixture(fixtures.MonkeyPatch('os_collect_config.cache.cfg',
                                              DummyConf(self.cache_dir)))
 
     def tearDown(self):
-        super(TestCache, self).tearDown()
+        super().tearDown()
 
     def test_cache(self):
         # Never seen, so changed is expected.
@@ -85,8 +85,8 @@ class TestCache(testtools.TestCase):
         self.assertIn(path, list_list)
 
     def test_cache_ignores_json_inequality(self):
-        content1 = u'{"a": "value-a", "b": "value-b"}'
-        content2 = u'{"b": "value-b", "a": "value-a"}'
+        content1 = '{"a": "value-a", "b": "value-b"}'
+        content2 = '{"b": "value-b", "a": "value-a"}'
         value1 = json.loads(content1)
         value2 = json.loads(content2)
         self.assertEqual(value1, value2)

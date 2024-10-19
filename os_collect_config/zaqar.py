@@ -53,7 +53,7 @@ opts = [
 name = 'zaqar'
 
 
-class Collector(object):
+class Collector:
     def __init__(self,
                  keystoneclient=keystoneclient,
                  zaqarclient=zaqarclient,

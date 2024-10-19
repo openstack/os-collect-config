@@ -23,31 +23,31 @@ from os_collect_config import exc
 from os_collect_config import heat
 
 
-META_DATA = {u'int1': 1,
-             u'strfoo': u'foo',
-             u'map_ab': {
-                 u'a': 'apple',
-                 u'b': 'banana',
+META_DATA = {'int1': 1,
+             'strfoo': 'foo',
+             'map_ab': {
+                 'a': 'apple',
+                 'b': 'banana',
              }}
 
 
 SOFTWARE_CONFIG_DATA = {
-    u'old-style': u'value',
-    u'deployments': [
+    'old-style': 'value',
+    'deployments': [
         {
-            u'inputs': [
+            'inputs': [
                 {
-                    u'type': u'String',
-                    u'name': u'input1',
-                    u'value': u'value1'
+                    'type': 'String',
+                    'name': 'input1',
+                    'value': 'value1'
                 }
             ],
-            u'group': 'Heat::Ungrouped',
-            u'name': 'dep-name1',
-            u'outputs': None,
-            u'options': None,
-            u'config': {
-                u'config1': 'value1'
+            'group': 'Heat::Ungrouped',
+            'name': 'dep-name1',
+            'outputs': None,
+            'options': None,
+            'config': {
+                'config1': 'value1'
             }
         }
     ]
@@ -55,14 +55,14 @@ SOFTWARE_CONFIG_DATA = {
 
 
 SOFTWARE_CONFIG_IMPOSTER_DATA = {
-    u'old-style': u'value',
-    u'deployments': {
-        u"not": u"a list"
+    'old-style': 'value',
+    'deployments': {
+        "not": "a list"
     }
 }
 
 
-class FakeKeystoneDiscover(object):
+class FakeKeystoneDiscover:
 
     def __init__(self, auth_url):
         pass
@@ -71,7 +71,7 @@ class FakeKeystoneDiscover(object):
         return 'http://192.0.2.1:5000/v3'
 
 
-class FakeKeystoneClient(object):
+class FakeKeystoneClient:
 
     def __init__(self, testcase, configs=None):
         self._test = testcase
@@ -103,7 +103,7 @@ class FakeFailKeystoneClient(FakeKeystoneClient):
         raise ks_exc.AuthorizationFailure('Forbidden')
 
 
-class FakeHeatClient(object):
+class FakeHeatClient:
     def __init__(self, testcase):
         self._test = testcase
         self.resources = self
@@ -128,7 +128,7 @@ class FakeHeatClientSoftwareConfig(FakeHeatClient):
 
 class TestHeatBase(testtools.TestCase):
     def setUp(self):
-        super(TestHeatBase, self).setUp()
+        super().setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         collect.setup_conf()

@@ -51,7 +51,7 @@ def _dest_looks_insecure(local_path):
     return looks_insecure
 
 
-class Collector(object):
+class Collector:
     def __init__(self, requests_impl=None):
         pass
 
@@ -84,7 +84,7 @@ class Collector(object):
                         value = json.loads(metadata.read())
                     except ValueError as e:
                         logger.error(
-                            '%s is not valid JSON (%s)' % (data_file, e))
+                            '{} is not valid JSON ({})'.format(data_file, e))
                         raise exc.LocalMetadataNotAvailable
                     basename = os.path.basename(data_file)
                     final_content.append((basename, value))

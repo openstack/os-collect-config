@@ -44,7 +44,7 @@ class FakeKeystoneDiscoverBase(test_heat.FakeKeystoneDiscover):
 
 class KeystoneTest(testtools.TestCase):
     def setUp(self):
-        super(KeystoneTest, self).setUp()
+        super().setUp()
         self.addCleanup(cfg.CONF.reset)
         collect.setup_conf()
         self.useFixture(fixtures.NestedTempfile())
@@ -73,7 +73,7 @@ class KeystoneTest(testtools.TestCase):
         self.assertIsNotNone(ks.cache)
 
     def _make_ks(self, client):
-        class Configs(object):
+        class Configs:
             auth_url = 'http://192.0.2.1:5000/'
             user_id = 'auser'
             password = 'apassword'

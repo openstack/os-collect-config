@@ -37,7 +37,7 @@ opts = [
 name = 'request'
 
 
-class Collector(object):
+class Collector:
     def __init__(self, requests_impl=common.requests):
         self._requests_impl = requests_impl
         self._session = requests_impl.Session()

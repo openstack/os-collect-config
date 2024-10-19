@@ -27,17 +27,17 @@ from os_collect_config import exc
 from os_collect_config import heat_local
 
 
-META_DATA = {u'localstrA': u'A',
-             u'localint9': 9,
-             u'localmap_xy': {
-                 u'x': 42,
-                 u'y': 'foo',
+META_DATA = {'localstrA': 'A',
+             'localint9': 9,
+             'localmap_xy': {
+                 'x': 42,
+                 'y': 'foo',
              }}
 
 
 class TestHeatLocal(testtools.TestCase):
     def setUp(self):
-        super(TestHeatLocal, self).setUp()
+        super().setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
         collect.setup_conf()
         self.orig_cfg_CONF = cfg.CONF
@@ -45,7 +45,7 @@ class TestHeatLocal(testtools.TestCase):
     def tearDown(self):
         cfg.CONF = self.orig_cfg_CONF
         cfg.CONF.reset()
-        super(TestHeatLocal, self).tearDown()
+        super().tearDown()
 
     def _call_collect(self, *temp_name):
         cfg.CONF.heat_local.path = list(temp_name)
@@ -83,7 +83,7 @@ class TestHeatLocal(testtools.TestCase):
 
     def test_collect_heat_local_with_invalid_metadata(self):
         with tempfile.NamedTemporaryFile() as md:
-            md.write("{'invalid' => 'INVALID'}".encode('utf-8'))
+            md.write(b"{'invalid' => 'INVALID'}")
             md.flush()
             self.assertRaises(exc.HeatLocalMetadataNotAvailable,
                               self._call_collect, md.name)

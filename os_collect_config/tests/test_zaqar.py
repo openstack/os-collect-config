@@ -47,7 +47,7 @@ class FakeKeystoneClientWebsocket(test_heat.FakeKeystoneClient):
         return 'ws://127.0.0.1:9000/'
 
 
-class FakeZaqarClient(object):
+class FakeZaqarClient:
 
     def __init__(self, testcase):
         self._test = testcase
@@ -63,7 +63,7 @@ class FakeZaqarClient(object):
         return FakeQueue()
 
 
-class FakeZaqarWebsocketClient(object):
+class FakeZaqarWebsocketClient:
 
     def __init__(self, options, messages=None, testcase=None):
         self._messages = messages
@@ -88,14 +88,14 @@ class FakeZaqarWebsocketClient(object):
         pass
 
 
-class FakeQueue(object):
+class FakeQueue:
 
     def pop(self):
         return iter([message.Message(
             queue=self, ttl=10, age=10, body=test_heat.META_DATA, href='')])
 
 
-class FakeZaqarClientSoftwareConfig(object):
+class FakeZaqarClientSoftwareConfig:
 
     def __init__(self, testcase):
         self._test = testcase
@@ -111,7 +111,7 @@ class FakeZaqarClientSoftwareConfig(object):
         return FakeQueueSoftwareConfig()
 
 
-class FakeQueueSoftwareConfig(object):
+class FakeQueueSoftwareConfig:
 
     def pop(self):
         return iter([message.Message(
@@ -121,7 +121,7 @@ class FakeQueueSoftwareConfig(object):
 
 class TestZaqar(testtools.TestCase):
     def setUp(self):
-        super(TestZaqar, self).setUp()
+        super().setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         collect.setup_conf()

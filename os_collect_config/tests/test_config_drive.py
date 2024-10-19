@@ -38,7 +38,7 @@ TYPE=xfs
 class TestConfigDrive(testtools.TestCase):
 
     def setUp(self):
-        super(TestConfigDrive, self).setUp()
+        super().setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
 
     @mock.patch.object(subprocess, 'check_output')
@@ -74,7 +74,7 @@ class TestConfigDrive(testtools.TestCase):
         self.assertEqual(('foo', 'bar'), psv('foo=bar'))
         self.assertEqual(('foo', 'bar=baz'), psv('foo=bar=baz'))
         self.assertEqual(('foo', 'bar baz'), psv('foo=bar baz'))
-        self.assertEqual(('foo', 'bar baz'), psv('foo=bar\ baz'))
+        self.assertEqual(('foo', 'bar baz'), psv(r'foo=bar\ baz'))
         self.assertEqual(('foo', ''), psv('foo='))
         self.assertEqual((None, None), psv('foo'))
         self.assertEqual((None, None), psv(None))
@@ -116,7 +116,7 @@ class TestConfigDrive(testtools.TestCase):
         mountpoint = self.useFixture(fixtures.TempDir()).path
         config_drive.PROC_MOUNTS_PATH = os.path.join(proc.path, 'mount')
         with open(config_drive.PROC_MOUNTS_PATH, 'w') as md:
-            md.write('%s %s r 0 0\n' % (bd.devname, mountpoint))
+            md.write('{} {} r 0 0\n'.format(bd.devname, mountpoint))
 
         self.assertIsNone(bd.mountpoint)
         self.assertFalse(bd.unmount)

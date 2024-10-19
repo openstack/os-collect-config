@@ -30,7 +30,7 @@ def merged_list_from_content(final_content, deployment_keys, collector_name):
                     'list.' % (depkey,))
                 continue
             logger.debug(
-                'Deployment found for %s' % (depkey,))
+                'Deployment found for {}'.format(depkey))
             for deployment in deployments:
                 if 'name' not in deployment:
                     logger.warn(

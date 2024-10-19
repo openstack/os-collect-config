@@ -59,7 +59,7 @@ def _setup_local_metadata(test_case):
 class TestCollect(testtools.TestCase):
 
     def setUp(self):
-        super(TestCollect, self).setUp()
+        super().setUp()
         self.useFixture(fixtures.FakeLogger())
         collect.setup_conf()
         self.addCleanup(cfg.CONF.reset)
@@ -357,7 +357,7 @@ class TestCollect(testtools.TestCase):
 class TestCollectAll(testtools.TestCase):
 
     def setUp(self):
-        super(TestCollectAll, self).setUp()
+        super().setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
         collect.setup_conf()
         self.cache_dir = self.useFixture(fixtures.TempDir())
@@ -422,8 +422,8 @@ class TestCollectAll(testtools.TestCase):
         (changed_keys, paths) = self._call_collect_all(
             store=True, collector_kwargs_map=collector_kwargs_map)
         if expected_changed is None:
-            expected_changed = set(['heat_local', 'cfn', 'ec2',
-                                    'heat', 'local', 'request', 'zaqar'])
+            expected_changed = {'heat_local', 'cfn', 'ec2',
+                                'heat', 'local', 'request', 'zaqar'}
         self.assertEqual(expected_changed, changed_keys)
         self.assertThat(paths, matchers.IsInstance(list))
         for path in paths:
@@ -450,9 +450,9 @@ class TestCollectAll(testtools.TestCase):
                 'discover_class': test_heat.FakeKeystoneDiscover
             },
         }
-        expected_changed = set((
+        expected_changed = {
             'heat_local', 'ec2', 'cfn', 'heat', 'local', 'request',
-            'dep-name1', 'dep-name2', 'dep-name3', 'zaqar'))
+            'dep-name1', 'dep-name2', 'dep-name3', 'zaqar'}
         self._test_collect_all_store(collector_kwargs_map=soft_config_map,
                                      expected_changed=expected_changed)
 
@@ -563,7 +563,7 @@ class TestConf(testtools.TestCase):
 class TestHup(testtools.TestCase):
 
     def setUp(self):
-        super(TestHup, self).setUp()
+        super().setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
 
         def fake_closerange(low, high):
@@ -588,7 +588,7 @@ class TestHup(testtools.TestCase):
 
 class TestFileHash(testtools.TestCase):
     def setUp(self):
-        super(TestFileHash, self).setUp()
+        super().setUp()
 
         # Deletes tempfiles during teardown
         self.useFixture(fixtures.NestedTempfile())

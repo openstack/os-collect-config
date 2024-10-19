@@ -28,19 +28,19 @@ from os_collect_config import exc
 from os_collect_config import local
 
 
-META_DATA = {u'localstrA': u'A',
-             u'localint9': 9,
-             u'localmap_xy': {
-                 u'x': 42,
-                 u'y': 'foo',
+META_DATA = {'localstrA': 'A',
+             'localint9': 9,
+             'localmap_xy': {
+                 'x': 42,
+                 'y': 'foo',
              }}
-META_DATA2 = {u'localstrA': u'Z',
-              u'localint9': 9}
+META_DATA2 = {'localstrA': 'Z',
+              'localint9': 9}
 
 
 class TestLocal(testtools.TestCase):
     def setUp(self):
-        super(TestLocal, self).setUp()
+        super().setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
         self.useFixture(fixtures.NestedTempfile())
         self.tdir = tempfile.mkdtemp()

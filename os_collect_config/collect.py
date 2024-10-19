@@ -234,7 +234,7 @@ def getfilehash(files):
             with open(filename) as fp:
                 data = fp.read()
             m.update(data.encode('utf-8'))
-        except IOError:
+        except OSError:
             pass
     return m.hexdigest()
 
