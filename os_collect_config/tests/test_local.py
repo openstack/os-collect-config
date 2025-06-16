@@ -114,11 +114,14 @@ class TestLocal(testtools.TestCase):
 
         def wrong_sort_listdir(path):
             ret = unpatched_listdir(path)
-            save_locale = locale.getdefaultlocale()
-            locale.setlocale(locale.LC_ALL, 'C')
-            bad_sort = sorted(ret, reverse=True)
-            locale.setlocale(locale.LC_ALL, save_locale)
+            save_locale = locale.getlocale()
+            try:
+                locale.setlocale(locale.LC_ALL, 'C')
+                bad_sort = sorted(ret, reverse=True)
+            finally:
+                locale.setlocale(locale.LC_ALL, save_locale)
             return bad_sort
+
         self.useFixture(fixtures.MonkeyPatch('os.listdir', wrong_sort_listdir))
         local_md = self._call_collect()
 
