@@ -17,7 +17,7 @@ import json
 from keystoneclient.v3 import client as keystoneclient
 from oslo_config import cfg
 from oslo_log import log
-from zaqarclient.queues.v1 import client as zaqarclient
+from zaqarclient.queues.v2 import client as zaqarclient
 from zaqarclient import transport
 from zaqarclient.transport import request
 
@@ -70,7 +70,7 @@ class Collector:
             kwargs['region_name'] = CONF.zaqar.region_name
         endpoint = ks.service_catalog.url_for(**kwargs)
         logger.debug('Fetching metadata from %s' % endpoint)
-        zaqar = self.zaqarclient.Client(endpoint, conf=conf, version=1.1)
+        zaqar = self.zaqarclient.Client(endpoint, conf=conf, version=2)
 
         queue = zaqar.queue(CONF.zaqar.queue_id)
         r = next(queue.pop())

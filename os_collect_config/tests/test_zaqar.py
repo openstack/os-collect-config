@@ -21,7 +21,7 @@ from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 import testtools
 from testtools import matchers
-from zaqarclient.queues.v1 import message
+from zaqarclient.queues.v2 import message
 from zaqarclient import transport
 from zaqarclient.transport import response
 
@@ -53,7 +53,7 @@ class FakeZaqarClient:
         self._test = testcase
 
     def Client(self, endpoint, conf, version):
-        self._test.assertEqual(1.1, version)
+        self._test.assertEqual(2, version)
         self._test.assertEqual('http://192.0.2.1:8888/', endpoint)
         return self
 
@@ -101,7 +101,7 @@ class FakeZaqarClientSoftwareConfig:
         self._test = testcase
 
     def Client(self, endpoint, conf, version):
-        self._test.assertEqual(1.1, version)
+        self._test.assertEqual(2, version)
         self._test.assertEqual('http://192.0.2.1:8888/', endpoint)
         return self
 

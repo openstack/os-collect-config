@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    Zaqar collector now uses v2 messaging API, instead of v1.1 messaging API.
