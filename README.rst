@@ -1,15 +1,10 @@
-========================
-Team and repository tags
-========================
-
-.. image:: https://governance.openstack.org/tc/badges/os-collect-config.svg
-    :target: https://governance.openstack.org/tc/reference/tags/index.html
-
-.. Change things from this point on
-
 =================
 os-collect-config
 =================
+
+.. image:: https://governance.openstack.org/tc/badges/os-collect-config.svg
+
+.. Change things from this point on
 
 -------------------------------------------------
 Collect configuration from cloud metadata sources
