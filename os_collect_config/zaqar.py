@@ -32,6 +32,7 @@ opts = [
     cfg.StrOpt('user-id',
                help='User ID for API authentication'),
     cfg.StrOpt('password',
+               secret=True,
                help='Password for API authentication'),
     cfg.StrOpt('project-id',
                help='ID of project for API authentication'),
