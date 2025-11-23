@@ -36,7 +36,7 @@ opts = [
                help='Password for API authentication'),
     cfg.StrOpt('project-id',
                help='ID of project for API authentication'),
-    cfg.StrOpt('auth-url',
+    cfg.URIOpt('auth-url',
                help='URL for API authentication'),
     cfg.StrOpt('queue-id',
                help='ID of the queue to be checked'),

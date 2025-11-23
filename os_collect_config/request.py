@@ -28,7 +28,7 @@ CONF = cfg.CONF
 logger = log.getLogger(__name__)
 
 opts = [
-    cfg.StrOpt('metadata-url',
+    cfg.URIOpt('metadata-url',
                help='URL to query for metadata'),
     cfg.FloatOpt('timeout', default=10,
                  help='Seconds to wait for the connection and read request'

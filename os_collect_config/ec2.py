@@ -28,7 +28,7 @@ EC2_METADATA_URL = 'http://169.254.169.254/latest/meta-data'
 CONF = cfg.CONF
 
 opts = [
-    cfg.StrOpt('metadata-url',
+    cfg.URIOpt('metadata-url',
                default=EC2_METADATA_URL,
                help='URL to query for EC2 Metadata'),
     cfg.FloatOpt('timeout', default=10,

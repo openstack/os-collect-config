@@ -32,7 +32,7 @@ opts = [
                help='Password for API authentication'),
     cfg.StrOpt('project-id',
                help='ID of project for API authentication'),
-    cfg.StrOpt('auth-url',
+    cfg.URIOpt('auth-url',
                help='URL for API authentication'),
     cfg.StrOpt('stack-id',
                help='ID of the stack this deployment belongs to'),
