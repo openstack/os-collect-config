@@ -30,7 +30,7 @@ CONF = cfg.CONF
 logger = log.getLogger(__name__)
 
 opts = [
-    cfg.StrOpt('metadata-url',
+    cfg.URIOpt('metadata-url',
                help='URL to query for CloudFormation Metadata'),
     cfg.StrOpt('heat-metadata-hint',
                default='/var/lib/heat-cfntools/cfn-metadata-server',
