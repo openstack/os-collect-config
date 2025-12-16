@@ -128,7 +128,7 @@ class BlockDevice:
             md_path = os.path.join(self.mountpoint,
                                    'ec2', 'latest', 'meta-data.json')
             if not os.path.isfile(md_path):
-                logger.warn('No expected file at path: %s' % md_path)
+                logger.warning('No expected file at path: %s' % md_path)
                 return {}
             with open(md_path) as f:
                 return json.load(f)

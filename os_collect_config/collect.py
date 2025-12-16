@@ -179,7 +179,7 @@ def collect_all(collectors, store=False, collector_kwargs_map=None):
         try:
             content = module.Collector(**collector_kwargs).collect()
         except exc.SourceNotAvailable:
-            logger.warn('Source [%s] Unavailable.' % collector)
+            logger.warning('Source [%s] Unavailable.' % collector)
             continue
         except exc.SourceNotConfigured:
             logger.debug('Source [%s] Not configured.' % collector)

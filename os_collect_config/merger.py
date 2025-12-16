@@ -25,7 +25,7 @@ def merged_list_from_content(final_content, deployment_keys, collector_name):
         if depkey in final_content:
             deployments = final_content[depkey]
             if not isinstance(deployments, list):
-                logger.warn(
+                logger.warning(
                     'Deployment-key %s was found but does not contain a '
                     'list.' % (depkey,))
                 continue
@@ -33,7 +33,7 @@ def merged_list_from_content(final_content, deployment_keys, collector_name):
                 'Deployment found for {}'.format(depkey))
             for deployment in deployments:
                 if 'name' not in deployment:
-                    logger.warn(
+                    logger.warning(
                         'No name found for a deployment under %s.' %
                         (depkey,))
                     continue

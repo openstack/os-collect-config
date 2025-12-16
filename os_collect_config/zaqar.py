@@ -125,24 +125,24 @@ class Collector:
 
     def collect(self):
         if CONF.zaqar.auth_url is None:
-            logger.warn('No auth_url configured.')
+            logger.warning('No auth_url configured.')
             raise exc.ZaqarMetadataNotConfigured()
         if CONF.zaqar.password is None:
-            logger.warn('No password configured.')
+            logger.warning('No password configured.')
             raise exc.ZaqarMetadataNotConfigured()
         if CONF.zaqar.project_id is None:
-            logger.warn('No project_id configured.')
+            logger.warning('No project_id configured.')
             raise exc.ZaqarMetadataNotConfigured()
         if CONF.zaqar.user_id is None:
-            logger.warn('No user_id configured.')
+            logger.warning('No user_id configured.')
             raise exc.ZaqarMetadataNotConfigured()
         if CONF.zaqar.queue_id is None:
-            logger.warn('No queue_id configured.')
+            logger.warning('No queue_id configured.')
             raise exc.ZaqarMetadataNotConfigured()
         if CONF.zaqar.ssl_certificate_validation is True and (
                 CONF.zaqar.ca_file is None):
-            logger.warn('No CA file configured when flag ssl certificate '
-                        'validation is on.')
+            logger.warning('No CA file configured when flag ssl certificate '
+                           'validation is on.')
             raise exc.ZaqarMetadataNotConfigured()
         # NOTE(flwang): To be compatible with old versions, we won't throw
         # error here if there is no region name.
@@ -178,5 +178,5 @@ class Collector:
             return final_list
 
         except Exception as e:
-            logger.warn(str(e))
+            logger.warning(str(e))
             raise exc.ZaqarMetadataNotAvailable()

@@ -99,5 +99,5 @@ class Collector:
             return final_list
 
         except Exception as e:
-            logger.warn(str(e))
+            logger.warning(str(e))
             raise exc.HeatMetadataNotAvailable

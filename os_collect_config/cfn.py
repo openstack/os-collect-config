@@ -115,19 +115,19 @@ class Collector:
                     timeout=CONF.cfn.timeout)
                 content.raise_for_status()
             except self._requests_impl.exceptions.RequestException as e:
-                logger.warn(e)
+                logger.warning(e)
                 raise exc.CfnMetadataNotAvailable
             map_content = etree.fromstring(content.text)
             resource_detail = map_content.find(
                 'DescribeStackResourceResult').find('StackResourceDetail')
             sub_element = resource_detail.find(field)
             if sub_element is None:
-                logger.warn('Path %s does not exist.' % (path))
+                logger.warnng('Path %s does not exist.' % (path))
                 raise exc.CfnMetadataNotAvailable
             try:
                 value = json.loads(sub_element.text)
             except ValueError as e:
-                logger.warn(
+                logger.warning(
                     'Path {} failed to parse as json. ({})'.format(path, e))
                 raise exc.CfnMetadataNotAvailable
             if sub_path:
@@ -135,8 +135,9 @@ class Collector:
                     try:
                         value = value[subkey]
                     except KeyError:
-                        logger.warn('Sub-key {} does not exist. ({})'.format(
-                            subkey, path))
+                        logger.warning(
+                            'Sub-key {} does not exist. ({})'.format(
+                                subkey, path))
                         raise exc.CfnMetadataNotAvailable
             final_content.update(value)
         final_list = merger.merged_list_from_content(
