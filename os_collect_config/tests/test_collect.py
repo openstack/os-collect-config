@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
 import json
 import os
 import signal
@@ -360,16 +359,12 @@ class TestCollectAll(testtools.TestCase):
         super().setUp()
         self.log = self.useFixture(fixtures.FakeLogger())
         collect.setup_conf()
+        self.addCleanup(cfg.CONF.reset)
         self.cache_dir = self.useFixture(fixtures.TempDir())
         self.backup_cache_dir = self.useFixture(fixtures.TempDir())
-        self.clean_conf = copy.copy(cfg.CONF)
 
-        def restore_copy():
-            cfg.CONF = self.clean_conf
-        self.addCleanup(restore_copy)
-
-        cfg.CONF.cachedir = self.cache_dir.path
-        cfg.CONF.backup_cachedir = self.backup_cache_dir.path
+        cfg.CONF.set_override('cachedir', self.cache_dir.path)
+        cfg.CONF.set_override('backup_cachedir', self.backup_cache_dir.path)
         cfg.CONF.cfn.metadata_url = 'http://192.0.2.1:8000/v1/'
         cfg.CONF.cfn.stack_name = 'foo'
         cfg.CONF.cfn.path = ['foo.Metadata']
