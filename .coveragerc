@@ -1,7 +1,9 @@
 [run]
 branch = True
+parallel = True
 source = os_collect_config
 omit = os_collect_config/tests/*
 
 [report]
 ignore_errors = True
+show_missing = True
