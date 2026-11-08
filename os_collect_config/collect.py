@@ -275,7 +275,7 @@ def main(args=sys.argv, collector_kwargs_map=None):
     exitval = 0
     config_files = CONF.config_file
     config_hash = getfilehash(config_files)
-    exponential_sleep_time = CONF.min_polling_interval
+    sleep_time = CONF.min_polling_interval
     while True:
         # shorter sleeps while changes are detected allows for faster
         # software deployment dependency processing
@@ -306,12 +306,10 @@ def main(args=sys.argv, collector_kwargs_map=None):
             if CONF.one_time:
                 break
             else:
-                logger.info("Sleeping %.2f seconds.", exponential_sleep_time)
-                time.sleep(exponential_sleep_time)
+                logger.info("Sleeping %.2f seconds.", sleep_time)
+                time.sleep(sleep_time)
 
-            exponential_sleep_time *= 2
-            if exponential_sleep_time > CONF.polling_interval:
-                exponential_sleep_time = CONF.polling_interval
+            sleep_time = min(sleep_time * 2, CONF.polling_interval)
         else:
             print(json.dumps(content, indent=1))
             break
