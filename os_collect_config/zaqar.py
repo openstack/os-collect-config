@@ -70,7 +70,7 @@ class Collector:
         if CONF.zaqar.region_name:
             kwargs['region_name'] = CONF.zaqar.region_name
         endpoint = ks.service_catalog.url_for(**kwargs)
-        logger.debug('Fetching metadata from %s' % endpoint)
+        logger.debug('Fetching metadata from %s', endpoint)
         zaqar = self.zaqarclient.Client(endpoint, conf=conf, version=2)
 
         queue = zaqar.queue(CONF.zaqar.queue_id)
@@ -87,7 +87,7 @@ class Collector:
             kwargs['region_name'] = CONF.zaqar.region_name
         endpoint = ks.service_catalog.url_for(**kwargs)
 
-        logger.debug('Fetching metadata from %s' % endpoint)
+        logger.debug('Fetching metadata from %s', endpoint)
 
         with self.transport.get_transport_for(endpoint, options=conf) as ws:
             # create queue

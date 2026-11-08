@@ -45,15 +45,14 @@ class Collector:
                     try:
                         value = json.loads(metadata.read())
                     except ValueError as e:
-                        logger.info(
-                            '{} is not valid JSON ({})'.format(path, e))
+                        logger.info('%s is not valid JSON (%s)', path, e)
                         continue
                     if final_content:
                         final_content.update(value)
                     else:
                         final_content = value
         if not final_content:
-            logger.info('Local metadata not found (%s)' %
+            logger.info('Local metadata not found (%s)',
                         cfg.CONF.heat_local.path)
             raise exc.HeatLocalMetadataNotAvailable
         return [('heat_local', final_content)]

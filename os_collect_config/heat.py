@@ -88,7 +88,7 @@ class Collector:
             if CONF.heat.region_name:
                 kwargs['region_name'] = CONF.heat.region_name
             endpoint = ks.service_catalog.url_for(**kwargs)
-            logger.debug('Fetching metadata from %s' % endpoint)
+            logger.debug('Fetching metadata from %s', endpoint)
             heat = self.heatclient.Client(
                 '1', endpoint, token=ks.auth_token)
             r = heat.resources.metadata(CONF.heat.stack_id,
