@@ -80,15 +80,14 @@ class BlockDevice:
                 values = line.split()
                 if values[0] == self.devname:
                     self.mountpoint = values[1]
-                    logger.debug('Found existing mounted config-drive: %s' %
+                    logger.debug('Found existing mounted config-drive: %s',
                                  self.mountpoint)
                     return
 
         # otherwise mount readonly to a temp directory
         self.mountpoint = tempfile.mkdtemp(prefix='config-2-')
         cmd = ['mount', self.devname, self.mountpoint, '-o', 'ro']
-        logger.debug('Mounting {} at : {}'.format(
-            self.devname, self.mountpoint))
+        logger.debug('Mounting %s at : %s', self.devname, self.mountpoint)
         try:
             subprocess.check_output(cmd)
         except subprocess.CalledProcessError as e:
@@ -108,7 +107,7 @@ class BlockDevice:
             return
 
         cmd = ['umount', '-l', self.mountpoint]
-        logger.debug('Unmounting: %s' % self.mountpoint)
+        logger.debug('Unmounting: %s', self.mountpoint)
         try:
             subprocess.check_output(cmd)
         except subprocess.CalledProcessError as e:
@@ -128,7 +127,7 @@ class BlockDevice:
             md_path = os.path.join(self.mountpoint,
                                    'ec2', 'latest', 'meta-data.json')
             if not os.path.isfile(md_path):
-                logger.warning('No expected file at path: %s' % md_path)
+                logger.warning('No expected file at path: %s', md_path)
                 return {}
             with open(md_path) as f:
                 return json.load(f)

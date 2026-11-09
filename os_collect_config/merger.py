@@ -26,16 +26,14 @@ def merged_list_from_content(final_content, deployment_keys, collector_name):
             deployments = final_content[depkey]
             if not isinstance(deployments, list):
                 logger.warning(
-                    'Deployment-key %s was found but does not contain a '
-                    'list.' % (depkey,))
+                    'Deployment-key %s was found but does not contain a list.',
+                    depkey)
                 continue
-            logger.debug(
-                'Deployment found for {}'.format(depkey))
+            logger.debug('Deployment found for %s', depkey)
             for deployment in deployments:
                 if 'name' not in deployment:
                     logger.warning(
-                        'No name found for a deployment under %s.' %
-                        (depkey,))
+                        'No name found for a deployment under %s.', depkey)
                     continue
                 if deployment.get('group', 'Heat::Ungrouped') in (
                         'os-apply-config', 'Heat::Ungrouped'):

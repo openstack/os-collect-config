@@ -89,7 +89,7 @@ class Collector:
         signer = ec2_utils.Ec2Signer(secret_key=CONF.cfn.secret_access_key)
         for path in CONF.cfn.path:
             if '.' not in path:
-                logger.error('Path not in format resource.field[.x.y] (%s)' %
+                logger.error('Path not in format resource.field[.x.y] (%s)',
                              path)
                 raise exc.CfnMetadataNotConfigured
             resource, field = path.split('.', 1)
@@ -122,22 +122,21 @@ class Collector:
                 'DescribeStackResourceResult').find('StackResourceDetail')
             sub_element = resource_detail.find(field)
             if sub_element is None:
-                logger.warnng('Path %s does not exist.' % (path))
+                logger.warning('Path %s does not exist.', path)
                 raise exc.CfnMetadataNotAvailable
             try:
                 value = json.loads(sub_element.text)
             except ValueError as e:
                 logger.warning(
-                    'Path {} failed to parse as json. ({})'.format(path, e))
+                    'Path %s failed to parse as json. (%s)', path, e)
                 raise exc.CfnMetadataNotAvailable
             if sub_path:
                 for subkey in sub_path.split('.'):
                     try:
                         value = value[subkey]
                     except KeyError:
-                        logger.warning(
-                            'Sub-key {} does not exist. ({})'.format(
-                                subkey, path))
+                        logger.warning('Sub-key %s does not exist. (%s)',
+                                       subkey, path)
                         raise exc.CfnMetadataNotAvailable
             final_content.update(value)
         final_list = merger.merged_list_from_content(

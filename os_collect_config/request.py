@@ -90,8 +90,7 @@ class Collector:
         try:
             value = json.loads(content.text)
         except ValueError as e:
-            logger.warning(
-                'Failed to parse as json. (%s)' % e)
+            logger.warning('Failed to parse as json. (%s)', e)
             raise exc.RequestMetadataNotAvailable
         final_content.update(value)
 

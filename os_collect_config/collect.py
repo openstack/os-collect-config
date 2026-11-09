@@ -179,10 +179,10 @@ def collect_all(collectors, store=False, collector_kwargs_map=None):
         try:
             content = module.Collector(**collector_kwargs).collect()
         except exc.SourceNotAvailable:
-            logger.warning('Source [%s] Unavailable.' % collector)
+            logger.warning('Source [%s] Unavailable.', collector)
             continue
         except exc.SourceNotConfigured:
-            logger.debug('Source [%s] Not configured.' % collector)
+            logger.debug('Source [%s] Not configured.', collector)
             continue
 
         if store:
@@ -206,7 +206,7 @@ def collect_all(collectors, store=False, collector_kwargs_map=None):
 
 def reexec_self(signal=None, frame=None):
     if signal:
-        logger.info('Signal received. Re-executing %s' % sys.argv)
+        logger.info('Signal received. Re-executing %s', sys.argv)
     # Close all but stdin/stdout/stderr
     os.closerange(3, 255)
     os.execv(sys.argv[0], sys.argv)
@@ -215,8 +215,8 @@ def reexec_self(signal=None, frame=None):
 def call_command(files, command):
     env = dict(os.environ)
     env["OS_CONFIG_FILES"] = ':'.join(files)
-    logger.info("Executing %s with OS_CONFIG_FILES=%s" %
-                (command, env["OS_CONFIG_FILES"]))
+    logger.info("Executing %s with OS_CONFIG_FILES=%s",
+                command, env["OS_CONFIG_FILES"])
     subprocess.check_call(CONF.command, env=env, shell=True)
 
 
@@ -292,8 +292,8 @@ def main(args=sys.argv, collector_kwargs_map=None):
                     call_command(content, CONF.command)
                 except subprocess.CalledProcessError as e:
                     exitval = e.returncode
-                    logger.error('Command failed, will not cache new data. %s'
-                                 % e)
+                    logger.error(
+                        'Command failed, will not cache new data. %s', e)
                 else:
                     for changed in changed_keys:
                         cache.commit(changed)
